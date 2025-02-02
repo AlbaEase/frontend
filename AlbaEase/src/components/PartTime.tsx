@@ -1,7 +1,10 @@
-import "./PartTime.css";
+import styles from "./PartTime.module.css";
 
 const PartTime = () => {
-  return <div>메인화면 왼쪽에 있는 알바생을 확인할 수 있는 창</div>;
+    return (<div className={styles.parttime}>
+      <p>알바생</p>
+      <input type="checkbox"></input>
+    </div>);
 };
 
 export default PartTime;

@@ -1,7 +1,11 @@
-import "./Choice.css";
+import styles from "./Choice.module.css";
 
 const Choice = () => {
-  return <div>날짜 선택 시 알바생 스케줄 확인</div>;
+    return (
+        <div className={styles.choice}>
+            <div className={styles.date}>날짜 포맷</div>
+        </div>
+    );
 };
 
 export default Choice;

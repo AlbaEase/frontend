@@ -1,0 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
+
+.parttime {
+    width: 100%;
+    max-width: 260px;
+    height: 695px;
+    margin-left: 20px;
+    text-align: center;
+    font-family: "Noto Sans KR", sans-serif;
+    border: solid 1px black;
+}
+
+p {
+    font-size: 20px;
+    font-weight: 700;
+}

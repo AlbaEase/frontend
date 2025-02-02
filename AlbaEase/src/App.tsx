@@ -6,22 +6,25 @@ import LandingPage from "./Pages/Common/LandingPage";
 import LoginPage from "./Pages/Common/LoginPage";
 import RegisterPage from "./Pages/Common/RegisterPage";
 import OwnerMainPage from "./Pages/Owner/OwnerMainPage";
+import OwnerMyPage from "./Pages/Owner/OwnerMyPage";
+import OwnerMySalary from "./Pages/Owner/OwnerMySalary";
 
 function App() {
-  return (
-    <>
-      <Routes>
-        <Route path="landing" element={<LandingPage />}></Route>
-        <Route path="login" element={<LoginPage />}></Route>
-        <Route path="register" element={<RegisterPage />}></Route>
-        <Route path="ownermain" element={<OwnerMainPage />}></Route>
-        <Route></Route>
-        <Route></Route>
-        <Route></Route>
-      </Routes>
-      <Footer />
-    </>
-  );
+
+    return (
+        <>
+            <Routes>
+                <Route path="landing" element={<LandingPage />}></Route>
+                <Route path="login" element={<LoginPage />}></Route>
+                <Route path="register" element={<RegisterPage />}></Route>
+                <Route path="ownermain" element={<OwnerMainPage />}></Route>
+                <Route path="ownermypage" element={<OwnerMyPage />}></Route>
+                <Route path="ownermysalary" element={<OwnerMySalary />}></Route>
+                <Route></Route>
+            </Routes>
+            <Footer />
+        </>
+    );
 }
 
 export default App;

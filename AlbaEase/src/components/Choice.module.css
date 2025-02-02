@@ -1,0 +1,15 @@
+.choice {
+    width: 100%;
+    max-width: 260px;
+    height: 695px;
+    margin-right: 20px;
+    text-align: center;
+    font-family: "Noto Sans KR", sans-serif;
+    border: solid 1px black;
+}
+
+.date {
+    font-size: 20px;
+    font-weight: 700;
+    padding-top: 15px;
+}
