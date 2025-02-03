@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 
 const RegisterPage = () => {
-  // 회원가입 과정에서 사용하는 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
+  // 회원가입 과정에서 사용하는 라디오, 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
+  const [isRadioSelect, setIsRadioSelect] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [code, setCode] = useState<string>("");
@@ -11,6 +12,10 @@ const RegisterPage = () => {
   const [password, setPassword] = useState<string>("");
   const [passwordCheck, setPasswordCheck] = useState<string>("");
 
+  // input 박스 내용 바꾸는 함수
+  const handleRadio = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsRadioSelect(e.target.checked);
+  };
   const handleName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserName(e.target.value);
   };
@@ -29,23 +34,38 @@ const RegisterPage = () => {
   const handlePasswordCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPasswordCheck(e.target.value);
   };
-  // 라디오 선택 상태변수 초기값은 선택되지 않은 false로 설정
-  const [isRadioSelect, setIsRadioSelect] = useState<boolean>(false);
+
+  // 유효성 검사 함수
+  // 매번 스탭마다 검사해야하는 유효한 함수들이 다르다.
+  const isFormValid = () => {
+    switch (step) {
+      case 1:
+        return isRadioSelect; // 라디오 버튼 체크 유무
+      case 2:
+        const isNameValid = userName.length >= 2 && userName.length <= 5; // 이름은 2~5글자
+        const isPhoneValid = phoneNumber.length === 11; // 전화번호는 11자리
+        return isNameValid && isPhoneValid; // 이름과 전화번호 모두 유효성 검사
+
+        return code !== ""; // 인증번호 기입 유무
+      case 4:
+        return id !== "" && password !== "" && passwordCheck !== ""; // 아이디, 비밀번호, 비밀번호 확인
+      case 5:
+        return isRadioSelect; // 라디오 버튼 체크 유무
+      default:
+        return false;
+    }
+  };
+
   // 회원가입 절차를 step으로 상태변수 관리 1페이지부터 시작이라서 초기값 1로 설정
   const [step, setStep] = useState<number>(1);
 
-  // 라디오 핸들 함수
-  const handleRadio = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsRadioSelect(e.target.checked);
-  };
-  // 버튼에서 사용할 기능 라디오 버튼을 체크하였을 경우만 다음 스테이지로 넘어갈 수 있도록
+  // 각각 유효성을 통과할 시 다음페이지로 넘어갈 수 있도록 설정
   const handleNext = () => {
-    if (isRadioSelect) {
+    if (isFormValid()) {
       setStep((prevStep) => prevStep + 1);
-    } else {
-      alert("라디오 상자를 선택");
     }
   };
+
   // alert로 알람창이 뜨고 있는데 -> 모달창 또는 효과로 고쳐 나가기
 
   return (
@@ -105,7 +125,15 @@ const RegisterPage = () => {
                 ----- 가입 방법 선택 -----
               </div>
               <div style={{ marginTop: "40px" }}>
-                <button onClick={handleNext}>알바이즈에 가입하기</button>
+                <button
+                  onClick={handleNext}
+                  className={`${styles.button} ${
+                    isFormValid() ? styles.active : styles.disabled
+                  }`}
+                  disabled={!isFormValid()}
+                >
+                  알바이즈에 가입하기
+                </button>
                 <p className={styles.fontStyle} style={{ textAlign: "center" }}>
                   or
                 </p>
@@ -136,8 +164,15 @@ const RegisterPage = () => {
                   onChange={handlePhoneNumber}
                 />
               </div>
-              <button style={{ marginTop: "40px" }} onClick={handleNext}>
-                전화번호 인증하기
+              <button
+                style={{ marginTop: "40px" }}
+                className={`${styles.button} ${
+                  isFormValid() ? styles.active : styles.disabled
+                }`}
+                onClick={handleNext}
+                disabled={!isFormValid()} // isFormValid 함수에 따라 버튼 비활성화
+              >
+                인증번호 발급 받기
               </button>
             </>
           )}
@@ -170,7 +205,14 @@ const RegisterPage = () => {
                   onChange={handleCode}
                 />
               </div>
-              <button style={{ marginTop: "40px" }} onClick={handleNext}>
+              <button
+                style={{ marginTop: "40px" }}
+                className={`${styles.button} ${
+                  isFormValid() ? styles.active : styles.disabled
+                }`}
+                onClick={handleNext}
+                disabled={!isFormValid()}
+              >
                 인증번호 확인
               </button>
               <div className={styles.fontStyle} style={{ textAlign: "center" }}>
@@ -234,7 +276,14 @@ const RegisterPage = () => {
                 />
               </div>
               {/* 비밀번호가 틀립니다., 비밀번호가 일치합니다. -> 조건에 따라서 텍스트가 나올 수 있도록 구현 */}
-              <button style={{ marginTop: "40px" }} onClick={handleNext}>
+              <button
+                style={{ marginTop: "40px" }}
+                className={`${styles.button} ${
+                  isFormValid() ? styles.active : styles.disabled
+                }`}
+                onClick={handleNext}
+                disabled={!isFormValid()}
+              >
                 알바이즈 가입하기
               </button>
             </>
@@ -273,3 +322,6 @@ export default RegisterPage;
 // 각 상태에다가 조건 부여하기 -> 글자수, 전화번호 등등 형식에 맞는지
 // 조건에 맞지 않을 경우 -> 오류 메세지 넣을 수 있도록 구현
 // 유효성 검사하기 -> ex) 다음 스텝으로 넘어갈 때 버튼이 input을 다 채워야지만 활성화 할 수 있도록 구현
+
+// 코드가 길어져 step별로 컴포넌트 나눌예정
+// 급한 거 없으니 나중에 구현하고 해보기

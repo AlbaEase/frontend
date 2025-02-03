@@ -83,11 +83,16 @@ const LoginPage = () => {
           </div>
           <div className={styles.fontStyle}>비밀번호를 잃어버리셨나요?</div>
           <div style={{ marginTop: "40px" }}>
-            <button onClick={handleLogin}>Login</button>
+            <button className={styles.button} onClick={handleLogin}>
+              Login
+            </button>
             <p className="fontStyle" style={{ textAlign: "center" }}>
               or
             </p>
-            <button style={{ backgroundColor: "yellow", color: "black" }}>
+            <button
+              className={styles.button}
+              style={{ backgroundColor: "yellow", color: "black" }}
+            >
               카카오 로그인
             </button>
           </div>

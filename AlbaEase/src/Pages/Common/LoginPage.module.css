@@ -71,7 +71,7 @@ input:focus {
   margin-top: 20px;
   color: #b0b0b0;
 }
-button {
+.button {
   width: 100%;
   height: 60px;
   border: none;
@@ -80,7 +80,7 @@ button {
   color: white;
   background-color: #009963;
 }
-button:hover {
+.button:hover {
   cursor: pointer;
   /* 반응형을 더 넣어도 좋을 거 같다. */
 }
