@@ -4,16 +4,13 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Header = () => {
   const myLocation = useLocation();
-  // const nav = useNavigate();
+  const nav = useNavigate();
 
-  // const handleLogout = () => {
-  //     // 로그아웃 처리 로직
-  //     // 로그아웃 후 /login으로 리디렉션
-  //     nav("/login", { replace: true });
-  // };
-  // <button onClick={handleLogout} className={styles.link}>
-  //     Logout
-  // </button>;
+  const handleLogout = () => {
+    // 로그아웃 처리 로직
+    // 로그아웃 후 /login으로 리디렉션
+    nav("/login", { replace: true });
+  };
 
   return (
     <header className={styles.header}>
@@ -44,9 +41,9 @@ const Header = () => {
         >
           My Page
         </Link>
-        <Link to="/login" className={styles.link}>
+        <button onClick={handleLogout} className={styles.logout}>
           Logout
-        </Link>
+        </button>
       </div>
     </header>
   );
