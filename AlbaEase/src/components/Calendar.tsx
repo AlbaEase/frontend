@@ -1,5 +1,5 @@
 import styles from "./Calendar.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import "dayjs/locale/ko";
 
@@ -8,7 +8,8 @@ dayjs.locale("ko");
 const Calendar = () => {
     /* 기본적인 달력 뼈대를 만들예정, 25년 1월~12월 */
     const [currentDate, setCurrentDate] = useState(dayjs()); // 현재 날짜 받아오기
-    // useState 에러는 어떻게게 할지 몰라서 그냥 둠...
+    // useState 에러는 어떻게 할지 몰라서 그냥 둠...
+    const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
     const minDate = dayjs("2025-01-01");
 
@@ -26,29 +27,34 @@ const Calendar = () => {
         setCurrentDate((prevDate) => prevDate.add(1, "month"));
     };
 
-    const startOfMonth = currentDate.startOf("month");
-    /* 첫 번째 날의 요일을 숫자로 변환 (일 = 0, 월 = 1, 화 = 2, 수 = 3, ...) */
-    const startDay = startOfMonth.get("day");
+    useEffect(() => {
+        const startOfMonth = currentDate.startOf("month");
+        /* 첫 번째 날의 요일을 숫자로 변환 (일 = 0, 월 = 1, 화 = 2, 수 = 3, ...) */
+        const startDay = startOfMonth.get("day");
 
-    const endOfMonth = currentDate.endOf("month");
-    /* 마지막 날짜의 일을 가져옴 */
-    const lastDay: number = endOfMonth.get("date");
+        const endOfMonth = currentDate.endOf("month");
+        /* 마지막 날짜의 일을 가져옴 */
+        const lastDay: number = endOfMonth.get("date");
 
-    /* 캘린더의 일을 담을 배열 */
-    const daysArray = [];
-    for (let i: number = 0; i < startDay; i++) {
-        daysArray.push(null);
-    }
-    for (let day = 1; day <= lastDay; day++) {
-        daysArray.push(day);
-    }
-    if (daysArray.length < 35) {
-        for (let i: number = daysArray.length; i < 35; i++) {
-            daysArray.push(null);
+        /* 캘린더의 일을 담을 배열 */
+        const newDaysArray = [];
+        for (let i: number = 0; i < startDay; i++) {
+            newDaysArray.push(null);
         }
-    }
+        for (let day = 1; day <= lastDay; day++) {
+            newDaysArray.push(day);
+        }
+        while (newDaysArray.length < 35) newDaysArray.push(null);
+        while (newDaysArray.length > 35 && newDaysArray.length < 42)
+            newDaysArray.push(null);
 
-    console.log(daysArray);
+        setDaysArray(newDaysArray);
+        console.log(daysArray);
+    }, [currentDate.month()]);
+
+    /* console 출력용 */
+    console.log("currentDate is " + currentDate.format());
+    const isScrollable = daysArray.length > 35;
 
     return (
         <div className={styles.calendar}>
@@ -78,11 +84,26 @@ const Calendar = () => {
             </div>
 
             {/* 날짜 */}
-            <div className={styles.days}>
+            <div
+                className={`${styles.days} ${
+                    isScrollable ? styles.scroll : " "
+                }`}>
                 {daysArray.map((day, index) => (
                     <div
                         key={index}
-                        className={day ? styles.day : styles.empty} // day가 있으면 날짜, 없으면 빈 칸
+                        className={`${day ? styles.day : styles.empty} ${
+                            /* day가 null이 아니고 현재 선택한 날짜라면 */
+                            day && currentDate.date() === day
+                                ? styles.isSelected
+                                : ""
+                        }`}
+                        onClick={() => {
+                            if (day) {
+                                setCurrentDate((prevDate) =>
+                                    prevDate.date(day)
+                                ); // 새로운 dayjs 객체 반환 후 설정
+                            }
+                        }} // day가 있으면 날짜, 없으면 빈 칸
                     >
                         {day ? day : ""}{" "}
                     </div>
