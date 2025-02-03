@@ -4,7 +4,7 @@ import Checkbox from "./Checkbox";
 const PartTime = () => {
     return (
         <div className={styles.parttime}>
-            <p>알바생</p>
+            <div className={styles.title}>알바생</div>
             <Checkbox />
         </div>
     );
