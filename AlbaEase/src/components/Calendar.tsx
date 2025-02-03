@@ -1,14 +1,17 @@
 import styles from "./Calendar.module.css";
 import { useState, useEffect } from "react";
-import dayjs from "dayjs";
+import { Dispatch, SetStateAction } from "react";
+import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/ko";
 
 dayjs.locale("ko");
 
-const Calendar = () => {
-    /* 기본적인 달력 뼈대를 만들예정, 25년 1월~12월 */
-    const [currentDate, setCurrentDate] = useState(dayjs()); // 현재 날짜 받아오기
-    // useState 에러는 어떻게 할지 몰라서 그냥 둠...
+interface CalendarProps {
+    currentDate: Dayjs;
+    setCurrentDate: Dispatch<SetStateAction<Dayjs>>;
+}
+
+const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate }) => {
     const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
     const minDate = dayjs("2025-01-01");
@@ -50,7 +53,7 @@ const Calendar = () => {
 
         setDaysArray(newDaysArray);
         console.log(daysArray);
-    }, [currentDate.month()]);
+    }, [currentDate]);
 
     /* console 출력용 */
     console.log("currentDate is " + currentDate.format());

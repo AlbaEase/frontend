@@ -1,4 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+ /* <weight>: Use a value from 200 to 800
+ <uniquifier>: Use a unique and descriptive class name */
 
 .header {
     /* 폰트 설정 */
@@ -19,11 +22,12 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    margin-left: 10px;
 }
 
 .logo {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
 }
 
 .title {
@@ -31,6 +35,7 @@
     font-weight: 700;
     font-size: 16px;
     color: #1c170d;
+    letter-spacing: -0.3px;
 }
 
 .nav {
@@ -40,6 +45,16 @@
 }
 
 .link {
+    text-decoration: none;
+    color: black;
+    padding: 10px 18px;
+    border-radius: 30px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.logout {
+    all: unset;
+    cursor: pointer;
     text-decoration: none;
     color: black;
     padding: 10px 18px;
