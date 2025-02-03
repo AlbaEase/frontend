@@ -49,7 +49,7 @@ img {
   margin-top: 30%;
   margin-left: 15%;
 }
-input {
+.input {
   width: 100%;
   height: 62px;
   margin-top: 35px;
@@ -59,10 +59,10 @@ input {
   border: none;
   border-radius: 10px;
 }
-input::placeholder {
+.input::placeholder {
   color: #009963;
 }
-input:focus {
+.input:focus {
   background-color: rgba(0, 153, 99, 0.2); /* 20% 투명도 */
 }
 .fontStyle {
@@ -83,4 +83,10 @@ input:focus {
 .button:hover {
   cursor: pointer;
   /* 반응형을 더 넣어도 좋을 거 같다. */
+}
+.errorMessage {
+  width: 100%;
+  font-size: 15px;
+  color: red;
+  margin: 10px -10px 0px 0px;
 }
