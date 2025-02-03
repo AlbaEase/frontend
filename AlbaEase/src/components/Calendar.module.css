@@ -6,6 +6,7 @@
     height: 695px;
     margin: auto 10px;
     text-align: center;
+
     font-family: "Noto Sans KR", sans-serif;
 }
 
@@ -51,6 +52,7 @@ p {
     grid-template-columns: repeat(7, 1fr);
     border: solid 1px #f2f2f2;
     text-align: center;
+    height: 500px;
 
     /* 폰트 설정 */
     font-family: "Plus Jakarta Sans", sans-serif;
@@ -68,4 +70,19 @@ p {
 
 .day {
     padding: 5px;
+    cursor: pointer;
+}
+
+.isSelected {
+    border: solid 1px #1C170D;
+    transition-duration: border-color 0.5s;
+}
+
+.scroll {
+    overflow-y: scroll; /* 스크롤이 밖으로 나가도록 설정 */
+}
+
+.scroll::-webkit-scrollbar {
+    width: 0px;  /* 스크롤 바의 너비를 0으로 설정 */
+    height: 0px; /* 수평 스크롤 바가 있을 경우 높이를 0으로 설정 */
 }
