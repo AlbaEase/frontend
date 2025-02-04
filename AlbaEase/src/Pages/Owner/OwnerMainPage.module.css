@@ -32,4 +32,8 @@
   .bottomContents {
     display: flex;
     flex-direction: row; /* 가로 배치 */
+    width: 100%;
+    max-width: 1280px;
+
+    position: relative;
   }

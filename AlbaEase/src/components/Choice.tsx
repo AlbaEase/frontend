@@ -1,4 +1,5 @@
 import { Dayjs } from "dayjs";
+import ChoiceSchedule from "./ChoiceSchedule";
 import Button from "./Button";
 import styles from "./Choice.module.css";
 
@@ -11,6 +12,9 @@ const Choice: React.FC<ChoiceProps> = ({ currentDate }) => {
         <div className={styles.choice}>
             <div className={styles.date}>
                 {currentDate.format("YYYY년 MM월 DD일")}
+            </div>
+            <div>
+                <ChoiceSchedule />
             </div>
             <Button children={"근무 등록하기"} />
         </div>
