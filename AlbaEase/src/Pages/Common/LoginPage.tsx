@@ -48,6 +48,15 @@ const LoginPage = () => {
       );
     }
   };
+
+  const SERVICE_KEY = import.meta.env.VITE_SERVICE_KEY; // .env에서 키를 가져와서 사용
+
+  const handleKakaoLogin = () => {
+    // 카카오 로그인 페이지로 리다이렉트
+    const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${SERVICE_KEY}&redirect_uri=http://localhost:5174/auth/kakao/callback&response_type=code`;
+    window.location.href = kakaoLoginUrl;
+  };
+
   // 로그인 시 에러나 오류를 alert()로 만들었는데 -> 모달 또는 UI컴포넌트 기반 메시지로 바꾸기
 
   return (
@@ -104,6 +113,7 @@ const LoginPage = () => {
             <button
               className={styles.button}
               style={{ backgroundColor: "yellow", color: "black" }}
+              onClick={handleKakaoLogin}
             >
               카카오 로그인
             </button>

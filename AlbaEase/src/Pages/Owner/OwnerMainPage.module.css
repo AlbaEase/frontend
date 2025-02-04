@@ -28,3 +28,8 @@
     gap: 20px;
     width: 100%;
   }
+
+  .bottomContents {
+    display: flex;
+    flex-direction: row; /* 가로 배치 */
+  }

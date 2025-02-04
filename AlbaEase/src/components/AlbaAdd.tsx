@@ -1,7 +1,12 @@
-import "./AlbaAdd.css";
+import styles from "./AlbaAdd.module.css";
+import addBtn from "../assets/addBtn.svg";
 
 const AlbaAdd = () => {
-  return <div> 근무지 추가 컴포넌트 </div>;
+    return (
+        <div className={styles.albaAdd}>
+            <img src={addBtn} alt="addBtn" className={styles.addBtn}/>
+        </div>
+    );
 };
 
 export default AlbaAdd;
