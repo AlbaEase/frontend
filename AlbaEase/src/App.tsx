@@ -8,6 +8,7 @@ import RegisterPage from "./Pages/Common/RegisterPage";
 import OwnerMainPage from "./Pages/Owner/OwnerMainPage";
 import OwnerMyPage from "./Pages/Owner/OwnerMyPage";
 import OwnerMySalary from "./Pages/Owner/OwnerMySalary";
+import OwnerMyChange from "./Pages/Owner/OwnerMyChange";
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
         <Route path="ownermain" element={<OwnerMainPage />}></Route>
         <Route path="ownermypage" element={<OwnerMyPage />}></Route>
         <Route path="ownermysalary" element={<OwnerMySalary />}></Route>
-        <Route></Route>
+        <Route path="ownermychange" element={<OwnerMyChange />}></Route>
       </Routes>
       <Footer />
     </>
