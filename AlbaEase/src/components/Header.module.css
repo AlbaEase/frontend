@@ -1,7 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-
- /* <weight>: Use a value from 200 to 800
- <uniquifier>: Use a unique and descriptive class name */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
 
 .header {
     /* 폰트 설정 */
@@ -31,11 +28,11 @@
 }
 
 .title {
+    font-family: "Noto Sans KR", sans-serif;
     text-decoration: none;
     font-weight: 700;
     font-size: 16px;
     color: #1c170d;
-    letter-spacing: -0.3px;
 }
 
 .nav {
@@ -66,5 +63,5 @@
     display: inline-block;
     font-weight: 600;
     background-color: #009963;
-    color: #FFFFFF;
+    color: #ffffff;
 }

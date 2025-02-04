@@ -1,0 +1,33 @@
+.alarm {
+    width: 56px;
+    height: 56px;
+    margin-left: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: solid 1px #000000;
+    border-radius: 30px;
+
+    position: relative;
+    overflow: visible;
+    cursor: pointer;
+}
+
+/* 알람이 존재한다면 빨간 원 띄우기 */
+.existAlarm {
+    position: absolute;
+    top: -1px;   /* 상단 여백 */
+    right: -1px; /* 우측 여백 */
+
+    width: 7px;
+    height: 7px;
+    background-color: #FF0000;
+    border-radius: 50%;
+}
+
+.bellImg {
+    width: 40px;
+    height: 40px;
+    padding-left: 3px;
+}

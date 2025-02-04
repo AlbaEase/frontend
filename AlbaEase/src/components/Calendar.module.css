@@ -52,8 +52,8 @@ p {
     grid-template-columns: repeat(7, 1fr);
     border: solid 1px #f2f2f2;
     text-align: center;
-    height: 525px;
-    width: 650px;
+    height: 500px;
+    width: 700px;
 
     /* 폰트 설정 */
     font-family: "Plus Jakarta Sans", sans-serif;
@@ -65,12 +65,13 @@ p {
 .empty {
     border: solid 1px #f2f2f2; /* 셀의 테두리 */
     display: flex;
-    justify-content: center;
-    height: 105px; /* 셀 높이 */
+    flex-direction: column; /* 세로(column) 방향 정렬 */
+    justify-content: top;
+    height: 100px; /* 셀 높이 */
 }
 
 .day {
-    padding: 5px;
+    padding-top: 5px;
     cursor: pointer;
 }
 

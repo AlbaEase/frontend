@@ -1,4 +1,5 @@
 import styles from "./Calendar.module.css";
+import CalendarSchedule from "./CalendarSchedule";
 import { useState, useEffect } from "react";
 import { Dispatch, SetStateAction } from "react";
 import dayjs, { Dayjs } from "dayjs";
@@ -53,6 +54,10 @@ const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate }) => {
 
         setDaysArray(newDaysArray);
         console.log(daysArray);
+        /* 선택한 날짜가 바뀔 때마다 배열 다시 생성
+         * (원래는 currentDate.month였는데 number>number로 변경되면
+         * useEffect가 변경된 걸 못 잡아내는 오류가 생길 수도 있다고 함,,)
+         */
     }, [currentDate]);
 
     /* console 출력용 */
@@ -109,6 +114,15 @@ const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate }) => {
                         }} // day가 있으면 날짜, 없으면 빈 칸
                     >
                         {day ? day : ""}{" "}
+                        {day ? (
+                            <CalendarSchedule
+                                startTime="09:00"
+                                endTime="13:00"
+                                employeeName="성이름"
+                            />
+                        ) : (
+                            " "
+                        )}
                     </div>
                 ))}
             </div>
