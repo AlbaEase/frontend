@@ -68,10 +68,26 @@ img {
   justify-content: center;
 }
 
-.input {
+.inputRadio {
   width: 15px;
   height: 15px;
   margin-top: 0px;
+}
+.input {
+  width: 100%;
+  height: 62px;
+  margin-top: 35px;
+  background-color: rgba(0, 153, 99, 0.3); /* 30% 투명도 */
+  font-size: 17px;
+  padding-left: 20px;
+  border: none;
+  border-radius: 10px;
+}
+.input::placeholder {
+  color: #009963;
+}
+.input:focus {
+  background-color: rgba(0, 153, 99, 0.2); /* 20% 투명도 */
 }
 .fontStyle {
   font-size: 16px;
@@ -91,6 +107,7 @@ img {
 
 .active {
   background-color: #009963; /* 활성화 시 색상 */
+  cursor: pointer;
 }
 
 .disabled {
