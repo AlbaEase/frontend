@@ -11,28 +11,25 @@ import SelectRadio from "../../components/SelectRadio";
 import styles from "./OwnerMainPage.module.css";
 
 const OwnerMainPage = () => {
-    const [currentDate, setCurrentDate] = useState(dayjs()); // 현재 날짜 받아오기
+  const [currentDate, setCurrentDate] = useState(dayjs()); // 현재 날짜 받아오기
 
-    return (
-        <div className={styles.background}>
-            <div className={styles.ownerMainPage}>
-                <Header />
-                <div className={styles.mainContents}>
-                    <PartTime />
-                    <Calendar
-                        currentDate={currentDate}
-                        setCurrentDate={setCurrentDate}
-                    />
-                    <Choice currentDate={currentDate} />
-                </div>
-                <div className={styles.bottomContents}>
-                    <Alarm />
-                    <SelectRadio />
-                    <AlbaAdd />
-                </div>
-            </div>
+  return (
+    <div className={styles.background}>
+      <div className={styles.ownerMainPage}>
+        <Header />
+        <div className={styles.mainContents}>
+          <PartTime />
+          <Calendar currentDate={currentDate} setCurrentDate={setCurrentDate} />
+          <Choice currentDate={currentDate} />
         </div>
-    );
+        <div className={styles.bottomContents}>
+          <Alarm />
+          <SelectRadio />
+          <AlbaAdd />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default OwnerMainPage;

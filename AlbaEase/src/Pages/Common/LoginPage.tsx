@@ -27,18 +27,36 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
 
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // 조건은 좀 더 생각해보기
+
   const handleLogin = () => {
-    if (id.trim() && password.trim()) {
+    const idValid = id.length >= 5 && id.length <= 15; // id조건: 5자리 ~ 15자리
+    const passwordValid =
+      password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password); //password조건: 8자리 이상 문자와 숫자 포함
+
+    if (idValid && passwordValid) {
       try {
-        // api연동구간
-        navigate("/main");
+        navigate("/ownermain");
       } catch (error) {
-        alert("로그인 실패: 다시 시도해주세요.");
+        setErrorMessage("로그인 실패: 다시 시도해주세요.");
       }
     } else {
-      alert("아이디와 비밀번호를 입력해주세요.");
+      setErrorMessage(
+        "아이디는 5자 이상, 15자 이하, 비밀번호는 8자 이상, 문자와 숫자가 혼합되어야 합니다."
+      );
     }
   };
+
+  const SERVICE_KEY = import.meta.env.VITE_SERVICE_KEY; // .env에서 키를 가져와서 사용
+
+  const handleKakaoLogin = () => {
+    // 카카오 로그인 페이지로 리다이렉트
+    const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${SERVICE_KEY}&redirect_uri=http://localhost:5174/auth/kakao/callback&response_type=code`;
+    window.location.href = kakaoLoginUrl;
+  };
+
   // 로그인 시 에러나 오류를 alert()로 만들었는데 -> 모달 또는 UI컴포넌트 기반 메시지로 바꾸기
 
   return (
@@ -66,6 +84,7 @@ const LoginPage = () => {
           <div style={{ fontSize: "30px" }}>Sign in</div>
           <div>
             <input
+              className={styles.input}
               type="text"
               value={id}
               onChange={handleId}
@@ -75,6 +94,7 @@ const LoginPage = () => {
           <div>
             {/* 비밀번호 확인할 수 있는 기능 구현하기 */}
             <input
+              className={styles.input}
               type="password"
               value={password}
               onChange={handlePassword}
@@ -82,16 +102,18 @@ const LoginPage = () => {
             />
           </div>
           <div className={styles.fontStyle}>비밀번호를 잃어버리셨나요?</div>
+          <div className={styles.errorMessage}>{errorMessage}</div>
           <div style={{ marginTop: "40px" }}>
             <button className={styles.button} onClick={handleLogin}>
               Login
             </button>
-            <p className="fontStyle" style={{ textAlign: "center" }}>
+            <p className={styles.fontStyle} style={{ textAlign: "center" }}>
               or
             </p>
             <button
               className={styles.button}
               style={{ backgroundColor: "yellow", color: "black" }}
+              onClick={handleKakaoLogin}
             >
               카카오 로그인
             </button>
