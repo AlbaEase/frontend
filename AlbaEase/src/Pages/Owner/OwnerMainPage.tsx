@@ -19,13 +19,17 @@ const OwnerMainPage = () => {
                 <Header />
                 <div className={styles.mainContents}>
                     <PartTime />
-                    <Calendar currentDate={currentDate} setCurrentDate={setCurrentDate} />
+                    <Calendar
+                        currentDate={currentDate}
+                        setCurrentDate={setCurrentDate}
+                    />
                     <Choice currentDate={currentDate} />
                 </div>
-                <Alarm />
-                <SelectRadio />
-                <AlbaAdd />
-                <div>여기에 들어가야할 내용 생각해보기.</div>
+                <div className={styles.bottomContents}>
+                    <Alarm />
+                    <SelectRadio />
+                    <AlbaAdd />
+                </div>
             </div>
         </div>
     );

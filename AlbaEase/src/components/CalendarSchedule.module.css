@@ -1,0 +1,46 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
+
+.calendarSchedule {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    justify-content: center;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 10px;
+
+    background-color: rgba(170, 185, 154, 0.4);    ;
+    border-radius: 10px;
+    width: 95px;
+    height: 29px;
+
+    margin-top: 5px;
+    margin-left: 2.5px;
+    margin-right: 2.5px;
+    padding-left: 14px;
+    position: relative;
+}
+
+.calendarSchedule::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 11px;
+    background-color: rgba(170, 185, 154);
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+  }
+
+.workHours {
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 0px;
+}
+
+.names {
+    color: #666666;
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 400;
+    margin-top: 0px;
+}
