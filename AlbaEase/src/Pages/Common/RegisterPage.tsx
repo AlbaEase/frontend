@@ -123,7 +123,7 @@ const RegisterPage = () => {
                     id="owner"
                     onChange={handleRadio}
                   />
-                  사장님
+                  <label htmlFor="owner">사장님</label>
                 </div>
                 <div>
                   <input
@@ -133,7 +133,7 @@ const RegisterPage = () => {
                     id="employee"
                     onChange={handleRadio}
                   />
-                  알바생
+                  <label htmlFor="employee">알바생</label>
                 </div>
               </div>
               <div className={styles.registerText} style={{ fontSize: "22px" }}>
