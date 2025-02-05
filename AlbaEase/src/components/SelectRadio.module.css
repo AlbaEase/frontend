@@ -1,19 +1,31 @@
+.selectRadioContainer {
+    position: absolute;
+    left: 280px;
+    width: 100%;
+    display: flex;
+    justify-content: left;
+}
+
 .selectRadio {
     font-family: "Noto Sans KR", sans-serif;
     font-size: 16px;
-
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
     padding: 10px;
-    position: absolute;
-    left: 280px;
+    width: 675px; /* 원하는 크기 지정 */
+    overflow: hidden; /* 내부 컨테이너에만 스크롤 적용 */
 }
 
 .selectBtn {
     display: flex;
     justify-content: center;
     gap: 15px;
+
+    overflow-x: auto; /* 가로 스크롤 활성화 */
+    white-space: nowrap; /* 줄바꿈 방지 */
+    padding-bottom: 15px; /* 스크롤바와 내용 간 간격 조정 */
+
+    padding-left: 5px;
+    justify-content: flex-start;
+
 }
 
 .selectLabel {
@@ -42,15 +54,15 @@
     -moz-appearance: none; /* 모질라 브라우저에서 기본 스타일 제거 */
     appearance: none; /* 기본 브라우저에서 기본 스타일 제거 */
     border: 3px solid #ffffff;
-    box-shadow: 0 0 0 2px #E8DECF; /* 체크되지 않았을 때의 테두리 색상 */
-    background-color: #FFFFFF;
+    box-shadow: 0 0 0 2px #e8decf; /* 체크되지 않았을 때의 테두리 색상 */
+    background-color: #ffffff;
     border-radius: 50%;
     outline: none; /* focus 시에 나타나는 기본 스타일 제거 */
     cursor: pointer;
 }
 
 .selectLabel input[type="radio"]:checked {
-    background-color: #E8DECF; /* 체크 시 내부 원 색상 */
+    background-color: #e8decf; /* 체크 시 내부 원 색상 */
     border: 2.5px solid #ffffff; /* 체크 시 테두리 색상 */
-    box-shadow: 0 0 0 2px #E8DECF; /* 바깥 라인 */
+    box-shadow: 0 0 0 2px #e8decf; /* 바깥 라인 */
 }

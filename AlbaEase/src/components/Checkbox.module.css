@@ -1,0 +1,49 @@
+.checkbox {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    margin-bottom: 10px;
+
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    margin-bottom: 5px;
+    margin-left: 15px;
+}
+
+.checkbox [type="checkbox"] {
+    appearance: none;
+    box-sizing: border-box;
+    background-clip: content-box;
+    width: 1.5em;
+    height: 1.5em;
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    cursor: pointer;
+
+    margin-bottom: 20px;
+    transform: translateY(10px);
+}
+
+.checkbox label {
+    display: flex;
+    align-items: center; /* 체크박스와 글씨를 수직 정렬 */
+    gap: 8px; /* 체크박스와 글씨 사이 여백 */
+    line-height: 1.5em; /* 체크박스 높이와 동일하게 맞춤 */
+}
+
+.checkbox [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #FFEB00;
+}
+
+.selectAll {
+    margin-left: -10px;
+    margin-bottom: 8px;
+}
+
+.selectAll [type="checkbox"]:checked {
+    padding: 0.15em;
+    background-color: #e8decf;
+}
