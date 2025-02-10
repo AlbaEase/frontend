@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, ReactNode, useMemo } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+    ReactNode,
+    useMemo,
+    useEffect,
+} from "react";
 
 /* 넘길 수 있는 데이터
  * 1. 알바생의 아이디, 시작 시간과 종료 시간 (schedule 컴포넌트들에 사용)
@@ -19,8 +26,18 @@ interface OwnerSchedule {
     endTime: string; // 종료 시간 (21:00)
 }
 
+interface Store {
+    storeId: number;
+    name: string;
+    storeCode: string;
+}
+
 /* 공유할 context type */
 interface OwnerScheduleContextType {
+    stores: Store[];
+    setStores: React.Dispatch<React.SetStateAction<Store[]>>;
+    selectedStore: number;
+    setSelectedStore: React.Dispatch<React.SetStateAction<number>>;
     selectedList: string[]; // 선택된 알바생 목록
     setSelectedList: React.Dispatch<React.SetStateAction<string[]>>;
     ownerSchedules: OwnerSchedule[]; // 전체 일정 목록
@@ -37,8 +54,65 @@ export const OwnerScheduleProvider = ({
 }: {
     children: ReactNode;
 }) => {
+    const [stores, setStores] = useState<Store[]>([]); // DB에서 가져올 가게 목록
+    const [selectedStore, setSelectedStore] = useState<number>(0);
     const [selectedList, setSelectedList] = useState<string[]>([]);
     const [ownerSchedules, setOwnerSchedules] = useState<OwnerSchedule[]>([]);
+
+    /* DB에서 가게 목록 가져오기 */
+    useEffect(() => {
+        const fetchStores = async () => {
+            try {
+                const res = await fetch("http://localhost:8080/stores"); // API 호출
+                const data: any[] | undefined = await res.json(); // data가 undefined일 수도 있음
+
+                if (!data) {
+                    console.error("가게 목록 데이터가 없습니다.");
+                    return; // 함수 종료
+                }
+
+                // storeId, name, storeCode만 추출하여 새로운 배열 생성
+                const filteredStores = data.map((store) => ({
+                    storeId: store.storeId,
+                    name: store.name,
+                    storeCode: store.storeCode,
+                }));
+
+                console.log("가게 목록 (storeId만): ", filteredStores);
+                console.log("가게 목록: ", filteredStores);
+                setStores(filteredStores);
+                if (filteredStores.length > 0) {
+                    setSelectedStore(filteredStores[0].storeId); // 기본 선택값 설정
+                }
+            } catch (error) {
+                console.error("가게 목록을 불러오는 데 실패했습니다.", error);
+            }
+        };
+
+        fetchStores();
+    }, []);
+
+    /* 가게 선택할 때마다 스케줄 다르게 불러오기 */
+    useEffect(() => {
+        const fetchSchedules = async () => {
+            // selectedStore는 storeId로 number 타입
+            if (!selectedStore) return; // 선택된 가게가 없으면 실행하지 않음
+
+            try {
+                const res = await fetch(`http://localhost:8080/schedules/store/${selectedStore}`);
+                const data: OwnerSchedule[] = await res.json();
+                setOwnerSchedules(data);
+            } catch (error) {
+                console.error(
+                    "스케줄 데이터를 불러오는 데 실패했습니다.",
+                    error
+                );
+            }
+        };
+
+        console.log(selectedStore);
+        fetchSchedules();
+    }, [selectedStore]);
 
     const groupedSchedules = useMemo(() => {
         /* selectedList에 있는 알바생들의 일정만 filteredSchedules에 저장 */
@@ -96,6 +170,10 @@ export const OwnerScheduleProvider = ({
     return (
         <OwnerScheduleContext.Provider
             value={{
+                stores,
+                setStores,
+                selectedStore,
+                setSelectedStore,
                 selectedList,
                 setSelectedList,
                 ownerSchedules,

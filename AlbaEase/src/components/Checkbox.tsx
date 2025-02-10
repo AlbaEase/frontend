@@ -1,16 +1,48 @@
 import styles from "./Checkbox.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
 
 const Checkbox = () => {
-    const employeesArray: string[] = [
-        "이서영",
-        "이은우",
-        "김가윤",
-        "김시현",
-        "김지희",
-        "조유성",
-        "조정현",
-    ];
+    /* DB 연결 */
+    const { selectedStore } = useOwnerSchedule();
+    const [employeesArray, setEmployeeArray] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            try {
+                // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
+                const res = await fetch(
+                    `http://localhost:8080/schedules/store/${selectedStore}`
+                );
+                if (!res.ok) {
+                    throw new Error("직원 목록 가져오기 실패");
+                }
+                const scheduleData = await res.json();
+
+                console.log(scheduleData);
+
+                // Set을 사용하여 중복된 user.userId 제거
+                const uniqueUserIds = new Set(
+                    scheduleData.map((schedule: any) => schedule.user.userId)
+                );
+
+                // 중복된 user.userId를 제거한 후, user.name을 가져와서 배열에 저장
+                const employeeNames = [...uniqueUserIds].map((userId) => {
+                    const schedule = scheduleData.find(
+                        (schedule: any) => schedule.user.userId === userId
+                    );
+                    return schedule?.user?.name; // 해당 user_id에 해당하는 name만 가져옴
+                });
+
+                // 이름만 저장된 배열을 상태에 저장
+                setEmployeeArray(employeeNames);
+            } catch (error) {
+                console.error("직원 목록 불러오기 실패: ", error);
+            }
+        };
+
+        fetchEmployees();
+    }, [selectedStore]);
 
     // 문자열 정렬 (오름차순)
     const sortedArray: string[] = employeesArray.sort();
