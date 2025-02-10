@@ -1,11 +1,12 @@
 import styles from "./RegisterPage.module.css";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 
 const RegisterPage = () => {
   // 회원가입 과정에서 사용하는 라디오, 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
   const [isRadioSelect, setIsRadioSelect] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [code, setCode] = useState<string>("");
   const [id, setId] = useState<string>("");
@@ -16,8 +17,11 @@ const RegisterPage = () => {
   const handleRadio = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsRadioSelect(e.target.checked);
   };
-  const handleName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserName(e.target.value);
+  const handleFirstName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFirstName(e.target.value);
+  };
+  const handleLastName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLastName(e.target.value);
   };
   const handlePhoneNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPhoneNumber(e.target.value);
@@ -48,9 +52,10 @@ const RegisterPage = () => {
       case 1:
         return isRadioSelect; // 라디오 버튼 체크 유무
       case 2:
-        const isNameValid = userName.length >= 2 && userName.length <= 5; // 이름은 2~5글자
+        const isLastNameValid = lastName.length >= 1 && lastName.length <= 2; // 성은 1~2글자
+        const isFirstNameValid = firstName.length >= 2 && firstName.length <= 5; // 이름은 2~5글자
         const isPhoneValid = phoneNumber.length === 11; // 전화번호는 11자리
-        return isNameValid && isPhoneValid; // 이름과 전화번호 모두 유효성 검사
+        return isFirstNameValid && isLastNameValid && isPhoneValid; // 이름과 전화번호 모두 유효성 검사
       case 3:
         const isCodeValid = code.length === 6; // 6자리 숫자가 국룰인 거 같아서 다음과 같이 설정
         return isCodeValid; // 인증번호 기입 유무
@@ -60,9 +65,28 @@ const RegisterPage = () => {
         const isPasswordCheckValid = password === passwordCheck;
         return isIdValid && isPasswordValid && isPasswordCheckValid; // 아이디, 비밀번호, 비밀번호 확인
       case 5:
-        return isRadioSelect; // 라디오 버튼 체크 유무
+        // 필수 선택사항 체크박스가 선택되었을 때 버튼이 활성화 될 수 있도록
+        return (
+          requiredCheckBox.termsOfService &&
+          requiredCheckBox.personalInfo &&
+          requiredCheckBox.thirdPartyInfo
+        );
+      case 6:
+        return false;
       default:
         return false;
+    }
+  };
+  // 더미데이터로 연습해보기
+  const mockDatabase = ["testUser", "example123", "user01"];
+
+  const [idError, setIdError] = useState<string>("");
+
+  const handleIdCheck = () => {
+    if (mockDatabase.includes(id)) {
+      setIdError("이미 사용 중인 아이디입니다.");
+    } else {
+      setIdError("사용 가능한 아이디입니다!");
     }
   };
 
@@ -75,13 +99,31 @@ const RegisterPage = () => {
       setStep((prevStep) => prevStep + 1);
     }
   };
+
   const navigate = useNavigate();
 
   const handleMain = () => {
     navigate("../ownermain");
   };
 
-  // alert로 알람창이 뜨고 있는데 -> 모달창 또는 효과로 고쳐 나가기
+  // 회원가입 선택지 select checkbox 만들기
+  // 전체 선택버튼으로 이 버튼을 누르면 필수 + 선택을 전부다 누를 수 있게된다.
+
+  // 필수 항목을 만들었다. 이 필수 항목이 선택되어야만 버튼을 활성화 시킬 수 있도록 이름을 만들어준다.
+  const [requiredCheckBox, setRequiredCheckBox] = useState({
+    termsOfService: false, // 알바이즈 이용약관
+    personalInfo: false, // 개인정보
+    thirdPartyInfo: false, // 개인정보 제3자 제공동의
+  });
+
+  // 필수 항목 핸들러 함수
+  const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setRequiredCheckBox((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
 
   return (
     <div className={styles.registerPage}>
@@ -169,9 +211,18 @@ const RegisterPage = () => {
               <div>
                 <input
                   type="text"
+                  placeholder="성"
+                  value={lastName}
+                  onChange={handleLastName}
+                  className={styles.input}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
                   placeholder="이름"
-                  value={userName}
-                  onChange={handleName}
+                  value={firstName}
+                  onChange={handleFirstName}
                   className={styles.input}
                 />
               </div>
@@ -204,9 +255,18 @@ const RegisterPage = () => {
               <div>
                 <input
                   type="text"
+                  placeholder="성"
+                  value={lastName}
+                  onChange={handleLastName}
+                  className={styles.input}
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
                   placeholder="이름"
-                  value={userName}
-                  onChange={handleName}
+                  value={firstName}
+                  onChange={handleFirstName}
                   className={styles.input}
                 />
               </div>
@@ -252,8 +312,8 @@ const RegisterPage = () => {
                 <input
                   type="text"
                   placeholder="이름"
-                  value={userName}
-                  onChange={handleName}
+                  value={firstName}
+                  onChange={handleFirstName}
                   className={styles.input}
                 />
               </div>
@@ -273,15 +333,20 @@ const RegisterPage = () => {
                 전화번호 인증완료
               </div>
               {/* 중복확인을 할 수 있는 내용을 추가해야함 */}
-              <div>
+              <div className={styles.wrapper}>
                 <input
                   type="text"
                   placeholder="아이디"
                   value={id}
                   onChange={handleId}
                   className={styles.input}
+                  style={{ paddingRight: "90px" }}
                 />
+                <button className={styles.checkButton} onClick={handleIdCheck}>
+                  중복확인
+                </button>
               </div>
+              {idError && <div className={styles.errorMessage}>{idError}</div>}
               {/* '아이디'는 사용이 가능합니다. -> 중복확인(버튼)을 클릭했을 때 아래에 나올 수 있도록*/}
               <div>
                 {/* 비밀번호 확인할 수 있는 기능 구현하기 */}
@@ -321,11 +386,87 @@ const RegisterPage = () => {
           {step === 5 && (
             <>
               <div style={{ fontSize: "30px" }}>Sign up</div>
-              약관 사항을 넣어야함
+              <div className={styles.termsBox}>
+                <div
+                  className={styles.termsTitle}
+                  style={{ marginTop: "30px" }}
+                >
+                  <div>
+                    <input type="checkbox" className={styles.checkBox} />
+                    모두 확인하였으며 동의합니다.
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      marginLeft: "25px",
+                      color: "#6B6B6B",
+                    }}
+                  >
+                    전체 동의에는 필수 및 선택 정보에 대한 동의가 포함되어
+                    있습니다.
+                    <br /> 개별적으로 동의를 하실 수 있으며,
+                    <br /> 선택항목에 대한 동의를 거부하시는 경우에도 서비스
+                    이용이 가능합니다.
+                  </div>
+                </div>
+                <div className={styles.termsContent}>
+                  <div className={styles.chcekContent}>
+                    <input
+                      type="checkbox"
+                      name="termsOfService"
+                      checked={requiredCheckBox.termsOfService}
+                      // 핸들러 함수를 통해 상태가 업데이트되고, checked 속성에 새로운 값이 반영된다. 아래 2개도 동일한 컨셉
+                      // 초기값은 false 선택 후 -> true
+                      onChange={handleCheckboxChange}
+                      className={styles.checkBox}
+                    />
+                    [필수]알바이즈 이용약관 동의
+                  </div>
+                  <div className={styles.chcekContent}>
+                    <input
+                      type="checkbox"
+                      name="personalInfo"
+                      checked={requiredCheckBox.personalInfo}
+                      onChange={handleCheckboxChange}
+                      className={styles.checkBox}
+                    />
+                    [필수]개인정보 수집 및 이용 동의
+                  </div>
+                  <div className={styles.chcekContent}>
+                    <input
+                      type="checkbox"
+                      name="thirdPartyInfo"
+                      checked={requiredCheckBox.thirdPartyInfo}
+                      onChange={handleCheckboxChange}
+                      className={styles.checkBox}
+                    />
+                    [필수]개인정보 제3자 제공 동의
+                  </div>
+                  <div className={styles.chcekContent}>
+                    <input type="checkbox" className={styles.checkBox} />
+                    [선택]마케팅 목적의 개인정보 수집 및 이용동의
+                  </div>
+                  <div className={styles.chcekOptionContent}>
+                    <input type="checkbox" className={styles.checkBox} />
+                    [선택]광고성 수신 정보 선택
+                  </div>
+                  <div className={styles.chcekOptionContent}>
+                    <input type="checkbox" className={styles.checkBox} />
+                    [선택]광고성 수신 정보 선택
+                  </div>
+                  <div className={styles.chcekOptionContent}>
+                    <input type="checkbox" className={styles.checkBox} />
+                    [선택]광고성 수신 정보 선택
+                  </div>
+                </div>
+              </div>
               <button
-                className={styles.button}
+                className={`${styles.button} ${
+                  isFormValid() ? styles.active : styles.disabled
+                }`}
                 style={{ marginTop: "40px" }}
                 onClick={handleNext}
+                disabled={!isFormValid()}
               >
                 동의하고 가입하기
               </button>
@@ -343,11 +484,28 @@ const RegisterPage = () => {
                 className={styles.input}
               />
               <button
+                style={{
+                  marginTop: "30px",
+                  backgroundColor: "white",
+                  color: "#009963",
+                }}
+                className={styles.button}
+              >
+                매장 추가하기
+              </button>
+              <button
                 onClick={handleMain}
                 className={styles.button}
-                style={{ marginTop: "50px" }}
+                style={{ marginTop: "10px" }}
               >
-                건너뛰기
+                매장 등록하기
+              </button>
+              <button
+                onClick={handleMain}
+                className={styles.button}
+                style={{ marginTop: "150px" }}
+              >
+                매장등록 건너뛰기
               </button>
             </>
           )}
