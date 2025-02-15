@@ -173,7 +173,7 @@ export const OwnerScheduleProvider = ({
                     const dateStr = workDate.format("YYYY-MM-DD"); // 해당 날짜에 스케줄 추가
                     const existingGroup = scheduleMap[dateStr].find(
                         // 동일한 스케줄 있는지 찾음
-                        (group: any) =>
+                        (group) =>
                             group.startTime === schedule.startTime &&
                             group.endTime === schedule.endTime
                     );
@@ -252,28 +252,7 @@ export const OwnerScheduleProvider = ({
 
         console.log("groupedSchedules 결과: ", result);
         return result;
-    }, [
-        JSON.stringify(selectedList),
-        JSON.stringify(ownerSchedules),
-        currentDate,
-    ]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
-
-    /* ## 참고: 데이터 가져오는 방법 예시 ##
-    // 데이터 가져오기 - 한 번만 실행
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch("backend API 주소"); // 서버 API 요청
-                const data: OwnerSchedule[] = await response.json(); // JSON 변환
-                setOwnerSchedules(data); // Context 상태 업데이트
-            } catch (error) {
-                console.error("데이터 가져오기 실패:", error);
-            }
-        };
-
-        fetchData();
-    }, []);
-    */
+    }, [selectedList, ownerSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
 
     return (
         <OwnerScheduleContext.Provider
