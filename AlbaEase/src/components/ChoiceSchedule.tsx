@@ -1,35 +1,36 @@
 import styles from "./ChoiceSchedule.module.css";
 
-const ChoiceSchedule = () => {
-    /* 얘네를 하나의 객체에 넣고 빼서 쓸 수 있게 하면 좋을 듯??
-     * 나중에 DB에서 가져와서 할당해야 함 */
-    const startTime: string = "13:00";
-    const endTime: string = "18:00";
-    const employeeNames: string[] = ["이름1", "이름2", "이름3"];
+type Schedule = {
+    startTime: string;
+    endTime: string;
+    names: string[];
+};
 
+interface ChoiceScheduleProps {
+    schedules: Schedule[];
+}
+
+const ChoiceSchedule = ({ schedules }: ChoiceScheduleProps) => {
     return (
-        <div className={styles.choiceSchedule}>
-            <div
-                className={styles.workhours}>{`${startTime} - ${endTime}`}</div>
-            <ul className={styles.names}>
-                {employeeNames.map((employeeName, index) => (
-                    <li key={index} className={styles.employeeName}>
-                        {employeeName}
-                    </li>
-                ))}
-            </ul>
+        <div className={styles.box}>
+            {schedules.map((schedule, index) => (
+                <div className={styles.choiceSchedule}>
+                    <div key={index} className={styles.scheduleBlock}>
+                        <div className={styles.workhours}>
+                            {`${schedule.startTime} - ${schedule.endTime}`}
+                        </div>
+                        <ul className={styles.names}>
+                            {schedule.names.map((name, i) => (
+                                <li key={i} className={styles.employeeName}>
+                                    {name}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
 
 export default ChoiceSchedule;
-
-/*
-            <div className={styles.names}>
-                {employeeNames.map((employeeName, index) => (
-                    <div key={index} className={styles.employeeName}>
-                        {employeeName}
-                    </div>
-                ))}
-            </div>
-*/

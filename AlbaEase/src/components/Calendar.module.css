@@ -69,6 +69,15 @@ p {
     height: 100px; /* 셀 높이 */
 }
 
+.schedules {
+    overflow-y: auto;
+}
+
+.schedules::-webkit-scrollbar {
+    width: 0px;  /* 스크롤 바의 너비를 0으로 설정 */
+    height: 0px; /* 수평 스크롤 바가 있을 경우 높이를 0으로 설정 */
+}
+
 .day {
     padding-top: 5px;
     cursor: pointer;

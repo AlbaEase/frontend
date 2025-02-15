@@ -5,10 +5,13 @@
     font-weight: 550;
     font-size: 16px;
 
+    display: flex;
+    justify-content: center;
+    line-height: 35px;
     text-align: center;
     margin: 15px 0;
 
-    width: 245px;
+    width: 230px;
     height: 35px;
     cursor: pointer;
 }

@@ -1,15 +1,22 @@
+.box {
+    margin-bottom: 0;
+}
+
 .choiceSchedule {
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     width: 230px;
-    height: 100%;
-    margin: 20px 0;
-    background-color: #FFFFFF;
+    height: auto;
+    margin: 15px 0;
+    margin-bottom: 10px;
+    background-color: #ffffff;
     border: solid 1.5px #009963;
     border-radius: 3px;
 }
 
 .workhours {
-    background-color: rgba(0,153,99, 0.2);
+    background-color: rgba(0, 153, 99, 0.2);
     font-weight: 700;
     font-size: 16px;
     padding: 5px 0;

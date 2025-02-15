@@ -1,5 +1,3 @@
-import { useState } from "react";
-import dayjs from "dayjs";
 import Alarm from "../../components/Alarm";
 import AlbaAdd from "../../components/AlbaAdd";
 import Calendar from "../../components/Calendar";
@@ -11,25 +9,23 @@ import SelectRadio from "../../components/SelectRadio";
 import styles from "./OwnerMainPage.module.css";
 
 const OwnerMainPage = () => {
-  const [currentDate, setCurrentDate] = useState(dayjs()); // 현재 날짜 받아오기
-
-  return (
-    <div className={styles.background}>
-      <div className={styles.ownerMainPage}>
-        <Header />
-        <div className={styles.mainContents}>
-          <PartTime />
-          <Calendar currentDate={currentDate} setCurrentDate={setCurrentDate} />
-          <Choice currentDate={currentDate} />
+    return (
+        <div className={styles.background}>
+            <div className={styles.ownerMainPage}>
+                <Header />
+                <div className={styles.mainContents}>
+                    <PartTime />
+                    <Calendar />
+                    <Choice />
+                </div>
+                <div className={styles.bottomContents}>
+                    <Alarm />
+                    <SelectRadio />
+                    <AlbaAdd />
+                </div>
+            </div>
         </div>
-        <div className={styles.bottomContents}>
-          <Alarm />
-          <SelectRadio />
-          <AlbaAdd />
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default OwnerMainPage;
