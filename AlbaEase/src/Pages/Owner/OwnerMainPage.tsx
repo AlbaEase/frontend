@@ -1,5 +1,4 @@
 import { useState } from "react";
-import dayjs from "dayjs";
 import Alarm from "../../components/Alarm";
 import AlbaAdd from "../../components/AlbaAdd";
 import Calendar from "../../components/Calendar";
@@ -14,8 +13,6 @@ import AlarmModal from "../../components/AlarmModal";
 import RequestModal from "../../components/RequestModal";
 
 const OwnerMainPage = () => {
-  const [currentDate, setCurrentDate] = useState(dayjs()); // 현재 날짜 받아오기
-
   // 알람모달창이 열려있는지 닫혀 있는 지 상태 정의
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState<boolean>(false);
   // onClick를 통해 false -> true 변경과 동시에 모달창 나타남
@@ -41,12 +38,8 @@ const OwnerMainPage = () => {
         <Header />
         <div className={styles.mainContents}>
           <PartTime />
-          <Calendar
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-            openRequestModal={openRequestModal}
-          />
-          <Choice currentDate={currentDate} />
+          <Calendar openRequestModal={openRequestModal} />
+          <Choice />
         </div>
         <div className={styles.bottomContents}>
           <Alarm onClick={openAlarmModal} />

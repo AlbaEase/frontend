@@ -1,23 +1,18 @@
 import styles from "./Calendar.module.css";
 import CalendarSchedule from "./CalendarSchedule";
 import { useState, useEffect } from "react";
-import { Dispatch, SetStateAction } from "react";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
+import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
 import "dayjs/locale/ko";
 
 dayjs.locale("ko");
 
 interface CalendarProps {
-  currentDate: Dayjs;
-  setCurrentDate: Dispatch<SetStateAction<Dayjs>>;
   openRequestModal: () => void; // OwnerMainPage에서 전달된 모달 열기 함수
 }
 
-const Calendar: React.FC<CalendarProps> = ({
-  currentDate,
-  setCurrentDate,
-  openRequestModal,
-}) => {
+const Calendar: React.FC<CalendarProps> = ({ openRequestModal }) => {
+  const { groupedSchedules, currentDate, setCurrentDate } = useOwnerSchedule();
   const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
   const minDate = dayjs("2025-01-01");
@@ -58,15 +53,12 @@ const Calendar: React.FC<CalendarProps> = ({
       newDaysArray.push(null);
 
     setDaysArray(newDaysArray);
-    console.log(daysArray);
     /* 선택한 날짜가 바뀔 때마다 배열 다시 생성
      * (원래는 currentDate.month였는데 number>number로 변경되면
      * useEffect가 변경된 걸 못 잡아내는 오류가 생길 수도 있다고 함,,)
      */
   }, [currentDate]);
 
-  /* console 출력용 */
-  console.log("currentDate is " + currentDate.format());
   const isScrollable = daysArray.length > 35;
 
   return (
@@ -96,36 +88,79 @@ const Calendar: React.FC<CalendarProps> = ({
       </div>
 
       {/* 날짜 */}
-      <div className={`${styles.days} ${isScrollable ? styles.scroll : " "}`}>
-        {daysArray.map((day, index) => (
-          <div
-            key={index}
-            className={`${day ? styles.day : styles.empty} ${
-              /* day가 null이 아니고 현재 선택한 날짜라면 */
-              day && currentDate.date() === day ? styles.isSelected : ""
-            }`}
-            onClick={() => {
-              if (day) {
-                setCurrentDate((prevDate) => prevDate.date(day)); // 새로운 dayjs 객체 반환 후 설정
-              }
-            }} // day가 있으면 날짜, 없으면 빈 칸
-          >
-            {day ? day : ""}{" "}
-            {day ? (
-              <CalendarSchedule
-                startTime="09:00"
-                endTime="13:00"
-                employeeName="성이름"
-                openRequestModal={openRequestModal} // CalendarSchedule에 모달 열기 함수 전달
-              />
-            ) : (
-              " "
-            )}
-          </div>
-        ))}
+      <div className={`${styles.days} ${isScrollable ? styles.scroll : ""}`}>
+        {daysArray.map((day, index) => {
+          const dateStr = day ? currentDate.date(day).format("YYYY-MM-DD") : "";
+
+          // groupedSchedules에서 해당 날짜의 데이터를 찾기
+          const schedulesForDate =
+            groupedSchedules.find((schedule) => schedule.date === dateStr)
+              ?.groups || [];
+
+          return (
+            <div
+              key={index}
+              className={`${day ? styles.day : styles.empty} ${
+                day && currentDate.date() === day ? styles.isSelected : ""
+              }`}
+              onClick={() => {
+                if (day) {
+                  setCurrentDate((prevDate) => prevDate.date(day));
+                }
+              }}
+            >
+              {day ? day : ""}
+              <div className={styles.schedules}>
+                {/* groupedSchedules의 그룹이 여러 개일 경우 각각 CalendarSchedule을 생성 */}
+                {schedulesForDate.map((scheduleGroup, groupIndex) => (
+                  <CalendarSchedule
+                    key={groupIndex}
+                    schedules={[scheduleGroup]}
+                    openRequestModal={openRequestModal} // CalendarSchedule에 모달 열기 함수 전달
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
 export default Calendar;
+
+/*  
+<div
+className={`${styles.days} ${
+    isScrollable ? styles.scroll : " "
+}`}>
+{daysArray.map((day, index) => (
+    <div
+        key={index}
+        className={`${day ? styles.day : styles.empty} ${
+            // day가 null이 아니고 현재 선택한 날짜라면
+            day && currentDate.date() === day
+                ? styles.isSelected
+                : ""
+        }`}
+        onClick={() => {
+            if (day) {
+                setCurrentDate((prevDate) =>
+                    prevDate.date(day)
+                ); // 새로운 dayjs 객체 반환 후 설정
+            }
+        }} // day가 있으면 날짜, 없으면 빈 칸
+    >
+        {day ? day : ""}{" "}
+        {day && selectedList.length !== 0 && groupedSchedules.length > 0 ? (
+            <CalendarSchedule />
+        ) : (
+            " "
+        )}
+    </div>
+))}
+</div>
+</div>
+);
+}; */
