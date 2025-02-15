@@ -1,6 +1,7 @@
 import styles from "./RegisterPage.module.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, ChangeEvent } from "react";
+import axios from "axios";
 
 const RegisterPage = () => {
   // 회원가입 과정에서 사용하는 라디오, 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
@@ -47,6 +48,7 @@ const RegisterPage = () => {
   // 아이디: 조건 정해야함
   // 비밀번호: 조건 정해야함
   // 비밀번호 확인: 위의 비밀번호와 동일하다는 내용이 들어가야함
+
   const isFormValid = () => {
     switch (step) {
       case 1:
@@ -75,18 +77,6 @@ const RegisterPage = () => {
         return false;
       default:
         return false;
-    }
-  };
-  // 더미데이터로 연습해보기
-  const mockDatabase = ["testUser", "example123", "user01"];
-
-  const [idError, setIdError] = useState<string>("");
-
-  const handleIdCheck = () => {
-    if (mockDatabase.includes(id)) {
-      setIdError("이미 사용 중인 아이디입니다.");
-    } else {
-      setIdError("사용 가능한 아이디입니다!");
     }
   };
 
@@ -123,6 +113,92 @@ const RegisterPage = () => {
       ...prev,
       [name]: checked,
     }));
+  };
+
+  // 전화번호 입력 후 사용자가 백엔드로부터 인증번호를 받는 과정
+  // 전화번호(프론트) -> 전화번호를 받고(백엔드) -> 인증번호를 보내준다(사용자한테)
+  const handleRequestVerificationCode = async () => {
+    try {
+      const response = await axios.post("http://localhost:8081/user/send-sms", {
+        phoneNumber,
+      });
+
+      alert(response.data.message || "인증번호가 발송되었습니다!");
+
+      // 인증번호 발송 후 다음 단계로 넘어가려면 handleNext 실행
+      handleNext();
+    } catch (error) {
+      alert("인증번호 요청 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 전화번호랑 인증코드를 인증해서 다음 단계로 넘어가기
+  const handleVerifyCode = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8081/user/verify-sms",
+        {
+          phoneNumber,
+          code,
+        }
+      );
+
+      if (response.data.success) {
+        alert("인증이 완료되었습니다!");
+        handleNext();
+      } else {
+        alert("인증번호가 일치하지 않습니다.");
+      }
+    } catch (error) {
+      alert("인증번호 확인 중 오류가 발생했습니다.");
+    }
+  };
+
+  const [idError, setIdError] = useState<string>("");
+  // 아이디 중복확인 버튼
+  const handleIdCheck = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8081/user/check-email",
+        {
+          id,
+        }
+      );
+
+      if (response.data.isDuplicate) {
+        setIdError("이미 사용 중인 아이디입니다.");
+      } else {
+        setIdError("사용 가능한 아이디입니다!");
+      }
+    } catch (error) {
+      setIdError("아이디 확인 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      const userData = {
+        lastName, // 성
+        firstName, // 이름
+        phoneNumber, // 전화번호
+        id, // 아이디
+        password, // 비밀번호
+      };
+
+      const response = await axios.post(
+        "http://localhost:8081/user/signup",
+        userData
+      );
+
+      if (response.data.success) {
+        alert("가입이 완료되었습니다!");
+        handleNext();
+      } else {
+        alert("가입 실패: " + response.data.message);
+      }
+    } catch (error) {
+      alert("가입 중 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -240,7 +316,7 @@ const RegisterPage = () => {
                 className={`${styles.button} ${
                   isFormValid() ? styles.active : styles.disabled
                 }`}
-                onClick={handleNext}
+                onClick={handleRequestVerificationCode}
                 disabled={!isFormValid()} // isFormValid 함수에 따라 버튼 비활성화
               >
                 인증번호 발급 받기
