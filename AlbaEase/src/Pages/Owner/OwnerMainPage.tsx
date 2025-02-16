@@ -8,9 +8,9 @@ import PartTime from "../../components/PartTime";
 import SelectRadio from "../../components/SelectRadio";
 
 import styles from "./OwnerMainPage.module.css";
-import AlbaAddModal from "../../components/AlbaAddModal";
-import AlarmModal from "../../components/AlarmModal";
-import RequestModal from "../../components/RequestModal";
+import AlbaAddModal from "../../components/Modal/AlbaAddModal";
+import AlarmModal from "../../components/Modal/AlarmModal";
+import RequestModal from "../../components/Modal/RequestModal";
 
 const OwnerMainPage = () => {
   // 알람모달창이 열려있는지 닫혀 있는 지 상태 정의
