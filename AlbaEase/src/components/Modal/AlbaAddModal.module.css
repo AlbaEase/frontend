@@ -15,7 +15,7 @@
 .modal {
   width: 800px;
   height: 500px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   border-radius: 30px;
   background-color: white;
 }
@@ -31,7 +31,7 @@
 .title {
   width: 608px;
   height: 24px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-left: 20px;
   font-size: 20px;
   font-weight: 700;
@@ -39,7 +39,7 @@
 .button {
   width: 30px;
   height: 24px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-right: 20px;
 }
 .button:hover {
@@ -49,13 +49,13 @@
 .content {
   width: 800px;
   height: 370px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-top: 3%;
 }
 .contentBox {
   width: 800px;
   height: 24px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-top: 30px;
   display: flex;
   align-items: center; /* 세로 중앙 정렬 */
@@ -89,7 +89,7 @@
 .openShopBox {
   width: 800px;
   height: 24px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-top: 30px;
   display: flex;
   align-items: center; /* 세로 중앙 정렬 */
@@ -97,7 +97,7 @@
 }
 .openBox {
   width: 400px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
 }
 .openShop {
   width: 400px;
@@ -108,7 +108,7 @@
 .openText {
   width: 800px;
   height: 24px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-top: 40px;
   text-align: center;
   font-size: 20px;
@@ -118,4 +118,24 @@
   display: flex;
   justify-content: center;
   gap: 10px;
+}
+.step2Box {
+  margin-top: 20px;
+  width: 800px;
+  height: 72px;
+  /* border: 1px black solid; */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+.done {
+  font-size: 13px;
+  font-weight: 700;
+}
+.move {
+  font-size: 13px;
+  width: 500;
+  text-decoration: underline;
+  cursor: pointer;
 }

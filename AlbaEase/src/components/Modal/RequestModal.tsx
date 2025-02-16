@@ -13,7 +13,9 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             취소
           </div>
         </div>
-        <div className={styles.content}></div>
+        <div className={styles.content}>
+
+        </div>
       </div>
     </div>
   );
