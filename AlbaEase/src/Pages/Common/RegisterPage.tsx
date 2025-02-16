@@ -119,9 +119,13 @@ const RegisterPage = () => {
   // 전화번호(프론트) -> 전화번호를 받고(백엔드) -> 인증번호를 보내준다(사용자한테)
   const handleRequestVerificationCode = async () => {
     try {
-      const response = await axios.post("http://localhost:8081/user/send-sms", {
-        phoneNumber,
-      });
+      console.log("전화번호:", phoneNumber); // 디버깅용 로그
+      const response = await axios.post(
+        "http://3.39.237.218:8080/user/send-sms",
+        {
+          phoneNumber,
+        }
+      );
 
       alert(response.data.message || "인증번호가 발송되었습니다!");
 
@@ -136,10 +140,9 @@ const RegisterPage = () => {
   const handleVerifyCode = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8081/user/verify-sms",
+        "http://3.39.237.218:8080/user/verify-sms",
         {
-          phoneNumber,
-          code,
+          verficationCode: code, // 백엔드 이름 맞춰주기
         }
       );
 

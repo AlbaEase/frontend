@@ -1,6 +1,6 @@
 import styles from "./AlbaAddModal.module.css";
 import { useState } from "react";
-import Button from "./Button";
+import Button from "../Button";
 
 interface AlbaAddModalProps {
   onClose: () => void;
