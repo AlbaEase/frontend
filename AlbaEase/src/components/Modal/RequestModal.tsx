@@ -1,5 +1,8 @@
 import styles from "./RequestModal.module.css";
 import { useState } from "react";
+import { useModal } from "../../contexts/ModalContext";
+import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
+import CustomSelect from "../CustomSelect";
 
 interface CalendarScheduleProps {
     onClose: () => void;
@@ -13,7 +16,10 @@ interface CalendarScheduleProps {
 
 const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
-    // console.log("렌더링 확인: ", schedules);
+    const { currentDate } = useOwnerSchedule();
+    const { modalData } = useModal();
+
+    console.log("modalData:", modalData);
 
     // 각 스텝에 따른 콘텐츠
     const renderStepContent = () => {
@@ -23,12 +29,46 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     <div className={styles.content}>
                         <div className={styles.category}>
                             <div className={styles.text}>요청 근무일자</div>
-                            <div className={styles.schedule}>일자 렌더링</div>
+                            <div className={styles.schedule}>
+                                {currentDate.format("YYYY/MM/DD")} |
+                                {modalData.length > 0 && (
+                                    <span className={styles.scheduleList}>
+                                        {modalData.map((group, index) => {
+                                            // "HH:mm:ss"에서 시와 분만 추출
+                                            const startTimeFormatted =
+                                                group.startTime
+                                                    .split(":")
+                                                    .slice(0, 2)
+                                                    .join(":");
+                                            const endTimeFormatted =
+                                                group.endTime
+                                                    .split(":")
+                                                    .slice(0, 2)
+                                                    .join(":");
+
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className={
+                                                        styles.scheduleItem
+                                                    }>
+                                                    <div
+                                                        className={styles.time}>
+                                                        {startTimeFormatted} -{" "}
+                                                        {endTimeFormatted}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </span>
+                                )}
+                                {modalData.startTime}{" "}
+                            </div>
                         </div>
                         <div className={styles.category}>
                             <div className={styles.text}>기존 근무자</div>
                             <div className={styles.employeeName}>
-                                근무자 렌더링
+                                <CustomSelect names={modalData[0].names} />
                             </div>
                         </div>
                         <div className={styles.category}>
