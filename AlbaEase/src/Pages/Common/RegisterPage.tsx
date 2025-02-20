@@ -4,8 +4,9 @@ import { useState, ChangeEvent } from "react";
 import axios from "axios";
 
 const RegisterPage = () => {
-  // 회원가입 과정에서 사용하는 라디오, 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
-  const [isRadioSelect, setIsRadioSelect] = useState<boolean>(false);
+  // 회원가입 과정에서 사용하는 역할, 성, 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
+  // const [isRadioSelect, setIsRadioSelect] = useState<boolean>(false);
+  const [role, setRole] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
@@ -15,8 +16,12 @@ const RegisterPage = () => {
   const [passwordCheck, setPasswordCheck] = useState<string>("");
 
   // input 박스 내용 바꾸는 함수
-  const handleRadio = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsRadioSelect(e.target.checked);
+  // const handleRadio = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setIsRadioSelect(e.target.checked);
+  // };
+
+  const handleRadio = (e: ChangeEvent<HTMLInputElement>) => {
+    setRole(e.target.value);
   };
   const handleFirstName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFirstName(e.target.value);
@@ -52,7 +57,7 @@ const RegisterPage = () => {
   const isFormValid = () => {
     switch (step) {
       case 1:
-        return isRadioSelect; // 라디오 버튼 체크 유무
+        return role !== ""; // 사장님인지, 알바생인지 선택하게끔
       case 2:
         const isLastNameValid = lastName.length >= 1 && lastName.length <= 2; // 성은 1~2글자
         const isFirstNameValid = firstName.length >= 2 && firstName.length <= 5; // 이름은 2~5글자
@@ -162,7 +167,7 @@ const RegisterPage = () => {
   const handleIdCheck = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8081/user/check-email",
+        "http://3.39.237.218:8080/user/check-id",
         {
           id,
         }
@@ -177,10 +182,11 @@ const RegisterPage = () => {
       setIdError("아이디 확인 중 오류가 발생했습니다.");
     }
   };
-
+  // 마지막 회원가입 버튼 눌렀을 때 보낼 정보들
   const handleRegister = async () => {
     try {
       const userData = {
+        role, // 역할
         lastName, // 성
         firstName, // 이름
         phoneNumber, // 전화번호
@@ -242,6 +248,7 @@ const RegisterPage = () => {
                     type="radio"
                     name="role"
                     id="owner"
+                    value="owner"
                     onChange={handleRadio}
                   />
                   <label htmlFor="owner">사장님</label>
@@ -252,6 +259,7 @@ const RegisterPage = () => {
                     type="radio"
                     name="role"
                     id="employee"
+                    value="employee"
                     onChange={handleRadio}
                   />
                   <label htmlFor="employee">알바생</label>
@@ -372,7 +380,7 @@ const RegisterPage = () => {
                 className={`${styles.button} ${
                   isFormValid() ? styles.active : styles.disabled
                 }`}
-                onClick={handleNext}
+                onClick={handleVerifyCode}
                 disabled={!isFormValid()}
               >
                 인증번호 확인
@@ -544,7 +552,7 @@ const RegisterPage = () => {
                   isFormValid() ? styles.active : styles.disabled
                 }`}
                 style={{ marginTop: "40px" }}
-                onClick={handleNext}
+                onClick={handleRegister}
                 disabled={!isFormValid()}
               >
                 동의하고 가입하기
