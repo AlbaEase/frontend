@@ -1,0 +1,7 @@
+.customSelect {
+    position: relative;
+    width: 200px;
+    padding: 8px;
+    border-radius: 5px;
+    border: solid 2px black;
+}

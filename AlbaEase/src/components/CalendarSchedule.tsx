@@ -1,8 +1,8 @@
 import styles from "./CalendarSchedule.module.css";
+import { useModal } from "../contexts/ModalContext";
 
 interface CalendarScheduleProps {
     schedules: Schedule[];
-    openRequestModal: () => void; // 모달 열기 함수
 }
 
 type Schedule = {
@@ -12,12 +12,14 @@ type Schedule = {
 };
 
 // props로 schedules 배열을 받음
-const CalendarSchedule: React.FC<CalendarScheduleProps> = ({
-    schedules,
-    openRequestModal,
-}) => {
+const CalendarSchedule: React.FC<CalendarScheduleProps> = ({ schedules }) => {
+    const { openModal } = useModal(); // useModal 훅 사용
+
     return (
-        <div className={styles.calendarSchedule} onClick={openRequestModal}>
+        <div
+            className={styles.calendarSchedule}
+            onClick={() => openModal("request", schedules)} // 모달 열기
+        >
             {schedules.length > 0 ? (
                 schedules.map((group, index) => {
                     // "HH:mm:ss"에서 시와 분만 추출
