@@ -163,6 +163,7 @@ const RegisterPage = () => {
   };
 
   const [idError, setIdError] = useState<string>("");
+  
   // 아이디 중복확인 버튼
   const handleIdCheck = async () => {
     try {
