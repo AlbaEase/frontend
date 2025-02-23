@@ -1,15 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { resolve } from 'path'
-
-const __dirname = new URL('.', import.meta.url).pathname
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src')
-    }
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, 'src') }
+    ]
   },
   server: {
     proxy: {
