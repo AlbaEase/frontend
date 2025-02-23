@@ -2,7 +2,7 @@ name: Deploy Frontend to EC2
 
 on:
   push:
-    branches: [ "deployTest" ]  # 배포시 main으로 변경 필요
+    branches: [ "main" ]  # 배포시 main으로 변경 필요
 
 jobs:
   build-and-deploy:
