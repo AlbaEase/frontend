@@ -1,11 +1,11 @@
 import styles from "./RegisterPage.module.css";
+import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, ChangeEvent } from "react";
-import axios from "axios";
+import axiosInstance from "../../api/axios"; // ✅ axios 설정 파일
+import { AxiosError } from "axios"; // 이 줄을 최상단 import 구문에 추가
 
 const RegisterPage = () => {
-  // 회원가입 과정에서 사용하는 역할, 성, 이름, 전화번호, 인증번호, 아이디, 비밀번호, 비밀번호 확인
-  // const [isRadioSelect, setIsRadioSelect] = useState<boolean>(false);
   const [role, setRole] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
@@ -14,15 +14,14 @@ const RegisterPage = () => {
   const [id, setId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [passwordCheck, setPasswordCheck] = useState<string>("");
+  const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(false);
 
-  // input 박스 내용 바꾸는 함수
-  // const handleRadio = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setIsRadioSelect(e.target.checked);
-  // };
-
+  // 라디오 버튼 핸들러
   const handleRadio = (e: ChangeEvent<HTMLInputElement>) => {
     setRole(e.target.value);
   };
+
+  // 각각의 input 핸들러
   const handleFirstName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFirstName(e.target.value);
   };
@@ -45,34 +44,27 @@ const RegisterPage = () => {
     setPasswordCheck(e.target.value);
   };
 
-  // 유효성 검사 함수
-  // 매번 스탭마다 검사해야하는 유효한 조건들이 다르다.
-  // 이름: 한글만 사용 2글자 ~ 5글자 (이게 일단 통신사 가입할 때 이름을 어떻게 정하는 지 알아봐야할 거 같다.)
-  // 전화번호: 숫자만 이용해서 11자리
-  // 인증번호 6자리로 임의로 정함
-  // 아이디: 조건 정해야함
-  // 비밀번호: 조건 정해야함
-  // 비밀번호 확인: 위의 비밀번호와 동일하다는 내용이 들어가야함
+  // step별 유효성 검사
+  const [step, setStep] = useState<number>(1);
 
   const isFormValid = () => {
     switch (step) {
       case 1:
-        return role !== ""; // 사장님인지, 알바생인지 선택하게끔
+        return role !== "";
       case 2:
-        const isLastNameValid = lastName.length >= 1 && lastName.length <= 2; // 성은 1~2글자
-        const isFirstNameValid = firstName.length >= 2 && firstName.length <= 5; // 이름은 2~5글자
-        const isPhoneValid = phoneNumber.length === 11; // 전화번호는 11자리
-        return isFirstNameValid && isLastNameValid && isPhoneValid; // 이름과 전화번호 모두 유효성 검사
+        const isLastNameValid = lastName.length >= 1 && lastName.length <= 2;
+        const isFirstNameValid = firstName.length >= 2 && firstName.length <= 5;
+        const isPhoneValid = phoneNumber.length === 11;
+        return isFirstNameValid && isLastNameValid && isPhoneValid;
       case 3:
-        const isCodeValid = code.length === 6; // 6자리 숫자가 국룰인 거 같아서 다음과 같이 설정
-        return isCodeValid; // 인증번호 기입 유무
+        const isCodeValid = code.length === 6;
+        return isCodeValid;
       case 4:
         const isIdValid = id.length >= 8;
         const isPasswordValid = password.length >= 8;
         const isPasswordCheckValid = password === passwordCheck;
-        return isIdValid && isPasswordValid && isPasswordCheckValid; // 아이디, 비밀번호, 비밀번호 확인
+        return isIdValid && isPasswordValid && isPasswordCheckValid;
       case 5:
-        // 필수 선택사항 체크박스가 선택되었을 때 버튼이 활성화 될 수 있도록
         return (
           requiredCheckBox.termsOfService &&
           requiredCheckBox.personalInfo &&
@@ -85,10 +77,6 @@ const RegisterPage = () => {
     }
   };
 
-  // 회원가입 절차를 step으로 상태변수 관리 1페이지부터 시작이라서 초기값 1로 설정
-  const [step, setStep] = useState<number>(1);
-
-  // 각각 유효성을 통과할 시 다음페이지로 넘어갈 수 있도록 설정
   const handleNext = () => {
     if (isFormValid()) {
       setStep((prevStep) => prevStep + 1);
@@ -101,17 +89,13 @@ const RegisterPage = () => {
     navigate("../ownermain");
   };
 
-  // 회원가입 선택지 select checkbox 만들기
-  // 전체 선택버튼으로 이 버튼을 누르면 필수 + 선택을 전부다 누를 수 있게된다.
-
-  // 필수 항목을 만들었다. 이 필수 항목이 선택되어야만 버튼을 활성화 시킬 수 있도록 이름을 만들어준다.
+  // 약관 동의 체크박스
   const [requiredCheckBox, setRequiredCheckBox] = useState({
-    termsOfService: false, // 알바이즈 이용약관
-    personalInfo: false, // 개인정보
-    thirdPartyInfo: false, // 개인정보 제3자 제공동의
+    termsOfService: false,
+    personalInfo: false,
+    thirdPartyInfo: false,
   });
 
-  // 필수 항목 핸들러 함수
   const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setRequiredCheckBox((prev) => ({
@@ -120,63 +104,55 @@ const RegisterPage = () => {
     }));
   };
 
-  // 전화번호 입력 후 사용자가 백엔드로부터 인증번호를 받는 과정
-  // 전화번호(프론트) -> 전화번호를 받고(백엔드) -> 인증번호를 보내준다(사용자한테)
+  // 인증번호 발급
   const handleRequestVerificationCode = async () => {
     try {
-      console.log("전화번호:", phoneNumber); // 디버깅용 로그
-      const response = await axios.post(
-        "http://3.39.237.218:8080/user/send-sms",
-        {
-          phoneNumber,
-        }
+      console.log("요청 데이터:", { phoneNumber });
+      const response = await axiosInstance.post(
+        "/user/send-sms",
+        { phoneNumber },
+        { withCredentials: true }
       );
-
+      console.log("응답 데이터:", response.data);
       alert(response.data.message || "인증번호가 발송되었습니다!");
-
-      // 인증번호 발송 후 다음 단계로 넘어가려면 handleNext 실행
       handleNext();
     } catch (error) {
+      console.error("에러 details:", error);
       alert("인증번호 요청 중 오류가 발생했습니다.");
     }
   };
 
-  // 전화번호랑 인증코드를 인증해서 다음 단계로 넘어가기
   const handleVerifyCode = async () => {
     try {
-      const response = await axios.post(
-        "http://3.39.237.218:8080/user/verify-sms",
-        {
-          phoneNumber,
-          verificationCode: code, // 백엔드 이름 맞춰주기
-        },
-        { withCredentials: true } // 여기에 추가
+      const response = await axiosInstance.post(
+        "/user/verify-sms",
+        { phoneNumber, verificationCode: code },
+        { withCredentials: true }
       );
-
-      if (response.data.success) {
+      if (response.status === 200) {
+        setIsPhoneVerified(true);
         alert("인증이 완료되었습니다!");
         handleNext();
       } else {
-        alert("인증번호가 일치하지 않습니다.");
+        alert("인증에 실패했습니다.");
       }
     } catch (error: any) {
-      console.error("에러 발생:", error.response?.data); // 서버에서 발생한 오류 메시지 출력
-      alert("인증번호 확인 중 오류가 발생했습니다.");
+      console.error("인증 에러:", error.response?.data);
+      alert(
+        error.response?.data?.message || "인증번호 확인 중 오류가 발생했습니다."
+      );
     }
   };
-
+  // 아이디 중복 확인
   const [idError, setIdError] = useState<string>("");
 
-  // 아이디 중복확인 버튼
   const handleIdCheck = async () => {
     try {
-      const response = await axios.post(
-        "http://3.39.237.218:8080/user/check-id",
-        {
-          id,
-        }
+      const response = await axiosInstance.post(
+        "/user/check-id",
+        { id },
+        { withCredentials: true }
       );
-
       if (response.data.isDuplicate) {
         setIdError("이미 사용 중인 아이디입니다.");
       } else {
@@ -186,34 +162,41 @@ const RegisterPage = () => {
       setIdError("아이디 확인 중 오류가 발생했습니다.");
     }
   };
-  // 마지막 회원가입 버튼 눌렀을 때 보낼 정보들
+
+  // 최종 회원가입
   const handleRegister = async () => {
     try {
+      if (!isPhoneVerified) {
+        alert("전화번호 인증을 먼저 완료해주세요.");
+        return;
+      }
+
       const userData = {
-        role, // 역할
-        lastName, // 성
-        firstName, // 이름
-        phoneNumber, // 전화번호
-        id, // 아이디
-        password, // 비밀번호
+        socialType: "NONE",
+        lastName,
+        firstName,
+        id,
+        password,
+        confirmPassword: passwordCheck,
+        phoneNumber,
+        role,
+        isPhoneVerified,
       };
 
-      const response = await axios.post(
-        "http://localhost:8081/user/signup",
-        userData
-      );
+      console.log("전송 데이터:", userData);
+      const response = await axiosInstance.post("/user/signup", userData, {
+        withCredentials: true,
+      });
 
-      if (response.data.success) {
+      if (response.status === 200) {
         alert("가입이 완료되었습니다!");
         handleNext();
-      } else {
-        alert("가입 실패: " + response.data.message);
       }
-    } catch (error) {
-      alert("가입 중 오류가 발생했습니다.");
+    } catch (error: any) {
+      console.error("에러 응답:", error.response?.data);
+      alert(error.response?.data?.message || "가입 중 오류가 발생했습니다.");
     }
   };
-
   return (
     <div className={styles.registerPage}>
       <div className={styles.content}>
@@ -229,7 +212,7 @@ const RegisterPage = () => {
               <Link to="../login">여기를 클릭</Link>해 로그인 하세요!
             </div>
             <div>
-              <img src="src/assets/AlbaEase_model.png" />
+              <img src={albaBoy} alt="albaBoy" className={styles.img} />
             </div>
           </div>
         </div>
@@ -241,7 +224,7 @@ const RegisterPage = () => {
             <>
               <div style={{ fontSize: "30px" }}>Sign up</div>
               <div className={styles.registerText}>
-                알바이즈 가입을 위헤
+                알바이즈 가입을 위해
                 <br />
                 카카오 가입 시에도 꼭 선택해 주세요!
               </div>
@@ -252,7 +235,7 @@ const RegisterPage = () => {
                     type="radio"
                     name="role"
                     id="owner"
-                    value="owner"
+                    value="OWNER"
                     onChange={handleRadio}
                   />
                   <label htmlFor="owner">사장님</label>
@@ -263,12 +246,13 @@ const RegisterPage = () => {
                     type="radio"
                     name="role"
                     id="employee"
-                    value="employee"
+                    value="WORKER"
                     onChange={handleRadio}
                   />
                   <label htmlFor="employee">알바생</label>
                 </div>
               </div>
+
               <div className={styles.registerText} style={{ fontSize: "22px" }}>
                 ----- 가입 방법 선택 -----
               </div>
@@ -332,7 +316,7 @@ const RegisterPage = () => {
                   isFormValid() ? styles.active : styles.disabled
                 }`}
                 onClick={handleRequestVerificationCode}
-                disabled={!isFormValid()} // isFormValid 함수에 따라 버튼 비활성화
+                disabled={!isFormValid()}
               >
                 인증번호 발급 받기
               </button>
@@ -395,7 +379,7 @@ const RegisterPage = () => {
             </>
           )}
 
-          {/* 스탭 4 */}
+          {/* 스텝 4 */}
           {step === 4 && (
             <>
               <div style={{ fontSize: "30px" }}>Sign up</div>
@@ -423,7 +407,6 @@ const RegisterPage = () => {
               >
                 전화번호 인증완료
               </div>
-              {/* 중복확인을 할 수 있는 내용을 추가해야함 */}
               <div className={styles.wrapper}>
                 <input
                   type="text"
@@ -438,9 +421,7 @@ const RegisterPage = () => {
                 </button>
               </div>
               {idError && <div className={styles.errorMessage}>{idError}</div>}
-              {/* '아이디'는 사용이 가능합니다. -> 중복확인(버튼)을 클릭했을 때 아래에 나올 수 있도록*/}
               <div>
-                {/* 비밀번호 확인할 수 있는 기능 구현하기 */}
                 <input
                   type="password"
                   placeholder="비밀번호"
@@ -450,7 +431,6 @@ const RegisterPage = () => {
                 />
               </div>
               <div>
-                {/* 비밀번호 확인할 수 있는 기능 구현하기 */}
                 <input
                   type="password"
                   placeholder="비밀번호 확인"
@@ -459,7 +439,6 @@ const RegisterPage = () => {
                   className={styles.input}
                 />
               </div>
-              {/* 비밀번호가 틀립니다., 비밀번호가 일치합니다. -> 조건에 따라서 텍스트가 나올 수 있도록 구현 */}
               <button
                 style={{ marginTop: "40px" }}
                 className={`${styles.button} ${
@@ -473,7 +452,7 @@ const RegisterPage = () => {
             </>
           )}
 
-          {/* 스탭 5 */}
+          {/* 스텝 5 */}
           {step === 5 && (
             <>
               <div style={{ fontSize: "30px" }}>Sign up</div>
@@ -506,8 +485,6 @@ const RegisterPage = () => {
                       type="checkbox"
                       name="termsOfService"
                       checked={requiredCheckBox.termsOfService}
-                      // 핸들러 함수를 통해 상태가 업데이트되고, checked 속성에 새로운 값이 반영된다. 아래 2개도 동일한 컨셉
-                      // 초기값은 false 선택 후 -> true
                       onChange={handleCheckboxChange}
                       className={styles.checkBox}
                     />
@@ -564,8 +541,7 @@ const RegisterPage = () => {
             </>
           )}
 
-          {/* 스탭 6, 7 선택사항인데 까다롭다. 조건을 라디오 박스에다가 넣어야 하는 건가. */}
-          {/* 스탭 6 */}
+          {/* 스텝 6 (선택) */}
           {step === 6 && (
             <>
               <div style={{ fontSize: "30px" }}>매장 등록하기(선택)</div>

@@ -1,4 +1,5 @@
 import styles from "./LoginPage.module.css";
+import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
@@ -75,7 +76,7 @@ const LoginPage = () => {
               <Link to="../register">여기를 클릭</Link>해 회원가입 하세요!!
             </div>
             <div>
-              <img src="src/assets/AlbaEase_model.png" />
+              <img src={albaBoy} alt="albaBoy" className={styles.img} />
             </div>
           </div>
         </div>
