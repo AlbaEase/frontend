@@ -147,8 +147,10 @@ const RegisterPage = () => {
       const response = await axios.post(
         "http://3.39.237.218:8080/user/verify-sms",
         {
-          verficationCode: code, // 백엔드 이름 맞춰주기
-        }
+          phoneNumber,
+          verificationCode: code, // 백엔드 이름 맞춰주기
+        },
+        { withCredentials: true } // 여기에 추가
       );
 
       if (response.data.success) {
@@ -157,13 +159,14 @@ const RegisterPage = () => {
       } else {
         alert("인증번호가 일치하지 않습니다.");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("에러 발생:", error.response?.data); // 서버에서 발생한 오류 메시지 출력
       alert("인증번호 확인 중 오류가 발생했습니다.");
     }
   };
 
   const [idError, setIdError] = useState<string>("");
-  
+
   // 아이디 중복확인 버튼
   const handleIdCheck = async () => {
     try {
