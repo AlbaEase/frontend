@@ -22,7 +22,7 @@
     background-color: white;
 }
 
-.smallModal {
+.secondModal {
     font-family: "Noto Sans KR", sans-serif;
     width: 800px;
     height: 282px;
@@ -108,7 +108,7 @@
 }
 
 .confirm {
-    margin-top: 140px;
+    margin-top: 170px;
     font-size: 16px;
     cursor: pointer;
     display: flex;
@@ -196,6 +196,8 @@
 
 .confirm2 {
     margin-top: 30px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 .askText {
@@ -211,4 +213,22 @@
     text-align: left;
     margin-left: 12px;
     margin-bottom: 10px;
+}
+
+.text3 {
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+}
+
+.confirm3 {
+    font-size: 16px;
+    margin-top: 67px;
+    cursor: pointer;
+}
+
+.invisible {
+    display: none;
 }

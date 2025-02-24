@@ -56,6 +56,9 @@ interface OwnerScheduleContextType {
     // 날짜와 같은 시간대에 일하는 알바생 그룹
     currentDate: Dayjs;
     setCurrentDate: React.Dispatch<React.SetStateAction<Dayjs>>;
+    selectedName: string;
+    setSelectedName: React.Dispatch<React.SetStateAction<string>>;
+    otherGroupMembers: string[];
 }
 
 const OwnerScheduleContext = createContext<
@@ -72,6 +75,7 @@ export const OwnerScheduleProvider = ({
     const [selectedList, setSelectedList] = useState<string[]>([]);
     const [ownerSchedules, setOwnerSchedules] = useState<OwnerSchedule[]>([]);
     const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
+    const [selectedName, setSelectedName] = useState(""); // 교환을 요청할 근무자 (기존 근무자)
 
     /* DB에서 가게 목록 가져오기 */
     useEffect(() => {
@@ -115,7 +119,7 @@ export const OwnerScheduleProvider = ({
                     `http://localhost:8080/schedules/store/${selectedStore}`
                 );
                 const data: OwnerSchedule[] = await res.json();
-                console.log(data);
+                // console.log(data);
                 setOwnerSchedules(data);
             } catch (error) {
                 console.error(
@@ -250,9 +254,64 @@ export const OwnerScheduleProvider = ({
             ), // startTime 기준 정렬
         }));
 
-        console.log("groupedSchedules 결과: ", result);
+        // console.log("groupedSchedules 결과: ", result);
         return result;
     }, [selectedList, ownerSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
+
+    /* 근무하는 날짜 또는 시간이 다른 그룹의 명단 */
+    const otherGroupMembersFunction = () => {
+        // 0. 선택된 알바생이 없으면 빈 배열 반환
+        if (!selectedName) return [];
+
+        // 1. 선택된 알바생의 근무 일정 가져오기
+        const selectedUserSchedules = ownerSchedules.filter(
+            (schedule) => schedule.user.name === selectedName
+        );
+
+        console.log(selectedUserSchedules);
+
+        // 2. 다른 알바생들의 근무 일정 필터링
+        const nonOverlappingWorkers = ownerSchedules.filter((schedule) => {
+            // 자기 자신 제외
+            if (schedule.user.name === selectedName) return false;
+
+            return !selectedUserSchedules.some((selectedSchedule) => {
+                // 3. workDates가 있는 경우 (단일 근무일)
+                if (!selectedSchedule.repeatDays) {
+                    return (
+                        dayjs(schedule.workDates).format("YYYY-MM-DD") ===
+                            dayjs(selectedSchedule.workDates).format(
+                                "YYYY-MM-DD"
+                            ) &&
+                        // 겹치는 날짜와 겹치는 시간이 있으면 제외외
+                        schedule.startTime < selectedSchedule.endTime &&
+                        schedule.endTime > selectedSchedule.startTime
+                    );
+                }
+
+                // 4. repeatDays가 있는 경우 (반복 근무)
+                const selectedRepeatDays =
+                    selectedSchedule.repeatDays.split(",");
+                const scheduleRepeatDays =
+                    schedule.repeatDays?.split(",") || [];
+
+                return (
+                    selectedRepeatDays.some((day) =>
+                        scheduleRepeatDays.includes(day)
+                    ) &&
+                    schedule.startTime < selectedSchedule.endTime &&
+                    schedule.endTime > selectedSchedule.startTime
+                );
+            });
+        });
+
+        return nonOverlappingWorkers.map((schedule) => schedule.user.name);
+    };
+
+    const otherGroupMembers = useMemo(
+        () => otherGroupMembersFunction(),
+        [selectedName, ownerSchedules]
+    );
 
     return (
         <OwnerScheduleContext.Provider
@@ -268,6 +327,9 @@ export const OwnerScheduleProvider = ({
                 groupedSchedules,
                 currentDate,
                 setCurrentDate,
+                selectedName,
+                setSelectedName,
+                otherGroupMembers,
             }}>
             {children}
         </OwnerScheduleContext.Provider>

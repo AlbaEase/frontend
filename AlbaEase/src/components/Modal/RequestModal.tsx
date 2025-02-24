@@ -16,11 +16,29 @@ interface CalendarScheduleProps {
 
 const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
-    const [selectedName, setSelectedName] = useState("");
-    const { currentDate } = useOwnerSchedule();
+    // const [selectedName, setSelectedName] = useState(""); // 교환을 요청할 근무자 (기존 근무자)
+    const [selectedOption, setSelectedOption] = useState<
+        "all" | "select" | null // 요청 대상 선택 체크박스
+    >(null);
+    const [selectedWorker, setSelectedWorker] = useState<string[]>([]);
+
+    const { currentDate, selectedName, setSelectedName } = useOwnerSchedule();
     const { modalData } = useModal();
 
-    console.log("modalData:", modalData);
+    const handleNameChange = (name: string) => {
+        setSelectedName(name);
+    };
+
+    const handleCheckboxChange = (option: "all" | "select") => {
+        setSelectedOption(option); // 둘 중 하나만 선택하도록
+        if (option === "all") {
+            const allWorkers = modalData.flatMap((group) => group.names);
+            setSelectedWorker(allWorkers);
+            console.log("선택한 대타 요청 근무자: ", selectedWorker);
+        } else {
+            setSelectedWorker([]);
+        }
+    };
 
     // 각 스텝에 따른 콘텐츠
     const renderStepContent = () => {
@@ -69,18 +87,33 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         <div className={styles.category}>
                             <div className={styles.text}>기존 근무자</div>
                             <div className={styles.employeeName}>
-                                <CustomSelect names={modalData[0].names} />
+                                <CustomSelect
+                                    names={modalData[0].names}
+                                    onSelect={handleNameChange}
+                                />
                             </div>
                         </div>
                         <div className={styles.category}>
                             <div className={styles.text1}>요청 대상</div>
                             <div className={styles.selectBox}>
                                 <label>
-                                    <input type="checkbox" />
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedOption === "all"}
+                                        onChange={() =>
+                                            handleCheckboxChange("all")
+                                        }
+                                    />
                                     근무자 전체
                                 </label>
                                 <label>
-                                    <input type="checkbox" />
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedOption === "select"}
+                                        onChange={() =>
+                                            handleCheckboxChange("select")
+                                        }
+                                    />
                                     근무자 선택하기
                                 </label>
                             </div>
@@ -141,7 +174,9 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                             </div>
                             <div className={styles.text2}>
                                 {"기존 근무자 : "}
-                                {}
+                                <span className={styles.selectedName}>
+                                    {selectedName || "선택된 근무자 없음"}
+                                </span>
                             </div>
                             <div className={styles.text2}>{"요청 대상 : "}</div>
                         </div>
@@ -151,7 +186,16 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     </div>
                 );
             case 3:
-                return <div className={styles.content}>스텝 3 내용</div>;
+                return (
+                    <div className={styles.content}>
+                        <div className={styles.text3}>
+                            근무 요청이 완료되었습니다.
+                        </div>
+                        <div className={styles.confirm3} onClick={onClose}>
+                            확인
+                        </div>
+                    </div>
+                );
             default:
                 return <div className={styles.content}>Loading...</div>;
         }
@@ -167,13 +211,17 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             {/* 모달창 사이즈 동적으로 조정 / modal, smallModal */}
             <div
                 className={`${styles.modal} ${
-                    currentStep === 2 ? styles.smallModal : ""
+                    currentStep !== 1 ? styles.secondModal : ""
                 }`}>
                 <div className={styles.container} style={{ marginTop: "20px" }}>
                     <div className={styles.title}>
                         {currentStep !== 3 ? "근무 요청하기" : "요청 완료"}
                     </div>
-                    <div className={styles.button} onClick={onClose}>
+                    <div
+                        className={`${styles.button} ${
+                            currentStep === 3 ? styles.invisible : ""
+                        }`}
+                        onClick={onClose}>
                         취소
                     </div>
                 </div>
