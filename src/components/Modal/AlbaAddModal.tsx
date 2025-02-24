@@ -1,15 +1,17 @@
 import styles from "./AlbaAddModal.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../Button";
+import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext"; // 매장 정보를 관리하는 context
+import SelectRadio from "../SelectRadio"; // SelectRadio import
 
 interface AlbaAddModalProps {
   onClose: () => void;
 }
 
 const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
+  const { stores, selectedStore, setSelectedStore } = useOwnerSchedule(); // 가게 정보와 선택된 매장 상태
   const [businessNumber, setBusinessNumber] = useState<string>("");
-
-  const [shop, setShop] = useState<string>("여기에는 가게가 들어갑니다.");
+  const [shop, setShop] = useState<string>("이디야");
 
   const handleBusinessNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBusinessNumber(e.target.value);
