@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import useSelector from "../hooks/useSelector"; // 기존 훅 사용
 import styles from "./CustomSelect.module.css"; // 스타일 파일
+import arrow from "../assets/arrow-down.svg";
 
 interface Props {
     names: string[];
@@ -31,6 +32,12 @@ const CustomSelect = ({ names = [], onSelect }: Props) => {
             <div className={styles.label} onClick={toggleHandler}>
                 {viewValue}
             </div>
+            <img
+                src={arrow}
+                alt="arrow"
+                className={styles.arrowSvg}
+                onClick={toggleHandler}
+            />
             {isOpen && (
                 <ul className={styles.selectOption}>
                     {names.map((name, index) => (

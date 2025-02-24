@@ -2,7 +2,7 @@
     position: relative;
     width: 87px;
     height: 27px;
-    padding: 8px;
+
     border-radius: 5px;
     border: solid 1.5px black;
 
@@ -15,8 +15,9 @@
 
 .label {
     cursor: pointer;
-    background-color: white;
     font-size: 16px;
+    width: 100%;
+    margin-left: 8px;
 }
 
 .selectOption {
@@ -52,4 +53,12 @@
 
 .option:hover {
     background-color: #f0f0f0;
+}
+
+.arrowSvg {
+    margin-top: 2px;
+    margin-left: 5px;
+    width: 24px;
+    height: 28px;
+    cursor: pointer;
 }
