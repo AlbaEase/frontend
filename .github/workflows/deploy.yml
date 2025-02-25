@@ -1,9 +1,7 @@
 name: Deploy Frontend to EC2
-
 on:
   push:
     branches: [ "main" ]  # 배포시 main으로 변경 필요
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -60,11 +58,13 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/frontend
+            # 기존 dist 폴더 내용 완전히 삭제 후 새 파일만 유지
+            rm -rf dist/*
+            mkdir -p dist
+            mv *.* dist/ 2>/dev/null || true
             # 기존 컨테이너 정리
             docker-compose down
             docker system prune -f
-            # 새 컨테이너 시작 전 이미지 빌드 확인
-            docker-compose build --no-cache
-            # 컨테이너 시작 및 로그 확인
+            # 컨테이너 시작
             docker-compose up -d
             docker-compose logs
