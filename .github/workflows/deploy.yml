@@ -58,13 +58,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/frontend
-            # 기존 dist 폴더 내용 완전히 삭제 후 새 파일만 유지
+            # 기존 dist 폴더 내용만 삭제
             rm -rf dist/*
             mkdir -p dist
-            mv *.* dist/ 2>/dev/null || true
             # 기존 컨테이너 정리
             docker-compose down
             docker system prune -f
-            # 컨테이너 시작
+            # 컨테이너 시작 및 로그 확인
             docker-compose up -d
             docker-compose logs
