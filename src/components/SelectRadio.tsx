@@ -1,11 +1,7 @@
 import styles from "./SelectRadio.module.css";
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
 
-interface SelectRadioProps {
-  shop: string; // shop props 추가
-}
-
-const SelectRadio: React.FC<SelectRadioProps> = ({ shop }) => {
+const SelectRadio = () => {
   const { stores, selectedStore, setSelectedStore } = useOwnerSchedule();
 
   // stores가 undefined일 경우 빈 배열로 설정
@@ -22,7 +18,7 @@ const SelectRadio: React.FC<SelectRadioProps> = ({ shop }) => {
                   type="radio"
                   name="store"
                   value={store.storeId}
-                  checked={store.name === shop}
+                  checked={selectedStore === store.storeId}
                   onChange={
                     (e) => setSelectedStore(Number(e.target.value)) // storeId를 number로 변환하여 설정
                   }

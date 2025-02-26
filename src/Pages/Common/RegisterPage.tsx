@@ -77,6 +77,10 @@ const RegisterPage = () => {
     }
   };
 
+  const handleLogin = () => {
+    navigate("../login"); // 로그인 페이지로 이동
+  };
+
   const handleNext = () => {
     if (isFormValid()) {
       setStep((prevStep) => prevStep + 1);
@@ -85,9 +89,9 @@ const RegisterPage = () => {
 
   const navigate = useNavigate();
 
-  const handleMain = () => {
-    navigate("../ownermain");
-  };
+  // const handleMain = () => {
+  //   navigate("../ownermain");
+  // };
 
   // 약관 동의 체크박스
   const [requiredCheckBox, setRequiredCheckBox] = useState({
@@ -190,7 +194,7 @@ const RegisterPage = () => {
 
       if (response.status === 200) {
         alert("가입이 완료되었습니다!");
-        handleNext();
+        handleLogin();
       }
     } catch (error: any) {
       console.error("에러 응답:", error.response?.data);
@@ -542,7 +546,7 @@ const RegisterPage = () => {
           )}
 
           {/* 스텝 6 (선택) */}
-          {step === 6 && (
+          {/* {step === 6 && (
             <>
               <div style={{ fontSize: "30px" }}>매장 등록하기(선택)</div>
               <input
@@ -575,7 +579,7 @@ const RegisterPage = () => {
                 매장등록 건너뛰기
               </button>
             </>
-          )}
+          )} */}
         </div>
       </div>
     </div>

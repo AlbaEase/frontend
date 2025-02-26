@@ -33,16 +33,33 @@ const LoginPage = () => {
 
   // 조건은 좀 더 생각해보기
 
-  const handleLogin = () => {
-    const idValid = id.length >= 5 && id.length <= 15; // id조건: 5자리 ~ 15자리
+  const handleLogin = async () => {
+    // 아이디, 비밀번호에 조건을 달았다. 백엔드에 요청을 넘기기 전에 1차적으로 거를 수 있도록
+    const idValid = id.length >= 5 && id.length <= 15;
     const passwordValid =
-      password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password); //password조건: 8자리 이상 문자와 숫자 포함
+      password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 
     if (idValid && passwordValid) {
       try {
-        navigate("/ownermain");
+        const response = await axios.post(
+          "http://3.39.237.218:8080/user/login",
+          {
+            id,
+            password,
+          }
+        );
+
+        if (response.status === 200) {
+          // localStorage.setItem("token", response.data.token); // 토큰 저장
+          // // 로그인 성공 시 페이지 이동
+          navigate("/ownermain");
+        } else {
+          setErrorMessage("로그인 실패: 다시 시도해주세요.");
+        }
       } catch (error) {
-        setErrorMessage("로그인 실패: 다시 시도해주세요.");
+        setErrorMessage(
+          "존재하지 않는 아이디와 비밀번호입니다. 다시 입력해주세요."
+        );
       }
     } else {
       setErrorMessage(
@@ -127,11 +144,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-
-// 1. 위에 헤더가 만들어지는 대로 추가해서 넣기
-// 2. 글꼴 확인한 후 변경하기
-// 3. loginForm 색상 변경하기 -> 정확하게 넣지 못함 일단 비슷하게 임의로 넣었는데 다음과 같이 넣어도 되는건지 잘 모르겠음
-// 4. 현재 html, css 작업만 한 상태 앞으로 타입스크립로 문법 짜서 넣기
-
-//  - 아이디랑 비밀번호 조건이 어떻게 되는지
-//  조건을 정해야 할 거 같다.
