@@ -1,18 +1,13 @@
 import styles from "./RequestModal.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 import CustomSelect from "../CustomSelect";
+import CustomSelectWorker from "../CustomSelectWorker";
 
 interface CalendarScheduleProps {
     onClose: () => void;
 }
-
-// type Schedule = {
-//     startTime: string;
-//     endTime: string;
-//     names: string[];
-// };
 
 const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -22,19 +17,24 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     >(null);
     const [selectedWorker, setSelectedWorker] = useState<string[]>([]);
 
-    const { currentDate, selectedName, setSelectedName } = useOwnerSchedule();
+    const { currentDate, selectedName, setSelectedName, otherGroupMembers } =
+        useOwnerSchedule();
     const { modalData } = useModal();
 
     const handleNameChange = (name: string) => {
         setSelectedName(name);
     };
 
+    // useEffect(() => {
+    //     console.log("요청 대상 변경됨: ", selectedWorker);
+    // }, [selectedWorker]);
+
     const handleCheckboxChange = (option: "all" | "select") => {
         setSelectedOption(option); // 둘 중 하나만 선택하도록
         if (option === "all") {
-            const allWorkers = modalData.flatMap((group) => group.names);
+            /* 여기 수정해야 됨!!!!!!!!!!!!!!!!!! */
+            const allWorkers = otherGroupMembers;
             setSelectedWorker(allWorkers);
-            console.log("선택한 대타 요청 근무자: ", selectedWorker);
         } else {
             setSelectedWorker([]);
         }
@@ -118,6 +118,18 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 </label>
                             </div>
                         </div>
+
+                        {/* "근무자 선택하기" 체크박스를 선택했을 때 CustomSelectWorker 렌더링 */}
+                        {selectedOption === "select" && (
+                            <div className={styles.selelctWorker}>
+                                <CustomSelectWorker
+                                    names={otherGroupMembers} // 모든 근무자 이름을 flat한 배열로 변환
+                                    selectedWorkers={selectedWorker}
+                                    onSelect={setSelectedWorker}
+                                />
+                            </div>
+                        )}
+
                         <div className={styles.confirm} onClick={goToNextStep}>
                             확인
                         </div>
@@ -178,7 +190,14 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                     {selectedName || "선택된 근무자 없음"}
                                 </span>
                             </div>
-                            <div className={styles.text2}>{"요청 대상 : "}</div>
+                            <div className={styles.text2}>
+                                {"요청 대상 : "}
+                                <span>
+                                    {selectedWorker.length > 0
+                                        ? selectedWorker.join(", ")
+                                        : "없음"}
+                                </span>
+                            </div>
                         </div>
                         <div className={styles.confirm2} onClick={goToNextStep}>
                             확인
@@ -203,6 +222,10 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
 
     // 다음 스텝으로 이동
     const goToNextStep = () => {
+        if (selectedWorker.length === 0) {
+            alert("요청 대상을 1명 이상 선택해주세요.");
+            return;
+        }
         setCurrentStep((prevStep) => prevStep + 1);
     };
 

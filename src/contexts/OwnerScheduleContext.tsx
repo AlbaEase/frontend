@@ -259,59 +259,33 @@ export const OwnerScheduleProvider = ({
     }, [selectedList, ownerSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
 
     /* 근무하는 날짜 또는 시간이 다른 그룹의 명단 */
-    const otherGroupMembersFunction = () => {
-        // 0. 선택된 알바생이 없으면 빈 배열 반환
-        if (!selectedName) return [];
+    const otherGroupMembers = useMemo(() => {
+        // 1. 그룹화된 스케줄에서 currentDate에 해당하는 그룹 찾기
+        const currentDateGroups =
+            groupedSchedules.find(
+                (group) => group.date === currentDate.format("YYYY-MM-DD")
+            )?.groups || [];
 
-        // 1. 선택된 알바생의 근무 일정 가져오기
-        const selectedUserSchedules = ownerSchedules.filter(
-            (schedule) => schedule.user.name === selectedName
+        // 2. currentDate에 해당하는 그룹에서 선택된 알바생의 그룹 찾기
+        const myGroup = currentDateGroups.find((group) =>
+            group.names.includes(selectedName)
         );
 
-        console.log(selectedUserSchedules);
+        if (!myGroup) return []; // 만약 나의 그룹이 없다면 빈 배열 리턴
 
-        // 2. 다른 알바생들의 근무 일정 필터링
+        // 3. 나의 그룹에 포함되지 않은 다른 사람들 필터링
         const nonOverlappingWorkers = ownerSchedules.filter((schedule) => {
             // 자기 자신 제외
             if (schedule.user.name === selectedName) return false;
 
-            return !selectedUserSchedules.some((selectedSchedule) => {
-                // 3. workDates가 있는 경우 (단일 근무일)
-                if (!selectedSchedule.repeatDays) {
-                    return (
-                        dayjs(schedule.workDates).format("YYYY-MM-DD") ===
-                            dayjs(selectedSchedule.workDates).format(
-                                "YYYY-MM-DD"
-                            ) &&
-                        // 겹치는 날짜와 겹치는 시간이 있으면 제외외
-                        schedule.startTime < selectedSchedule.endTime &&
-                        schedule.endTime > selectedSchedule.startTime
-                    );
-                }
-
-                // 4. repeatDays가 있는 경우 (반복 근무)
-                const selectedRepeatDays =
-                    selectedSchedule.repeatDays.split(",");
-                const scheduleRepeatDays =
-                    schedule.repeatDays?.split(",") || [];
-
-                return (
-                    selectedRepeatDays.some((day) =>
-                        scheduleRepeatDays.includes(day)
-                    ) &&
-                    schedule.startTime < selectedSchedule.endTime &&
-                    schedule.endTime > selectedSchedule.startTime
-                );
-            });
+            // 현재 날짜 그룹에서 선택된 알바생의 그룹에 포함되지 않은 사람들
+            return currentDateGroups.every(
+                (group) => !group.names.includes(schedule.user.name)
+            );
         });
 
         return nonOverlappingWorkers.map((schedule) => schedule.user.name);
-    };
-
-    const otherGroupMembers = useMemo(
-        () => otherGroupMembersFunction(),
-        [selectedName, ownerSchedules]
-    );
+    }, [ownerSchedules, selectedName, groupedSchedules, currentDate]);
 
     return (
         <OwnerScheduleContext.Provider
