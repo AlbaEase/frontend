@@ -1,5 +1,5 @@
 import styles from "./RequestModal.module.css";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 import CustomSelect from "../CustomSelect";
@@ -25,10 +25,6 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
         setSelectedName(name);
     };
 
-    // useEffect(() => {
-    //     console.log("요청 대상 변경됨: ", selectedWorker);
-    // }, [selectedWorker]);
-
     const handleCheckboxChange = (option: "all" | "select") => {
         setSelectedOption(option); // 둘 중 하나만 선택하도록
         if (option === "all") {
@@ -53,7 +49,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 {currentDate.format("YYYY/MM/DD")} |{" "}
                                 {modalData.length > 0 && (
                                     <span className={styles.scheduleList}>
-                                        {modalData.map((group, index) => {
+                                        {modalData.map((group: any, index: any) => {
                                             // "HH:mm:ss"에서 시와 분만 추출
                                             const startTimeFormatted =
                                                 group.startTime
@@ -231,7 +227,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
 
     return (
         <div className={styles.modalOverlay}>
-            {/* 모달창 사이즈 동적으로 조정 / modal, smallModal */}
+            {/* 모달창 사이즈 동적으로 조정 / modal, secondModal */}
             <div
                 className={`${styles.modal} ${
                     currentStep !== 1 ? styles.secondModal : ""

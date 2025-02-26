@@ -13,14 +13,19 @@ const SelectRadio = () => {
                 <div className={styles.selectBtn}>
                     {safeStores.length > 0 ? (
                         safeStores.map((store) => (
-                            <label key={store.storeId} className={styles.selectLabel}>
+                            <label
+                                key={store.storeId}
+                                className={styles.selectLabel}>
                                 <input
                                     type="radio"
                                     name="store"
                                     value={store.storeId}
                                     checked={selectedStore === store.storeId}
-                                    onChange={(e) =>
-                                        setSelectedStore(Number(e.target.value)) // storeId를 number로 변환하여 설정
+                                    onChange={
+                                        (e) =>
+                                            setSelectedStore(
+                                                Number(e.target.value)
+                                            ) // storeId를 number로 변환하여 설정
                                     }
                                 />
                                 {store.name}

@@ -1,4 +1,3 @@
-import styles from "./CustomSelect.module.css";
 import React, { useRef, useEffect, useState } from "react";
 
 type useSelect = [

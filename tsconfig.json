@@ -7,5 +7,8 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "noUnusedLocals": false, // 개발 중 사용하지 않는 변수 허용
+    "allowUnusedLabels": true, // 사용하지 않는 라벨 허용
+    "skipLibCheck": true
   }
 }

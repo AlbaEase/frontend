@@ -6,11 +6,10 @@ import Choice from "../../components/Choice";
 import Header from "../../components/Header";
 import PartTime from "../../components/PartTime";
 import SelectRadio from "../../components/SelectRadio";
-
-import styles from "./OwnerMainPage.module.css";
 import AlbaAddModal from "../../components/Modal/AlbaAddModal";
 import AlarmModal from "../../components/Modal/AlarmModal";
 import RequestModal from "../../components/Modal/RequestModal";
+import styles from "./OwnerMainPage.module.css";
 
 const OwnerMainPage = () => {
     /* 모달창 컨텍스트 생성 */
