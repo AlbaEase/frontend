@@ -1,7 +1,64 @@
 .customSelect {
-  position: relative;
-  width: 200px;
-  padding: 8px;
-  border-radius: 5px;
-  border: solid 2px black;
+    position: relative;
+    width: 87px;
+    height: 27px;
+
+    border-radius: 5px;
+    border: solid 1.5px black;
+
+    display: flex;
+    align-items: center; /* 세로 중앙 정렬 */
+    justify-content: flex-start; /* 가로 왼쪽 정렬 */
+
+    text-align: left; /* 텍스트 왼쪽 정렬 */
+}
+
+.label {
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    margin-left: 8px;
+}
+
+.selectOption {
+    position: absolute;
+    margin-top: 1px;
+    top: 100%; /* 버튼 바로 아래에 배치 */
+    left: 0;
+
+    padding: 2px 12px; /* 적절한 패딩 추가 */
+    padding-bottom: 5px;
+
+    width: 100%;
+    max-height: 200px; /* 너무 길어지지 않도록 최대 높이 설정 */
+    background-color: white;
+    border: 1px solid #ababab;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.option {
+    margin: 0px;
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+
+    font-size: 15px;
+    cursor: pointer;
+    list-style-type: none;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.option:hover {
+    background-color: #f0f0f0;
+}
+
+.arrowSvg {
+    margin-top: 2px;
+    margin-left: 5px;
+    width: 24px;
+    height: 28px;
+    cursor: pointer;
 }

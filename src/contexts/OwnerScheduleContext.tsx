@@ -56,6 +56,9 @@ interface OwnerScheduleContextType {
     // 날짜와 같은 시간대에 일하는 알바생 그룹
     currentDate: Dayjs;
     setCurrentDate: React.Dispatch<React.SetStateAction<Dayjs>>;
+    selectedName: string;
+    setSelectedName: React.Dispatch<React.SetStateAction<string>>;
+    otherGroupMembers: string[];
 }
 
 const OwnerScheduleContext = createContext<
@@ -72,6 +75,7 @@ export const OwnerScheduleProvider = ({
     const [selectedList, setSelectedList] = useState<string[]>([]);
     const [ownerSchedules, setOwnerSchedules] = useState<OwnerSchedule[]>([]);
     const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
+    const [selectedName, setSelectedName] = useState(""); // 교환을 요청할 근무자 (기존 근무자)
 
     /* DB에서 가게 목록 가져오기 */
     useEffect(() => {
@@ -115,7 +119,7 @@ export const OwnerScheduleProvider = ({
                     `http://localhost:8080/schedules/store/${selectedStore}`
                 );
                 const data: OwnerSchedule[] = await res.json();
-                console.log(data);
+                // console.log(data);
                 setOwnerSchedules(data);
             } catch (error) {
                 console.error(
@@ -250,9 +254,38 @@ export const OwnerScheduleProvider = ({
             ), // startTime 기준 정렬
         }));
 
-        console.log("groupedSchedules 결과: ", result);
+        // console.log("groupedSchedules 결과: ", result);
         return result;
     }, [selectedList, ownerSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
+
+    /* 근무하는 날짜 또는 시간이 다른 그룹의 명단 */
+    const otherGroupMembers = useMemo(() => {
+        // 1. 그룹화된 스케줄에서 currentDate에 해당하는 그룹 찾기
+        const currentDateGroups =
+            groupedSchedules.find(
+                (group) => group.date === currentDate.format("YYYY-MM-DD")
+            )?.groups || [];
+
+        // 2. currentDate에 해당하는 그룹에서 선택된 알바생의 그룹 찾기
+        const myGroup = currentDateGroups.find((group) =>
+            group.names.includes(selectedName)
+        );
+
+        if (!myGroup) return []; // 만약 나의 그룹이 없다면 빈 배열 리턴
+
+        // 3. 나의 그룹에 포함되지 않은 다른 사람들 필터링
+        const nonOverlappingWorkers = ownerSchedules.filter((schedule) => {
+            // 자기 자신 제외
+            if (schedule.user.name === selectedName) return false;
+
+            // 현재 날짜 그룹에서 선택된 알바생의 그룹에 포함되지 않은 사람들
+            return currentDateGroups.every(
+                (group) => !group.names.includes(schedule.user.name)
+            );
+        });
+
+        return nonOverlappingWorkers.map((schedule) => schedule.user.name);
+    }, [ownerSchedules, selectedName, groupedSchedules, currentDate]);
 
     return (
         <OwnerScheduleContext.Provider
@@ -268,6 +301,9 @@ export const OwnerScheduleProvider = ({
                 groupedSchedules,
                 currentDate,
                 setCurrentDate,
+                selectedName,
+                setSelectedName,
+                otherGroupMembers,
             }}>
             {children}
         </OwnerScheduleContext.Provider>

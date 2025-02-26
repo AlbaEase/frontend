@@ -1,159 +1,247 @@
 .modalOverlay {
-  width: 1280px;
-  height: 800px;
-  position: fixed;
-  top: 0%;
-  left: 12.5%;
+    width: 1280px;
+    height: 800px;
+    position: fixed;
+    top: 0%;
+    left: 12.5%;
 
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 10;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .modal {
-  font-family: "Noto Sans KR", sans-serif;
-  width: 800px;
-  height: 500px;
-  /* border: 1px black solid; */
-  border-radius: 30px;
-  background-color: white;
+    font-family: "Noto Sans KR", sans-serif;
+    width: 800px;
+    height: 500px;
+    /* border: 1px black solid; */
+    border-radius: 30px;
+    background-color: white;
+}
+
+.secondModal {
+    font-family: "Noto Sans KR", sans-serif;
+    width: 800px;
+    height: 282px;
+    /* border: 1px black solid; */
+    border-radius: 30px;
+    background-color: white;
 }
 
 .container {
-  width: 752px;
-  height: 40px;
-  border-bottom: 1px #666666 solid;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
+    width: 752px;
+    height: 40px;
+    border-bottom: 1px #666666 solid;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
 }
 
 .title {
-  width: 608px;
-  height: 24px;
-  /* border: 1px black solid; */
-  margin-left: 20px;
-  font-size: 20px;
-  font-weight: 700;
+    width: 608px;
+    height: 24px;
+    /* border: 1px black solid; */
+    margin-left: 20px;
+    font-size: 20px;
+    font-weight: 700;
 }
 
 .button {
-  width: 30px;
-  height: 24px;
-  /* border: 1px black solid; */
-  margin-right: 20px;
+    width: 30px;
+    height: 24px;
+    /* border: 1px black solid; */
+    margin-right: 20px;
 }
 
 .button:hover {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 /* 모달창 내부 */
 
 .contentContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* 가로 가운데 정렬 */
-  margin-top: 25px;
-  margin-left: 45px;
-  margin-right: 45px;
-  height: 100%;
-  width: 710px;
-  text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 가로 가운데 정렬 */
+    margin-top: 25px;
+    margin-left: 45px;
+    margin-right: 45px;
+    height: 100%;
+    width: 710px;
+    text-align: center;
 }
 
 .content {
-  width: 710px;
-  margin-top: 30px;
+    position: relative;
+    width: 710px;
+    margin-top: 30px;
 }
 
 .category {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start; /* 왼쪽 정렬 */
-  align-items: center; /* 각 항목의 시작점을 맞추기 위해 설정 */
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start; /* 왼쪽 정렬 */
+    align-items: flex-start; /* 각 항목의 시작점을 맞추기 위해 설정 */
 
-  margin-bottom: 20px;
-  font-size: 20px;
+    margin-bottom: 20px;
+    font-size: 20px;
 }
 
 .category > div {
-  display: inline-block;
-  vertical-align: middle; /* 각 div가 수직으로 가운데 정렬되도록 설정 */
+    display: inline-block;
+    vertical-align: middle; /* 각 div가 수직으로 가운데 정렬되도록 설정 */
 }
 
 .category > div:first-child {
-  margin-right: 250px;
+    margin-right: 250px;
 }
 
 .category > div:last-child {
-  font-size: 16px;
+    font-size: 16px;
+}
+
+.text1 {
+    min-width: 100px;
+    text-align: left;
 }
 
 .confirm {
-  margin-top: 190px;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin-right: 0;
+    position: absolute; /* 절대 위치 지정 */
+    top: 330px; /* 부모 요소에서의 위치 설정 */
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-right: 0;
 }
 
 .employeeName {
-  margin-left: 17px;
+    margin-left: 17px;
 }
 
 .selectBox {
-  display: flex;
-  flex-direction: column; /* 세로로 정렬 */
-  gap: 5px; /* 체크박스들 사이의 간격 조정 */
-  margin-left: 30px;
+    display: flex;
+    flex-direction: column; /* 세로로 정렬 */
+    gap: 5px; /* 체크박스들 사이의 간격 조정 */
+    margin-left: 10px;
 }
 
 .selectBox input {
-  display: block;
-  margin-right: 10px; /* 체크박스와 텍스트 사이에 여백을 줄 수 있습니다 */
+    display: block;
+    margin-right: 10px; /* 체크박스와 텍스트 사이에 여백을 줄 수 있습니다 */
 }
 
 .selectBox [type="checkbox"] {
-  appearance: none;
-  box-sizing: border-box;
-  background-clip: content-box;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #ababab;
-  border-radius: 4px;
-  cursor: pointer;
+    appearance: none;
+    content: "✔";
+    color: #ababab;
+    box-sizing: border-box;
+    background-clip: content-box;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ababab;
+    background-color: #ffffff;
+    border-radius: 4px;
+    cursor: pointer;
 
-  margin-bottom: 10px;
-  transform: translateY(4px);
+    margin-bottom: 10px;
+    transform: translateY(4px);
+}
+
+/* 기본 체크 모양 (회색) */
+.selectBox input[type="checkbox"]::before {
+    content: "✔";
+    font-size: 15px;
+    color: #ababab; /* 기본 연한 회색 체크 */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .selectBox label {
-  display: flex;
-  align-items: center; /* 체크박스와 글씨를 수직 정렬 */
-  gap: 0px; /* 체크박스와 글씨 사이 여백 */
-  line-height: 22px; /* 체크박스 높이와 동일하게 맞춤 */
+    display: flex;
+    align-items: center; /* 체크박스와 글씨를 수직 정렬 */
+    gap: 0px; /* 체크박스와 글씨 사이 여백 */
+    line-height: 22px; /* 체크박스 높이와 동일하게 맞춤 */
+    cursor: pointer;
 }
 
-.checkbox [type="checkbox"]:checked {
-  border: 2px solid #e8decf;
-  border-radius: 4px;
-  background-color: #ffeb00;
+.selectBox [type="checkbox"]:checked {
+    background-color: #ffffff; /* 배경 유지 */
+}
+
+/* 체크된 상태에서 내부 체크 모양 변경 (검은색) */
+.selectBox input[type="checkbox"]:checked::before {
+    color: #000000; /* 체크 색상을 검은색으로 변경 */
+}
+
+.selelctWorker {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* 왼쪽 정렬 */    
 }
 
 .schedule {
-  flex-direction: row; /* 한 줄로 배치 */
-  justify-content: flex-start; /* 왼쪽 정렬 */
-  align-items: center; /* 세로 중앙 정렬 */
-  white-space: nowrap; /* 줄 바꿈 없이 한 줄로 출력 */
+    flex-direction: row; /* 한 줄로 배치 */
+    justify-content: flex-start; /* 왼쪽 정렬 */
+    align-items: center; /* 세로 중앙 정렬 */
+    white-space: nowrap; /* 줄 바꿈 없이 한 줄로 출력 */
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-weight: 450;
+    font-size: 13px;
+    /* margin-right: 10px; */
 }
 
 .scheduleList {
-  display: inline;
+    display: inline;
+    font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+/* .scheduleItem {
+    margin-left: 0;
+} */
+
+.confirm2 {
+    margin-top: 30px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.askText {
+    font-size: 16px;
+}
+
+.step2text {
+    font-size: 13px;
+    margin-top: 18px;
+}
+
+.text2 {
+    text-align: left;
+    margin-left: 12px;
+    margin-bottom: 10px;
+}
+
+.text3 {
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+}
+
+.confirm3 {
+    font-size: 16px;
+    margin-top: 71px;
+    cursor: pointer;
+}
+
+.invisible {
+    display: none;
 }
