@@ -3,6 +3,7 @@ import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import axiosInstance from "../../api/axios";
 
 // interface FormData {
 //   id: string;
@@ -41,7 +42,7 @@ const LoginPage = () => {
 
     if (idValid && passwordValid) {
       try {
-        const response = await axios.post(
+        const response = await axiosInstance.post(
           "http://3.39.237.218:8080/user/login",
           {
             id,
