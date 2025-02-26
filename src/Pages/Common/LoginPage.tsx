@@ -2,7 +2,6 @@ import styles from "./LoginPage.module.css";
 import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
 import axiosInstance from "../../api/axios";
 
 // interface FormData {
@@ -43,7 +42,7 @@ const LoginPage = () => {
     if (idValid && passwordValid) {
       try {
         const response = await axiosInstance.post(
-          "http://3.39.237.218:8080/user/login",
+          "/user/login",
           {
             id,
             password,
@@ -51,13 +50,14 @@ const LoginPage = () => {
         );
 
         if (response.status === 200) {
-          // localStorage.setItem("token", response.data.token); // 토큰 저장
-          // // 로그인 성공 시 페이지 이동
+          localStorage.setItem("token", response.data.token); // 토큰 저장
+          // 로그인 성공 시 페이지 이동
           navigate("/ownermain");
         } else {
           setErrorMessage("로그인 실패: 다시 시도해주세요.");
         }
       } catch (error) {
+        console.error("로그인 오류:", error);
         setErrorMessage(
           "존재하지 않는 아이디와 비밀번호입니다. 다시 입력해주세요."
         );
