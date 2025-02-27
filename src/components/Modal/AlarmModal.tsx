@@ -1,45 +1,43 @@
+import { useState, useEffect, useRef } from "react";
 import styles from "./AlarmModal.module.css";
-import { useState } from "react";
 import Button from "../Button";
+import { fetchNotifications } from "../../api/apiService";
 
 interface AlarmProps {
   onClose: () => void;
 }
 
-interface Alarm {
-  requester: string;
-  date: string;
-  accepter: string;
+interface Notification {
+  id: number;
+  requester: string; // 요청한 사람
+  accepter: string; // 변경 대상자
+  date: string; // 변경 요청 날짜
 }
 
 const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
-  // 알람 데이터를 상태로 관리
-  const [alarmData, setAlarmData] = useState<Alarm[]>([
-    {
-      requester: "김가윤",
-      date: "25.01.15/18:00~23:00",
-      accepter: "이서영",
-    },
-    {
-      requester: "조정현",
-      date: "25.01.12/18:00~23:00",
-      accepter: "조유성",
-    },
-  ]);
+  const [alarmData, setAlarmData] = useState<Notification[]>([]);
 
-  // 거절하기 버튼 클릭 시 알람 삭제
-  const handleReject = (index: number) => {
-    setAlarmData((prev) => prev.filter((_, i) => i !== index)); // 해당 알람을 삭제
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchNotifications();
+      if (data) {
+        setAlarmData(data);
+      }
+    };
+
+    fetchData(); //
+  }, []);
+
+  // ✅ 알람 수락하기
+  const handleAccept = (id: number) => {
+    console.log(`✅ 알람 수락: ${id}`);
+    setAlarmData((prev) => prev.filter((alarm) => alarm.id !== id));
   };
 
-  // 수락하기 버튼 클릭 시 새로운 알람 데이터 추가
-  const handleAccept = (index: number) => {
-    const acceptedAlarm = alarmData[index];
-    // 여기서는 예시로 알람 데이터를 새롭게 추가하는 로직
-    // 실제 구현에 맞게 스케줄에 추가하는 등의 로직을 넣을 수 있음
-    console.log(`수락한 알람:`, acceptedAlarm);
-    // 추가적인 동작이 필요하다면 여기에 추가 가능
-    setAlarmData((prev) => prev.filter((_, i) => i !== index)); // 알람을 수락 후 삭제
+  // ✅ 알람 거절하기
+  const handleReject = (id: number) => {
+    console.log(`❌ 알람 거절: ${id}`);
+    setAlarmData((prev) => prev.filter((alarm) => alarm.id !== id));
   };
 
   return (
@@ -52,32 +50,41 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           </div>
         </div>
         <div className={styles.content}>
-          {alarmData.map((alarm, index) => (
-            <div key={index} className={styles.contentBox}>
-              <div className={styles.alarmContent}>
-                <div>
-                  <span style={{ fontWeight: "700" }}>{alarm.requester}</span>
-                  님의 근무 변경 요청이 있어요.
+          {alarmData.length > 0 ? (
+            alarmData.map((alarm) => (
+              <div key={alarm.id} className={styles.contentBox}>
+                <div className={styles.alarmContent}>
+                  <div>
+                    <span style={{ fontWeight: "700" }}>{alarm.requester}</span>
+                    님의 근무 변경 요청이 있어요.
+                  </div>
+                  <div>{alarm.date}</div>
+                  <div>요청 대상자: {alarm.accepter}</div>
                 </div>
-                <div>{alarm.date}</div>
-                <div>요청 대상자: {alarm.accepter}</div>
-              </div>
-              <div className={styles.alarmButton}>
-                <div>
-                  <Button width="105px" height="35px" children="수락하기" />
-                </div>
-                <div>
+                <div className={styles.alarmButton}>
+                  <Button
+                    width="105px"
+                    height="35px"
+                    onClick={() => handleAccept(alarm.id)}
+                  >
+                    수락하기
+                  </Button>
                   <Button
                     width="105px"
                     height="35px"
                     variant="gray"
-                    children="거절하기"
-                    onClick={() => handleReject(index)}
-                  />
+                    onClick={() => handleReject(alarm.id)}
+                  >
+                    거절하기
+                  </Button>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p style={{ textAlign: "center", padding: "20px" }}>
+              새로운 알람이 없습니다.
+            </p>
+          )}
         </div>
       </div>
     </div>
