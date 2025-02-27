@@ -14,7 +14,7 @@ const MyInformation = () => {
     storeName: "",
   });
 
-  // useEffect사용하는 이유:
+  // useEffect 사용하는 이유:
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken"); // 🔍 저장된 토큰 확인

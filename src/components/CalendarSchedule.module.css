@@ -8,7 +8,7 @@
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 10px;
 
-    background-color: rgba(170, 185, 154, 0.4);    ;
+    background-color: rgba(0, 153, 99, 0.3);    ;
     border-radius: 10px;
     width: 94px;
     height: 29px;
@@ -27,7 +27,7 @@
     top: 0;
     bottom: 0;
     width: 11px;
-    background-color: rgba(170, 185, 154);
+    background-color: rgba(0, 153, 99);
     border-top-left-radius: 12px;
     border-bottom-left-radius: 12px;
   }
