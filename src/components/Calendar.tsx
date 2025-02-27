@@ -10,6 +10,7 @@ dayjs.locale("ko");
 const Calendar = () => {
     const { groupedSchedules, currentDate, setCurrentDate } =
         useOwnerSchedule();
+    console.log(groupedSchedules);
     const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
     const minDate = dayjs("2025-01-01");

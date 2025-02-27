@@ -7,6 +7,7 @@ import {
     useEffect,
 } from "react";
 import dayjs, { Dayjs } from "dayjs";
+import axiosInstance from "../api/loginAxios";
 
 /* 넘길 수 있는 데이터
  * 1. 알바생의 아이디, 시작 시간과 종료 시간 (schedule 컴포넌트들에 사용)
@@ -19,14 +20,9 @@ import dayjs, { Dayjs } from "dayjs";
  * export const OwnerScheduleProvider 부분에 예시 주석으로 작성
  */
 
-/* 새 타입 명시 */
-interface Users {
-    userId: number; // 알바생 아이디
-    name: string; // 알바생 이름
-}
-
 interface OwnerSchedule {
-    user: Users; // 객체로 사용
+    userId: number; // 알바생 아이디
+    fullName: string; // 알바생 이름
     startTime: string; // 시작 시간 (13:00)
     endTime: string; // 종료 시간 (21:00)
     repeatDays: string; // 반복 요일
@@ -77,28 +73,45 @@ export const OwnerScheduleProvider = ({
     const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
     const [selectedName, setSelectedName] = useState(""); // 교환을 요청할 근무자 (기존 근무자)
 
-    /* DB에서 가게 목록 가져오기 */
+    // localStorage에서 토큰을 가져옵니다.
+    const token = localStorage.getItem("accessToken");
+
+    // DB에서 가게 목록 가져오기 (axios로 변경)
     useEffect(() => {
         const fetchStores = async () => {
             try {
-                const res = await fetch("http://localhost:8080/stores"); // API 호출
-                const data: any[] | undefined = await res.json(); // data가 undefined일 수도 있음
+                if (token) {
+                    // axios 요청 헤더에 토큰을 추가합니다.
+                    const res = await axiosInstance.get(
+                        "http://3.39.237.218:8080/store/me",
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
+                            },
+                        }
+                    );
+                    const data = res.data;
 
-                if (!data) {
-                    console.error("가게 목록 데이터가 없습니다.");
-                    return; // 함수 종료
-                }
+                    console.log("받아온 데이터: ", data);
 
-                // storeId, name, storeCode만 추출하여 새로운 배열 생성
-                const filteredStores = data.map((store) => ({
-                    storeId: store.storeId,
-                    name: store.name,
-                    storeCode: store.storeCode,
-                }));
+                    if (!data) {
+                        console.error("가게 목록 데이터가 없습니다.");
+                        return;
+                    }
 
-                setStores(filteredStores);
-                if (filteredStores.length > 0) {
-                    setSelectedStore(filteredStores[0].storeId); // 기본 선택값 설정
+                    const filteredStores = data.map((store: any) => ({
+                        storeId: store.storeId,
+                        name: store.name,
+                        storeCode: store.storeCode,
+                    }));
+
+                    setStores(filteredStores);
+                    if (filteredStores.length > 0) {
+                        setSelectedStore(filteredStores[0].storeId);
+                    }
+                } else {
+                    console.error("토큰이 없습니다. 인증을 확인하세요.");
+                    // 인증 절차를 여기에 추가할 수 있습니다.
                 }
             } catch (error) {
                 console.error("가게 목록을 불러오는 데 실패했습니다.", error);
@@ -108,19 +121,26 @@ export const OwnerScheduleProvider = ({
         fetchStores();
     }, []);
 
-    /* 가게 선택할 때마다 스케줄 다르게 불러오기 */
+    // 가게 선택할 때마다 스케줄 다르게 불러오기 (axios로 변경)
     useEffect(() => {
         const fetchSchedules = async () => {
-            // selectedStore는 storeId로 number 타입
-            if (!selectedStore) return; // 선택된 가게가 없으면 실행하지 않음
+            if (!selectedStore) return;
 
             try {
-                const res = await fetch(
-                    `http://localhost:8080/schedules/store/${selectedStore}`
-                );
-                const data: OwnerSchedule[] = await res.json();
-                // console.log(data);
-                setOwnerSchedules(data);
+                if (token) {
+                    const res = await axiosInstance.get(
+                        `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
+                            },
+                        }
+                    );
+                    const data: OwnerSchedule[] = res.data;
+                    setOwnerSchedules(data);
+                } else {
+                    console.error("토큰이 없습니다. 인증을 확인하세요.");
+                }
             } catch (error) {
                 console.error(
                     "스케줄 데이터를 불러오는 데 실패했습니다.",
@@ -132,16 +152,20 @@ export const OwnerScheduleProvider = ({
         fetchSchedules();
     }, [selectedStore]);
 
+    useEffect(() => {
+        console.log("현재 ownerSchedules 데이터: ", ownerSchedules);
+    }, [ownerSchedules]);
+
     /* 스케줄 그룹화 */
     const groupedSchedules = useMemo(() => {
         /* selectedList에 있는 알바생들의 일정만 filteredSchedules에 저장 */
         const filteredSchedules = ownerSchedules.filter((schedule) =>
-            selectedList.includes(schedule.user.name)
+            selectedList.includes(schedule.fullName)
         );
 
-        // console.log("스케줄", ownerSchedules);
-        // console.log("선택 리스트", selectedList);
-        // console.log("필터링 된 스케줄", filteredSchedules);
+        console.log("스케줄", ownerSchedules);
+        console.log("선택 리스트", selectedList);
+        console.log("필터링 된 스케줄", filteredSchedules);
 
         /* currentDate를 기준으로 한 달의 시작일과 종료일을 계산 */
         const startOfMonth = currentDate.startOf("month");
@@ -170,7 +194,7 @@ export const OwnerScheduleProvider = ({
 
         filteredSchedules.forEach((schedule) => {
             // repeat_days가 null인 경우, workDate를 기준으로 날짜 매칭
-            if (schedule.repeatDays === null) {
+            if (!schedule.repeatDays) {
                 const workDate = dayjs(schedule.workDates); // workDate를 Dayjs로 변환
                 if (workDate.month() === currentDate.month()) {
                     // 스케줄의 월이 현재 날짜의 월과 같으면
@@ -184,13 +208,13 @@ export const OwnerScheduleProvider = ({
 
                     if (existingGroup) {
                         // 이미 존재하는 그룹 있으면 이름을 추가
-                        existingGroup.names.push(schedule.user.name);
+                        existingGroup.names.push(schedule.fullName);
                     } else {
                         // 이전에 해당 스케줄 그룹이 없으면 새로 그룹 추가
                         scheduleMap[dateStr].push({
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
-                            names: [schedule.user.name],
+                            names: [schedule.fullName],
                         });
                     }
                 }
@@ -200,24 +224,20 @@ export const OwnerScheduleProvider = ({
             /* 시작 날짜 가져와서 그날부터 추가하도록 수정해야 됨 */
             else {
                 const dayOfWeekStrings = [
-                    "일",
-                    "월",
-                    "화",
-                    "수",
-                    "목",
-                    "금",
-                    "토",
+                    "SUN",
+                    "MON",
+                    "TUE",
+                    "WED",
+                    "THU",
+                    "FRI",
+                    "SAT",
                 ];
-
-                // 반복 요일 받아오기
-                // repeatDays가 null 또는 undefined일 경우 빈 배열로 처리
-                const repeatDaysArray = (schedule.repeatDays || "").split(","); // repeatDays를 ','로 구분하여 배열로 변환
 
                 monthDates.forEach((date) => {
                     const dayOfWeek = dayOfWeekStrings[date.day()]; // 해당 날짜의 요일, 2025-02-13의 경우 "목"
 
                     // 반복 요일 배열에 해당 날짜의 요일이 포함되어 있으면 스케줄 추가
-                    if (repeatDaysArray.includes(dayOfWeek)) {
+                    if (schedule.repeatDays.includes(dayOfWeek)) {
                         const dateStr = date.format("YYYY-MM-DD");
 
                         // scheduleMap[dateStr]가 존재하지 않으면 빈 배열로 초기화
@@ -233,12 +253,12 @@ export const OwnerScheduleProvider = ({
                         );
 
                         if (existingGroup) {
-                            existingGroup.names.push(schedule.user.name);
+                            existingGroup.names.push(schedule.fullName);
                         } else {
                             scheduleMap[dateStr].push({
                                 startTime: schedule.startTime,
                                 endTime: schedule.endTime,
-                                names: [schedule.user.name],
+                                names: [schedule.fullName],
                             });
                         }
                     }
@@ -276,15 +296,15 @@ export const OwnerScheduleProvider = ({
         // 3. 나의 그룹에 포함되지 않은 다른 사람들 필터링
         const nonOverlappingWorkers = ownerSchedules.filter((schedule) => {
             // 자기 자신 제외
-            if (schedule.user.name === selectedName) return false;
+            if (schedule.fullName === selectedName) return false;
 
             // 현재 날짜 그룹에서 선택된 알바생의 그룹에 포함되지 않은 사람들
             return currentDateGroups.every(
-                (group) => !group.names.includes(schedule.user.name)
+                (group) => !group.names.includes(schedule.fullName)
             );
         });
 
-        return nonOverlappingWorkers.map((schedule) => schedule.user.name);
+        return nonOverlappingWorkers.map((schedule) => schedule.fullName);
     }, [ownerSchedules, selectedName, groupedSchedules, currentDate]);
 
     return (

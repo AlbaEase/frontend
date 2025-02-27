@@ -1,6 +1,7 @@
 import styles from "./Checkbox.module.css";
 import { useState, useEffect } from "react";
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
+import axiosInstance from "../api/loginAxios";
 
 const Checkbox = () => {
     /* DB 연결 */
@@ -9,29 +10,42 @@ const Checkbox = () => {
     /* 체크박스 선택 관리 */
     const [isAllSelected, setIsAllSelected] = useState(false);
 
+    const token = localStorage.getItem("accessToken"); // 토큰 가져오기
+
+    console.log("selectedList: ", selectedList);
+
     useEffect(() => {
         const fetchEmployees = async () => {
             try {
-                // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
-                const res = await fetch(
-                    `http://localhost:8080/schedules/store/${selectedStore}`
-                );
-                if (!res.ok) {
-                    throw new Error("직원 목록 가져오기 실패");
+                console.log("useEffect 실행 확인");
+                if (!token) {
+                    console.error("토큰이 없습니다. 인증을 확인하세요.");
+                    return;
                 }
-                const scheduleData = await res.json();
+
+                // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
+                const res = await axiosInstance.get(
+                    `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const scheduleData = res.data;
 
                 // Set을 사용하여 중복된 user.userId 제거
                 const uniqueUserIds = new Set(
-                    scheduleData.map((schedule: any) => schedule.user.userId)
+                    scheduleData.map((schedule: any) => schedule.userId)
                 );
 
-                // 중복된 user.userId를 제거한 후, user.name을 가져와서 배열에 저장
+                // 중복된 userId를 제거한 후, fullName을 가져와서 배열에 저장
                 const employeeNames = [...uniqueUserIds].map((userId) => {
                     const schedule = scheduleData.find(
-                        (schedule: any) => schedule.user.userId === userId
+                        (schedule: any) => schedule.userId === userId
                     );
-                    return schedule?.user?.name; // 해당 user_id에 해당하는 name만 가져옴
+                    return schedule?.fullName; // 해당 user_id에 해당하는 name만 가져옴
                 });
 
                 // 이름만 저장된 배열을 상태에 저장
@@ -43,6 +57,8 @@ const Checkbox = () => {
 
         fetchEmployees();
     }, [selectedStore]);
+
+    // console.log("scheduleData: ", scheduleData);
 
     // 직원 목록이 업데이트되면 selectedList도 자동으로 업데이트
     useEffect(() => {
