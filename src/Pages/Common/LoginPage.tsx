@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import axiosInstance from "../../api/loginAxios";
-import axios from "axios";
 
 // interface FormData {
 //   id: string;
