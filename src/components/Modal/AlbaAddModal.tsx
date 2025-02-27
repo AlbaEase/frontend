@@ -1,15 +1,13 @@
 import styles from "./AlbaAddModal.module.css";
 import { useState, useEffect } from "react";
 import Button from "../Button";
-import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext"; // 매장 정보를 관리하는 context
-import SelectRadio from "../SelectRadio"; // SelectRadio import
+import axiosInstance from "../../api/axios";
 
 interface AlbaAddModalProps {
   onClose: () => void;
 }
 
 const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
-  const { stores, selectedStore, setSelectedStore } = useOwnerSchedule(); // 가게 정보와 선택된 매장 상태
   const [businessNumber, setBusinessNumber] = useState<string>("");
   const [shop, setShop] = useState<string>("이디야");
 
@@ -38,15 +36,14 @@ const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
   // 사업자번호로 매장 정보 조회
   // 현재 매장 api가 준비되지 않아서 하드코딩으로 미리 매장을 준비해서 사용함
   // 나중에 연동이 되는대로 사용해보기
-  // const fetchShop = async () => {
+  // const fakeShop = async () => {
   //   try {
-  //     const res = await fetch(
-  //       `http://localhost:8080/shop?businessNumber=${businessNumber}`
-  //     );
-  //     const data = await res.json();
+  //     const res = await axiosInstance.get(`/shop`, {
+  //       params: { businessNumber }, // 쿼리 파라미터 추가
+  //     });
 
-  //     if (res.ok && data) {
-  //       setShop(data.name); // 서버에서 받은 매장명 설정
+  //     if (res.data) {
+  //       setShop(res.data.name); // 서버에서 받은 매장명 설정
   //       setIsOpen(true);
   //     } else {
   //       alert("매장을 찾을 수 없습니다. 사업자번호를 확인해주세요.");
@@ -79,22 +76,18 @@ const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
     if (!shop) return;
 
     try {
-      const res = await fetch("http://localhost:8080/register-shop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessNumber, shopName: shop }),
+      await axiosInstance.post("/store", {
+        businessNumber,
+        shopName: shop,
       });
 
-      if (res.ok) {
-        setStep(2); // 등록 완료 화면으로 이동
-      } else {
-        alert("매장 등록에 실패했습니다.");
-      }
+      setStep(2); // 등록 완료 화면으로 이동
     } catch (error) {
       console.error("매장 등록 중 오류 발생:", error);
-      alert("오류가 발생했습니다.");
+      alert("매장 등록에 실패했습니다.");
     }
   };
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>

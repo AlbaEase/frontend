@@ -1,56 +1,77 @@
 import styles from "./MyInformation.module.css";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../api/loginAxios";
 
 const MyInformation = () => {
+  // 항상 각자처리하던 거 한번에 처리해보기
+  // 총이름, 전화번호, 비밀번호, 역할, 가게이름 초기값 설정하기
   const [userInfo, setUserInfo] = useState({
-    name: "",
-    phone: "",
+    fullName: "",
+    phoneNumber: "",
     password: "********",
-    job: "",
-    place: "",
+    role: "",
+    storeName: "",
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  // useEffect사용하는 이유:
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem("token"); // 로그인 시 저장된 토큰 가져오기
+    const token = localStorage.getItem("accessToken"); // 🔍 저장된 토큰 확인
+    console.log("현재 저장된 토큰:", token);
 
-      if (!token) {
-        setError("로그인이 필요합니다.");
-        setLoading(false);
-        return;
-      }
-
+    if (!token) {
+      console.warn("🚨 토큰이 없습니다. 로그인 페이지로 이동하세요.");
+      return;
+    }
+    // ✅ 토큰 디코딩하여 만료 시간 확인
+    const decodeJWT = (token: string) => {
       try {
-        const response = await axios.get(
-          "http://3.39.237.218:8080/user/mypage",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        setUserInfo({
-          name: response.data.name,
-          phone: response.data.phone,
-          password: "********", // 백엔드에서 받아와도 노출 X
-          job: response.data.job || "사장님",
-          place: response.data.place || "등록된 매장 없음",
-        });
-
-        setLoading(false);
-      } catch (err) {
-        setError("사용자 정보를 불러오는 데 실패했습니다.");
-        setLoading(false);
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        return JSON.parse(atob(base64));
+      } catch (error) {
+        console.error("🚨 JWT 디코딩 실패:", error);
+        return null;
       }
     };
 
-    fetchUserData();
-  }, []);
+    const decoded = decodeJWT(token);
+    console.log("🔍 디코딩된 토큰 정보:", decoded);
 
-  if (loading) return <div>로딩 중...</div>;
-  if (error) return <div>{error}</div>;
+    if (decoded?.exp) {
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (decoded.exp < currentTime) {
+        console.warn("🚨 토큰이 만료되었습니다. 로그인 페이지로 이동합니다.");
+        localStorage.removeItem("accessToken");
+        window.location.href = "/login";
+        return;
+      }
+    }
+    const fetchUserInfo = async () => {
+      try {
+        const response = await axiosInstance.get("/user/me");
+        console.log("🔍 서버 응답 데이터:", response.data); // ✅ 응답 데이터 확인
+
+        setUserInfo((prev) => ({
+          ...prev,
+          fullName: response.data.fullName || "",
+          phoneNumber: response.data.phoneNumber || "",
+          role: response.data.role || "",
+          storeName: response.data.storeName || "",
+        }));
+      } catch (error) {
+        console.error("🚨 유저 정보를 가져오는 데 실패했습니다:", error);
+
+        if (error.response?.status === 401) {
+          console.warn("🚨 토큰이 만료되었습니다. 로그인 페이지로 이동합니다.");
+          localStorage.removeItem("accessToken"); // ❌ 만료된 토큰 삭제
+          window.location.href = "/login"; // 🔄 로그인 페이지로 리디렉트
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   return (
     <div className={styles.MyInformation}>
@@ -63,11 +84,11 @@ const MyInformation = () => {
       </div>
       <div className={styles.contentContainer}>
         <div className={styles.title}>이름</div>
-        <div className={styles.content}>{userInfo.name}</div>
+        <div className={styles.content}>{userInfo.fullName}</div>
       </div>
       <div className={styles.contentContainer}>
         <div className={styles.title}>휴대폰 번호</div>
-        <div className={styles.content}>{userInfo.phone}</div>
+        <div className={styles.content}>{userInfo.phoneNumber}</div>
       </div>
       <div className={styles.contentContainer}>
         <div className={styles.title}>비밀번호</div>
@@ -75,11 +96,11 @@ const MyInformation = () => {
       </div>
       <div className={styles.contentContainer}>
         <div className={styles.title}>직업</div>
-        <div className={styles.content}>{userInfo.job}</div>
+        <div className={styles.content}>{userInfo.role}</div>
       </div>
       <div className={styles.contentContainer}>
         <div className={styles.title}>근무 매장</div>
-        <div className={styles.contentPlace}>{userInfo.place}</div>
+        <div className={styles.contentPlace}>{userInfo.storeName}</div>
       </div>
     </div>
   );

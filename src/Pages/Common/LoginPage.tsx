@@ -2,8 +2,8 @@ import styles from "./LoginPage.module.css";
 import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import axiosInstance from "../../api/loginAxios";
 import axios from "axios";
-import axiosInstance from "../../api/axios";
 
 // interface FormData {
 //   id: string;
@@ -35,37 +35,47 @@ const LoginPage = () => {
   // 조건은 좀 더 생각해보기
 
   const handleLogin = async () => {
-    // 아이디, 비밀번호에 조건을 달았다. 백엔드에 요청을 넘기기 전에 1차적으로 거를 수 있도록
-    const idValid = id.length >= 5 && id.length <= 15;
-    const passwordValid =
-      password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+    if (id.length < 5 || id.length > 15) {
+      setErrorMessage("아이디는 5자 이상, 15자 이하입니다.");
+      return;
+    }
+    if (
+      password.length < 8 ||
+      !/[A-Za-z]/.test(password) ||
+      !/\d/.test(password)
+    ) {
+      setErrorMessage("비밀번호는 8자 이상, 문자와 숫자를 포함해야 합니다.");
+      return;
+    }
 
-    if (idValid && passwordValid) {
-      try {
-        const response = await axiosInstance.post(
-          "http://3.39.237.218:8080/user/login",
-          {
-            id,
-            password,
-          }
-        );
+    try {
+      const response = await axios.post("http://3.39.237.218:8080/user/login", {
+        id,
+        password,
+      });
 
-        if (response.status === 200) {
-          // localStorage.setItem("token", response.data.token); // 토큰 저장
-          // // 로그인 성공 시 페이지 이동
-          navigate("/ownermain");
-        } else {
-          setErrorMessage("로그인 실패: 다시 시도해주세요.");
-        }
-      } catch (error) {
-        setErrorMessage(
-          "존재하지 않는 아이디와 비밀번호입니다. 다시 입력해주세요."
-        );
+      console.log("🔍 로그인 응답 데이터:", response.data);
+
+      const token = response.data;
+      if (!token) {
+        console.error("🚨 서버 응답에 토큰이 없음!", response.data);
+        setErrorMessage("서버에서 인증 토큰을 받지 못했습니다.");
+        return;
       }
-    } else {
-      setErrorMessage(
-        "아이디는 5자 이상, 15자 이하, 비밀번호는 8자 이상, 문자와 숫자가 혼합되어야 합니다."
-      );
+
+      console.log("✅ 받은 토큰:", token);
+
+      // ✅ `localStorage`에 저장한 후 axiosInstance 헤더 업데이트
+      localStorage.setItem("accessToken", token);
+      console.log("✅ 저장된 토큰 확인:", localStorage.getItem("accessToken"));
+
+      // ✅ 로그인 후 axiosInstance의 Authorization 헤더를 업데이트
+      axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
+
+      navigate("/ownermain");
+    } catch (error) {
+      console.error("🚨 로그인 요청 실패:", error);
+      setErrorMessage("아이디 또는 비밀번호가 잘못되었습니다.");
     }
   };
 
