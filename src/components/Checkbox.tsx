@@ -116,16 +116,19 @@ const Checkbox = () => {
                 />
                 {"전체 선택"}
             </label>
-            {sortedArray.map((employeeName) => (
-                <label key={employeeName}>
-                    <input
-                        type="checkbox"
-                        onChange={() => handleSingleSelect(employeeName)}
-                        checked={selectedList.includes(employeeName)}
-                    />
-                    {employeeName}
-                </label>
-            ))}
+            {sortedArray.map((employeeName, index) => {
+                const repeatedClassName = `name${(index % 10) + 1}`; // 1부터 10까지 반복
+                return (
+                    <label key={employeeName} className={styles[repeatedClassName]}>
+                        <input
+                            type="checkbox"
+                            onChange={() => handleSingleSelect(employeeName)}
+                            checked={selectedList.includes(employeeName)}
+                        />
+                        {employeeName}
+                    </label>
+                );
+            })}
         </div>
     );
 };

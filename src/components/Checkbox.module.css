@@ -32,10 +32,64 @@
     line-height: 1.5em; /* 체크박스 높이와 동일하게 맞춤 */
 }
 
-.checkbox [type="checkbox"]:checked {
+.name1 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: rgba(114, 125, 115, 0.4);
+}
+
+.name2 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #AAB99A;
+}
+
+.name3 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #D2E5BD;
+}
+
+.name4 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #F0F0D7;
+}
+
+.name5 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #8D77AB;
+}
+
+.name6 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #EFB6C8;
+}
+
+.name7 [type="checkbox"]:checked {
     border: 2px solid #e8decf;
     border-radius: 4px;
     background-color: #FFEB00;
+}
+
+.name8 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #90D5E8;
+}
+
+.name9 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #EEC179;
+}
+
+.name10 [type="checkbox"]:checked {
+    border: 2px solid #e8decf;
+    border-radius: 4px;
+    background-color: #D47FDC;
 }
 
 .selectAll {
