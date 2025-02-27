@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../api/loginAxios";
 
 const MyInformation = () => {
+
   // 항상 각자처리하던 거 한번에 처리해보기
   // 총이름, 전화번호, 비밀번호, 역할, 가게이름 초기값 설정하기
   const [userInfo, setUserInfo] = useState({

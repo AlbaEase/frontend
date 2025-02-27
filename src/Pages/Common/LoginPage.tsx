@@ -2,8 +2,10 @@ import styles from "./LoginPage.module.css";
 import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+
 import axiosInstance from "../../api/loginAxios";
 import axios from "axios";
+
 
 // interface FormData {
 //   id: string;
@@ -35,6 +37,7 @@ const LoginPage = () => {
   // 조건은 좀 더 생각해보기
 
   const handleLogin = async () => {
+
     if (id.length < 5 || id.length > 15) {
       setErrorMessage("아이디는 5자 이상, 15자 이하입니다.");
       return;
