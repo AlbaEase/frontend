@@ -6,7 +6,6 @@ import { useState } from "react";
 import axiosInstance from "../../api/loginAxios";
 import axios from "axios";
 
-
 // interface FormData {
 //   id: string;
 //   password: string;
@@ -37,7 +36,6 @@ const LoginPage = () => {
   // 조건은 좀 더 생각해보기
 
   const handleLogin = async () => {
-
     if (id.length < 5 || id.length > 15) {
       setErrorMessage("아이디는 5자 이상, 15자 이하입니다.");
       return;
@@ -52,7 +50,8 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await axios.post("http://3.39.237.218:8080/user/login", {
+      // ✅ axiosInstance 사용 (로그인 요청에는 자동으로 Authorization 헤더 제외됨)
+      const response = await axiosInstance.post("/user/login", {
         id,
         password,
       });
