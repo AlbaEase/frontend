@@ -10,6 +10,7 @@
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
+  font-family: "Noto Sans KR", sans-serif;
 }
 .title {
   width: 500px;
