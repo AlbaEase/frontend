@@ -76,14 +76,16 @@
   border-bottom: 2px black solid;
 }
 .numberInput {
-  width: 187px;
+  font-family: "Noto Sans KR", sans-serif;
+  width: 200px;
   height: 20px;
   border: none;
   outline: none; /* 포커스 시 윤곽선 없애기 */
-  margin-right: 40px;
+  /* margin-right: 40px; */
   font-size: 13px;
 }
 .inputButton {
+  font-family: "Noto Sans KR", sans-serif;
   width: 65px;
   height: 23px;
   font-size: 13px;
