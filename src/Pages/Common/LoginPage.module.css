@@ -20,6 +20,7 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: right;
+  font-family: "Noto Sans KR", sans-serif;
 }
 .contentPosition {
   width: 700px;
@@ -48,6 +49,7 @@ img {
   /* border: 1px black solid; */
   margin-top: 30%;
   margin-left: 15%;
+  font-family: "Noto Sans KR", sans-serif;
 }
 .input {
   width: 100%;

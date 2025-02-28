@@ -26,11 +26,13 @@ body {
   /* border: 1px black solid; */
   margin-right: 10%;
   margin-bottom: 5%;
+  font-family: "Noto Sans KR", sans-serif;
 }
 .content2 {
   margin-top: 60px;
   display: flex;
   justify-content: space-between;
+  font-family: "Noto Sans KR", sans-serif;
 }
 img {
   width: 320px;
