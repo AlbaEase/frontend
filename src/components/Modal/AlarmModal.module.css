@@ -1,9 +1,10 @@
 .modalOverlay {
-  width: 1280px;
-  height: 800px;
+  width: 100vw;
+  height: 100vh;
   position: fixed;
   top: 0%;
-  left: 12.5%;
+  left: 50%;
+  transform: translateX(-50%); /* ✅ 좌우 정중앙 정렬 */
 
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 10;
@@ -12,7 +13,7 @@
 
   display: flex;
   justify-content: center;
-  align-items: center;
+  /* align-items: flex-start; */
 }
 
 .modal {
@@ -21,6 +22,7 @@
   /* border: 1px black solid; */
   border-radius: 30px;
   background-color: white;
+  margin-top: 5%;
 }
 
 .container {
@@ -52,7 +54,7 @@
 .content {
   width: 800px;
   height: 390px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-top: 2%;
 }
 .contentBox {

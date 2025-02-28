@@ -108,12 +108,12 @@ const MypageCalendar = () => {
               {day ? day : ""}
               <div className={styles.schedules}>
                 {/* groupedSchedules의 그룹이 여러 개일 경우 각각 CalendarSchedule을 생성 */}
-                {schedulesForDate.map((scheduleGroup, groupIndex) => (
-                  <CalendarSchedule
-                    key={groupIndex}
-                    schedules={[scheduleGroup]}
-                  />
-                ))}
+                {/* {schedulesForDate.map((scheduleGroup, groupIndex) => (
+                  // <CalendarSchedule
+                  //   key={groupIndex}
+                  //   schedules={[scheduleGroup]}
+                  // />
+                ))} */}
               </div>
             </div>
           );

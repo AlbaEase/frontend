@@ -4,7 +4,7 @@
 .MySalary {
   width: 1000px;
   height: 640px;
-  border: 2px black solid;
+  /* border: 2px black solid; */
 }
 .contents1 {
   width: 1000px;
@@ -32,7 +32,7 @@
 .calendar {
   width: 720px;
   height: 530px;
-  border: 2px black solid;
+  /* border: 2px black solid; */
 }
 .contents2 {
   display: flex;
@@ -42,5 +42,5 @@
 .albaRadio {
   width: 720px;
   height: 30px;
-  border: 2px black solid;
+  /* border: 2px black solid; */
 }
