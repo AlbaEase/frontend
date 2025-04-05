@@ -1,11 +1,20 @@
-import "./EmployeeMyChange.css";
-
+import styles from "./EmployeeMyChange.module.css";
+import MyHeader from "../../components/employeeMy/MyHeader";
+import EmployeeNavBar from "../../components/employeeMy/EmployeeNavBar";
+import EmployeeMyCh from "../../components/employeeMy/EmployeeMyCh";
 const EmployeeMyChange = () => {
   return (
-    <>
-      알바생 마이페이지 안에 있는 변경 내역을 보여줄 수 있도록 구현할
-      예정입니다.
-    </>
+    <div className={styles.employeeMychange}>
+      <div className={styles.contents}>
+        {/* 헤더 */}
+        <MyHeader />
+        <div className={styles.title}>My Page</div>
+        <div className={styles.components}>
+          <EmployeeNavBar />
+          <EmployeeMyCh />
+        </div>
+      </div>
+    </div>
   );
 };
 

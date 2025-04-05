@@ -1,0 +1,49 @@
+.employeeMyInfo {
+  width: 1200px;
+  height: 700px;
+  border: 1px solid black;
+  padding: 10px 20px;
+
+  font-family: "Noto Sans KR", sans-serif;
+}
+.title {
+  width: 100%;
+  border-bottom: 1px solid black;
+
+  display: flex;
+  justify-content: space-between;
+}
+.titleT {
+  font-size: 27px;
+  padding: 10px 20px;
+}
+.titleEdit {
+  padding: 10px 20px;
+}
+
+.content {
+  width: 100%;
+  /* border: 1px solid black; */
+
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+
+  margin-top: 30px;
+}
+
+.contents {
+  width: 100%;
+  /* border: 1px solid black; */
+
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+.contentsTitle {
+  font-size: 22px;
+}
+
+.contentsContents {
+  font-size: 20px;
+}

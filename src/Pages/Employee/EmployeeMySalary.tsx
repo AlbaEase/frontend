@@ -1,7 +1,22 @@
-import "./EmployeeMySalary.css";
+import styles from "./EmployeeMyChange.module.css";
+import MyHeader from "../../components/employeeMy/MyHeader";
+import EmployeeNavBar from "../../components/employeeMy/EmployeeNavBar";
+import EmployeeMyS from "../../components/employeeMy/EmployeeMyS";
 
 const EmployeeMySalary = () => {
-  return <>주인장 마이 페이지 안에 있는 월급 계산페이지를 구현할 예정입니다.</>;
+  return (
+    <div className={styles.employeeMychange}>
+      <div className={styles.contents}>
+        {/* 헤더 */}
+        <MyHeader />
+        <div className={styles.title}>My Page</div>
+        <div className={styles.components}>
+          <EmployeeNavBar />
+          <EmployeeMyS />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default EmployeeMySalary;
