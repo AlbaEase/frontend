@@ -9,6 +9,11 @@
     "allowSyntheticDefaultImports": true,
     "noUnusedLocals": false, // 개발 중 사용하지 않는 변수 허용
     "allowUnusedLabels": true, // 사용하지 않는 라벨 허용
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "baseUrl": "./src", // 경로 기준 설정
+    "paths": {
+      "@ap.cx/react-fullpage": ["@types/react-fullpage"] // 사용자 정의 타입 정의 경로 설정
+    }
+  },
+  "include": ["src"]
 }

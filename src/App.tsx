@@ -25,9 +25,7 @@ function App() {
                 <Route path="ownermypage" element={<OwnerMyPage />}></Route>
                 <Route path="ownermysalary" element={<OwnerMySalary />}></Route>
                 <Route path="ownermychange" element={<OwnerMyChange />}></Route>
-                <Route
-                    path="employeemain"
-                    element={<EmployeeMainPage />}></Route>
+                <Route path="employeemain" element={<EmployeeMainPage />}></Route>
                 <Route
                     path="employeemypage"
                     element={<EmployeeMyPage />}></Route>

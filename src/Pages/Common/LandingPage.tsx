@@ -1,19 +1,48 @@
-import styles from "./LandingPage.module.css";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import {
+  FullpageContainer,
+  FullpageSection,
+} from "@shinyongjun/react-fullpage";
+import "@shinyongjun/react-fullpage/css";
+
+import LandingHeader from "../landing/LandingHeader";
+
+import First from "../landing/First";
+import Second from "../landing/Second";
+import Third from "../landing/Third";
+import Fourth from "../landing/Fourth";
+import Fifth from "../landing/Fifth";
+import Sixth from "../landing/Sixth";
+
 const LandingPage = () => {
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
   return (
     <>
-      <div className={styles.landingPage}>
-        <div className={styles.header}>헤더</div>
-        <div className={styles.main}>
-          <p>
-            <Link to="../login">여기를 클릭</Link>해 로그인 하세요!
-          </p>
-          <p>
-            <Link to="../register">여기를 클릭</Link>해 회원가입 하세요!!
-          </p>
-        </div>
-      </div>
+      <LandingHeader />
+      <FullpageContainer
+        activeIndex={activeIndex}
+        setActiveIndex={setActiveIndex}
+      >
+        <FullpageSection>
+          <First />
+        </FullpageSection>
+        <FullpageSection>
+          <Second />
+        </FullpageSection>
+        <FullpageSection>
+          <Third />
+        </FullpageSection>
+        <FullpageSection>
+          <Fourth />
+        </FullpageSection>
+        <FullpageSection>
+          <Fifth />
+        </FullpageSection>
+        <FullpageSection>
+          <Sixth />
+        </FullpageSection>
+      </FullpageContainer>
     </>
   );
 };

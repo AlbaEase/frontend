@@ -1,7 +1,32 @@
-import "./EmployeeMyPage.css";
+import style from "./EmployeeMyPage.module.css";
+import { useState } from "react";
+
+import EmployeeMyInfo from "../../components/employeeMy/EmployeeMyInfo";
+import EmployeeNavBar from "../../components/employeeMy/EmployeeNavBar";
+import MyHeader from "../../components/employeeMy/MyHeader";
 
 const EmployeeMyPage = () => {
-  return <>알바생 마이페이지를 구현할 예정입니다.</>;
+  const [userInfo, setUserInfo] = useState({
+    fullName: "",
+    phoneNumber: "",
+    password: "********",
+    role: "",
+    storeName: "",
+  });
+
+  return (
+    <div className={style.employeeMyPage}>
+      <div className={style.contents}>
+        {/* 헤더 */}
+        <MyHeader />
+        <div className={style.title}>My Page</div>
+        <div className={style.components}>
+          <EmployeeNavBar />
+          <EmployeeMyInfo />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default EmployeeMyPage;

@@ -17,11 +17,11 @@ const LoginPage = () => {
   // });
 
   // id, password 상태관리
-  const [id, setId] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  const handleId = (e: React.ChangeEvent<HTMLInputElement>) => {
-    return setId(e.target.value);
+  const handleEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    return setEmail(e.target.value);
   };
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,8 +35,10 @@ const LoginPage = () => {
   // 조건은 좀 더 생각해보기
 
   const handleLogin = async () => {
-    if (id.length < 5 || id.length > 15) {
-      setErrorMessage("아이디는 5자 이상, 15자 이하입니다.");
+    // 이메일 형식 검증 (길이 제한 대신 이메일 형식 체크)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage("유효한 이메일 주소를 입력해 주세요.");
       return;
     }
     if (
@@ -51,7 +53,7 @@ const LoginPage = () => {
     try {
       // ✅ axiosInstance 사용 (로그인 요청에는 자동으로 Authorization 헤더 제외됨)
       const response = await axiosInstance.post("/user/login", {
-        id,
+        email,
         password,
       });
 
@@ -117,9 +119,9 @@ const LoginPage = () => {
             <input
               className={styles.input}
               type="text"
-              value={id}
-              onChange={handleId}
-              placeholder="ID"
+              value={email}
+              onChange={handleEmail}
+              placeholder="이메일"
             />
           </div>
           <div>
