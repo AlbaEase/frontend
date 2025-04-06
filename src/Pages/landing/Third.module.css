@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+.thirdLanding {
+  width: 100%;
+  height: 100vh;
+  border: 1px black solid;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0% 10%; /*-> 이거 사용하고 content에서 width:100% 주는 것도 가능 */
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    height: 100vh;
+    padding: 15% 10%;
+  }
+}
+.content {
+  border: 1px black solid;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  /* 반응형 처리 */
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    height: 100%;
+  }
+}
+.contents {
+  border: 1px black solid;
+  width: 100%;
+  height: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+
+  @media (max-width: 1024px) {
+    width: 100%; /* 너비를 100%로 설정 */
+    height: 30%; /* 폰으로 볼때 랜딩페이지를 화면의 60vh 설정 60퍼센트 화면에서 30퍼*/
+  }
+}
+
+.p1 {
+  font-family: "Inter", sans-serif;
+  font-size: 2rem;
+
+  @media (max-width: 1024px) {
+    font-size: 1.2rem;
+  }
+}
+
+.p2 {
+  font-family: "Inter", sans-serif;
+  font-size: 1.3rem;
+
+  @media (max-width: 1024px) {
+    font-size: 0.7rem;
+  }
+}
+.video {
+  border: 1px black solid;
+  width: 100%;
+  height: 75%;
+  display: flex;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    height: 70%; /* 폰으로 볼때 랜딩페이지를 화면의 60vh 설정 60퍼센트 화면에서 70퍼*/
+  }
+}

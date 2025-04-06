@@ -9,6 +9,9 @@ import OwnerMainPage from "./Pages/Owner/OwnerMainPage";
 import OwnerMyPage from "./Pages/Owner/OwnerMyPage";
 import OwnerMySalary from "./Pages/Owner/OwnerMySalary";
 import OwnerMyChange from "./Pages/Owner/OwnerMyChange";
+import EmployeeMyPage from "./Pages/Employee/EmployeeMyPage";
+import EmployeeMySalary from "./Pages/Employee/EmployeeMySalary";
+import EmployeeMyChange from "./Pages/Employee/EmployeeMyChange";
 
 function App() {
   return (
@@ -19,8 +22,16 @@ function App() {
         <Route path="register" element={<RegisterPage />}></Route>
         <Route path="ownermain" element={<OwnerMainPage />}></Route>
         <Route path="ownermypage" element={<OwnerMyPage />}></Route>
-        <Route path="ownermysalary" element={<OwnerMySalary />}></Route>
-        <Route path="ownermychange" element={<OwnerMyChange />}></Route>
+
+        <Route path="employeemypage" element={<EmployeeMyPage />}></Route>
+        <Route
+          path="employeemypage/mysalary"
+          element={<EmployeeMySalary />}
+        ></Route>
+        <Route
+          path="employeemypage/mychange"
+          element={<EmployeeMyChange />}
+        ></Route>
       </Routes>
       <Footer />
     </>

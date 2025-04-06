@@ -10,9 +10,10 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "type-check": "tsc -b"  
+    "type-check": "tsc -b"
   },
   "dependencies": {
+    "@shinyongjun/react-fullpage": "^1.10.1",
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",
     "react": "^18.3.1",
