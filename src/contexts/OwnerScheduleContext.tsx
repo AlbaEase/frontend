@@ -92,7 +92,7 @@ export const OwnerScheduleProvider = ({
                     );
                     const data = res.data;
 
-                    console.log("받아온 데이터: ", data);
+                    // console.log("받아온 데이터: ", data);
 
                     if (!data) {
                         console.error("가게 목록 데이터가 없습니다.");
@@ -152,9 +152,9 @@ export const OwnerScheduleProvider = ({
         fetchSchedules();
     }, [selectedStore]);
 
-    useEffect(() => {
-        console.log("현재 ownerSchedules 데이터: ", ownerSchedules);
-    }, [ownerSchedules]);
+    // useEffect(() => {
+    //     console.log("현재 ownerSchedules 데이터: ", ownerSchedules);
+    // }, [ownerSchedules]);
 
     /* 스케줄 그룹화 */
     const groupedSchedules = useMemo(() => {
@@ -163,9 +163,9 @@ export const OwnerScheduleProvider = ({
             selectedList.includes(schedule.fullName)
         );
 
-        console.log("스케줄", ownerSchedules);
-        console.log("선택 리스트", selectedList);
-        console.log("필터링 된 스케줄", filteredSchedules);
+        // console.log("스케줄", ownerSchedules);
+        // console.log("선택 리스트", selectedList);
+        // console.log("필터링 된 스케줄", filteredSchedules);
 
         /* currentDate를 기준으로 한 달의 시작일과 종료일을 계산 */
         const startOfMonth = currentDate.startOf("month");
