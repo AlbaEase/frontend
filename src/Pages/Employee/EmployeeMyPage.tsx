@@ -6,13 +6,7 @@ import EmployeeNavBar from "../../components/employeeMy/EmployeeNavBar";
 import MyHeader from "../../components/employeeMy/MyHeader";
 
 const EmployeeMyPage = () => {
-  const [userInfo, setUserInfo] = useState({
-    fullName: "",
-    phoneNumber: "",
-    password: "********",
-    role: "",
-    storeName: "",
-  });
+
 
   return (
     <div className={style.employeeMyPage}>
