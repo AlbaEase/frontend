@@ -1,0 +1,40 @@
+* {
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .background {
+    background-color: #d9d9d9;
+  }
+  
+  .ownerMainPage {
+    width: 1280px;
+    height: 800px;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    background-color: #ffffff;
+  }
+  
+  .mainContents {
+    display: flex;
+    flex-direction: row; /* 가로 배치 */
+    justify-content: flex-start; /* 왼쪽 정렬 */
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+  }
+  
+  .bottomContents {
+    display: flex;
+    flex-direction: row; /* 가로 배치 */
+    width: 100%;
+    max-width: 1280px;
+  
+    position: relative;
+  }
+  
