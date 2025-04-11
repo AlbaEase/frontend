@@ -35,7 +35,7 @@ const LoginPage = () => {
   // 조건은 좀 더 생각해보기
 
   const handleLogin = async () => {
-    // 이메일 형식 검증 (길이 제한 대신 이메일 형식 체크)
+    // 이메일 형식 및 비밀번호 유효성 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setErrorMessage("유효한 이메일 주소를 입력해 주세요.");
@@ -51,15 +51,15 @@ const LoginPage = () => {
     }
 
     try {
-      // ✅ axiosInstance 사용 (로그인 요청에는 자동으로 Authorization 헤더 제외됨)
+      // axiosInstance를 사용하여 로그인 요청
       const response = await axiosInstance.post("/user/login", {
         email,
         password,
       });
-
       console.log("🔍 로그인 응답 데이터:", response.data);
 
-      const token = response.data;
+      // 서버 응답에서 토큰과 역할 정보를 추출
+      const { token, role } = response.data;
       if (!token) {
         console.error("🚨 서버 응답에 토큰이 없음!", response.data);
         setErrorMessage("서버에서 인증 토큰을 받지 못했습니다.");
@@ -67,15 +67,22 @@ const LoginPage = () => {
       }
 
       console.log("✅ 받은 토큰:", token);
+      console.log("✅ 사용자 역할:", role);
 
-      // ✅ `localStorage`에 저장한 후 axiosInstance 헤더 업데이트
+      // localStorage에 토큰 저장 및 axiosInstance 헤더 업데이트
       localStorage.setItem("accessToken", token);
       console.log("✅ 저장된 토큰 확인:", localStorage.getItem("accessToken"));
-
-      // ✅ 로그인 후 axiosInstance의 Authorization 헤더를 업데이트
       axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
 
-      navigate("/ownermain");
+      // 역할에 따른 라우팅 분기
+      // role이 대문자로 전달되므로 대문자 비교 혹은 소문자로 변환해서 비교할 수 있습니다.
+      if (role === "OWNER") {
+        navigate("/ownermain");
+      } else if (role === "WORKER") {
+        navigate("/employeemain");
+      } else {
+        navigate("/defaultMain");
+      }
     } catch (error) {
       console.error("🚨 로그인 요청 실패:", error);
       setErrorMessage("아이디 또는 비밀번호가 잘못되었습니다.");

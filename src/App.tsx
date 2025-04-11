@@ -15,30 +15,30 @@ import EmployeeMySalary from "./Pages/Employee/EmployeeMySalary";
 import EmployeeMyChange from "./Pages/Employee/EmployeeMyChange";
 
 function App() {
-    return (
-        <>
-            <Routes>
-                <Route path="" element={<LandingPage />}></Route>
-                <Route path="login" element={<LoginPage />}></Route>
-                <Route path="register" element={<RegisterPage />}></Route>
-                <Route path="ownermain" element={<OwnerMainPage />}></Route>
-                <Route path="ownermypage" element={<OwnerMyPage />}></Route>
-                <Route path="ownermysalary" element={<OwnerMySalary />}></Route>
-                <Route path="ownermychange" element={<OwnerMyChange />}></Route>
-                <Route path="employeemain" element={<EmployeeMainPage />}></Route>
-                <Route
-                    path="employeemypage"
-                    element={<EmployeeMyPage />}></Route>
-                <Route
-                    path="employeemypage/mysalary"
-                    element={<EmployeeMySalary />}></Route>
-                <Route
-                    path="employeemypage/mychange"
-                    element={<EmployeeMyChange />}></Route>
-            </Routes>
-            <Footer />
-        </>
-    );
+  return (
+    <>
+      <Routes>
+        <Route path="" element={<LandingPage />}></Route>
+        <Route path="login" element={<LoginPage />}></Route>
+        <Route path="register" element={<RegisterPage />}></Route>
+        <Route path="ownermain" element={<OwnerMainPage />}></Route>
+        <Route path="ownermypage" element={<OwnerMyPage />}></Route>
+        <Route path="ownermysalary" element={<OwnerMySalary />}></Route>
+        <Route path="ownermychange" element={<OwnerMyChange />}></Route>
+        <Route path="employeemain" element={<EmployeeMainPage />}></Route>
+        <Route path="employeemypage" element={<EmployeeMyPage />}></Route>
+        <Route
+          path="employeemypage/mysalary"
+          element={<EmployeeMySalary />}
+        ></Route>
+        <Route
+          path="employeemypage/mychange"
+          element={<EmployeeMyChange />}
+        ></Route>
+      </Routes>
+      <Footer />
+    </>
+  );
 }
 
 export default App;
