@@ -29,7 +29,7 @@ const MyHeader = () => {
       </div>
       <div className={styles.nav}>
         <Link
-          to="/ownermain"
+          to="/employeemain"
           className={`${styles.link} ${
             myLocation.pathname === "/ownermain" ? styles.active : ""
           }`}
@@ -37,7 +37,7 @@ const MyHeader = () => {
           Calendar
         </Link>
         <Link
-          to="/ownermypage"
+          to="/employeemypage"
           className={`${styles.link} ${
             myLocation.pathname === "/ownermypage" ? styles.active : ""
           }`}

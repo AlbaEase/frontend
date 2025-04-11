@@ -1,7 +1,11 @@
 import styles from "./EmployeeMyInfo.module.css";
 import { useState } from "react";
+import { useModal } from "../../contexts/ModalContext";
+import EditModal from "../Modal/EditModal";
 
 const EmployeeMyInfo = () => {
+  const { activeModal, openModal, closeModal } = useModal();
+
   const [userInfo, setUserInfo] = useState({
     fullName: "",
     phoneNumber: "",
@@ -10,15 +14,12 @@ const EmployeeMyInfo = () => {
     storeName: "",
   });
 
-  const openModal = () => {
-    return <></>;
-  };
-
   return (
     <div className={styles.employeeMyInfo}>
       <div className={styles.title}>
         <div className={styles.titleT}>나의 정보</div>
-        <div className={styles.titleEdit} onClick={openModal}>
+
+        <div className={styles.titleEdit} onClick={() => openModal("edit")}>
           내 정보 수정하기
         </div>
       </div>
@@ -44,6 +45,8 @@ const EmployeeMyInfo = () => {
           <div className={styles.contentsContents}>{userInfo.storeName}</div>
         </div>
       </div>
+      {/* activeModal이 "edit"일 때 EditModal 렌더링 */}
+      {activeModal === "edit" && <EditModal onClose={closeModal} />}
     </div>
   );
 };
