@@ -1,11 +1,12 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "http://3.39.237.218:8080", // 백엔드 서버 주소
   headers: {
     "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
   },
-  withCredentials: true,
+  withCredentials: false,
 });
 
 // ✅ 요청 인터셉터에서 최신 토큰 가져오기

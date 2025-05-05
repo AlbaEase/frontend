@@ -7,6 +7,7 @@ const Header = () => {
     const myLocation = useLocation();
     const nav = useNavigate();
     const [userName, setUserName] = useState("");
+    const [userType, setUserType] = useState<string>(""); // 사용자 타입(OWNER/EMPLOYEE)
 
     useEffect(() => {
         // 로컬 스토리지에서 사용자 정보 가져오기
@@ -15,6 +16,8 @@ const Header = () => {
             try {
                 const parsedUserInfo = JSON.parse(userInfo);
                 setUserName(parsedUserInfo.name || "");
+                setUserType(parsedUserInfo.userType || ""); // 사용자 타입 설정
+                console.log("사용자 정보:", parsedUserInfo); // 디버깅용 로그
             } catch (error) {
                 console.error("사용자 정보 파싱 오류:", error);
             }
@@ -31,6 +34,19 @@ const Header = () => {
         nav("/login", { replace: true });
     };
 
+    // 사용자 타입에 따라 메인 페이지 경로 결정
+    const getMainPath = () => {
+        return userType === "EMPLOYEE" ? "/employeemain" : "/ownermain";
+    };
+
+    // 사용자 타입에 따라 마이페이지 경로 결정
+    const getMyPagePath = () => {
+        return userType === "EMPLOYEE" ? "/employeemypage" : "/ownermypage";
+    };
+
+    const mainPath = getMainPath();
+    const myPagePath = getMyPagePath();
+
     return (
         <header className={styles.header}>
             <div className={styles.logoContainer}>
@@ -39,25 +55,25 @@ const Header = () => {
                     alt="logo"
                     className={styles.logo}
                 />
-                <Link to="/ownermain" className={styles.title}>
+                <Link to={mainPath} className={styles.title}>
                     알바이즈
                     {userName && <span className={styles.userName}> | {userName}</span>}
                 </Link>
             </div>
             <div className={styles.nav}>
                 <Link
-                    to="/ownermain"
+                    to={mainPath}
                     className={`${styles.link} ${
-                        myLocation.pathname === "/ownermain"
+                        myLocation.pathname === mainPath
                             ? styles.active
                             : ""
                     }`}>
                     Calendar
                 </Link>
                 <Link
-                    to="/ownermypage"
+                    to={myPagePath}
                     className={`${styles.link} ${
-                        myLocation.pathname === "/ownermypage"
+                        myLocation.pathname === myPagePath
                             ? styles.active
                             : ""
                     }`}>
