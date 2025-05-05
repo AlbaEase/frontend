@@ -35,6 +35,14 @@
   color: #1c170d;
 }
 
+.userName {
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: #555;
+  margin-left: 5px;
+}
+
 .nav {
   display: flex;
   align-items: center;

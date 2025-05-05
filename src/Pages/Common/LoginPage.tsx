@@ -56,10 +56,41 @@ const LoginPage = () => {
         email,
         password,
       });
+      
+      // 응답 데이터 자세히 출력
       console.log("🔍 로그인 응답 데이터:", response.data);
+      console.log("🔍 응답 데이터 자세히:");
+      
+      // 응답 데이터의 모든 필드를 깊게 분석
+      const deepInspect = (obj: Record<string, unknown>, prefix = "") => {
+        if (!obj || typeof obj !== 'object') return;
+        
+        Object.keys(obj).forEach(key => {
+          const value = obj[key];
+          console.log(`${prefix}- ${key}: ${typeof value === 'object' ? '(object)' : JSON.stringify(value)}`);
+          
+          if (value && typeof value === 'object') {
+            deepInspect(value as Record<string, unknown>, `${prefix}  `);
+          }
+          
+          // 이름 관련 필드 특별 로깅
+          if (
+            key.includes('name') || 
+            key.includes('Name') || 
+            key === 'first_name' || 
+            key === 'last_name' || 
+            key === 'firstName' || 
+            key === 'lastName'
+          ) {
+            console.log(`🔎 발견된 이름 필드 - ${prefix}${key}: ${JSON.stringify(value)}`);
+          }
+        });
+      };
+      
+      deepInspect(response.data);
 
       // 서버 응답에서 토큰과 역할 정보를 추출
-      const { token, role } = response.data;
+      const { token, role, fullName } = response.data;
       if (!token) {
         console.error("🚨 서버 응답에 토큰이 없음!", response.data);
         setErrorMessage("서버에서 인증 토큰을 받지 못했습니다.");
@@ -68,10 +99,21 @@ const LoginPage = () => {
 
       console.log("✅ 받은 토큰:", token);
       console.log("✅ 사용자 역할:", role);
+      console.log("✅ 사용자 이름:", fullName);
 
       // localStorage에 토큰 저장 및 axiosInstance 헤더 업데이트
       localStorage.setItem("accessToken", token);
+      
+      // 사용자 정보 저장
+      const userInfo = {
+        role,
+        name: fullName, // 백엔드에서 전달한 fullName 사용
+        email
+      };
+      localStorage.setItem("userInfo", JSON.stringify(userInfo));
+      
       console.log("✅ 저장된 토큰 확인:", localStorage.getItem("accessToken"));
+      console.log("✅ 저장된 사용자 정보:", localStorage.getItem("userInfo"));
       axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
 
       // 역할에 따른 라우팅 분기
