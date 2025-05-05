@@ -13,7 +13,7 @@ const MyHeader = () => {
     // 로그아웃 처리 로직
     // 로그아웃 후 /login으로 리디렉션
     nav("/login", { replace: true });
-  };
+  }; 
 
   return (
     <header className={styles.header}>
