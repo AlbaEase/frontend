@@ -23,7 +23,7 @@ const MyHeader = () => {
           alt="logo"
           className={styles.logo}
         />
-        <Link to="/ownermain" className={styles.title}>
+        <Link to="/employeemain" className={styles.title}>
           알바이즈
         </Link>
       </div>
@@ -31,7 +31,7 @@ const MyHeader = () => {
         <Link
           to="/employeemain"
           className={`${styles.link} ${
-            myLocation.pathname === "/ownermain" ? styles.active : ""
+            myLocation.pathname === "/employeemain" ? styles.active : ""
           }`}
         >
           Calendar
@@ -39,7 +39,7 @@ const MyHeader = () => {
         <Link
           to="/employeemypage"
           className={`${styles.link} ${
-            myLocation.pathname === "/ownermypage" ? styles.active : ""
+            myLocation.pathname === "/employeemypage" ? styles.active : ""
           }`}
         >
           My Page
