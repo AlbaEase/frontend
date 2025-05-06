@@ -59,7 +59,7 @@
 }
 .contentBox {
   width: 800px;
-  height: 24px;
+  height: auto;
   /* border: 1px black solid; */
   margin-top: 30px;
   display: flex;
@@ -151,8 +151,14 @@
 .errorMessage {
   color: #ff3b30;
   font-size: 14px;
-  margin-top: 6px;
+  margin-top: 10px;
   margin-bottom: 10px;
+  margin-left: 48px;
+  text-align: left;
+  width: 70%;
+  font-weight: 500;
+  display: block;
+  line-height: 1.4;
 }
 
 /* 매장명 직접 입력 스타일 */

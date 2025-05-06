@@ -192,10 +192,10 @@ const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
                 {isValidating ? "검증 중..." : "입력 완료"}
               </button>
             </div>
-            {validationError && (
-              <div className={styles.errorMessage}>{validationError}</div>
-            )}
           </div>
+          {validationError && (
+            <div className={styles.errorMessage}>{validationError}</div>
+          )}
           
           {/* 입력 확인을 눌렀을 때 매장이 나오도록 하는 코드 */}
           {isOpen && (

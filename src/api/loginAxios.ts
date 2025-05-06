@@ -16,13 +16,8 @@ axiosInstance.interceptors.request.use(
     console.log("🔍 인터셉터 실행 - 저장된 토큰:", token);
 
     if (token) {
-      // 토큰을 헤더에 추가할 때 Bearer 접두사와 공백 확인
-      // JWT Filter에서 "Bearer " 접두사가 있는지 확인할 수 있음
       config.headers["Authorization"] = `Bearer ${token}`;
-      
-      // 디버깅용 로그
-      console.log("✅ Authorization 헤더:", config.headers["Authorization"]);
-      console.log("✅ 전체 헤더:", JSON.stringify(config.headers));
+      console.log("✅ Authorization 헤더 추가됨:", config.headers["Authorization"]);
     } else {
       console.warn(
         "🚨 Authorization 헤더 없음! 토큰이 저장되지 않았거나 불러올 수 없음."
@@ -36,24 +31,13 @@ axiosInstance.interceptors.request.use(
 
 // ✅ 응답 인터셉터: 401 에러 처리
 axiosInstance.interceptors.response.use(
-  (response) => {
-    // 응답이 성공적으로 왔을 때 로그 기록
-    console.log(`✅ ${response.config.url} 응답 성공:`, response.status);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // 에러 응답의 상세 정보 출력
-    console.error("🚨 API 오류 발생:", {
-      url: error.config?.url,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      headers: error.config?.headers,
-    });
+    console.error("🚨 API 오류 발생:", error);
 
     if (error.response?.status === 401) {
       console.log("🚨 토큰이 만료되었습니다. 다시 로그인 해주세요.");
       localStorage.removeItem("accessToken");
-      localStorage.removeItem("userInfo");
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -66,10 +50,6 @@ window.addEventListener("storage", () => {
   if (token) {
     axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
     console.log("✅ 스토리지 변경 감지: Authorization 헤더 업데이트됨!");
-  } else {
-    // 토큰이 없는 경우 헤더 제거
-    delete axiosInstance.defaults.headers["Authorization"];
-    console.log("✅ 스토리지 변경 감지: 토큰 없음, Authorization 헤더 제거됨");
   }
 });
 

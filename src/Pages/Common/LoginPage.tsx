@@ -88,7 +88,7 @@ const LoginPage = () => {
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       
       console.log("✅ 저장된 토큰 확인:", localStorage.getItem("accessToken"));
-      console.log("✅ 저장된 사용자 정보:", JSON.stringify(userInfo));
+      console.log("✅ 저장된 사용자 정보:", localStorage.getItem("userInfo"));
       
       // 모든 요청에 Authorization 헤더 추가
       axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
