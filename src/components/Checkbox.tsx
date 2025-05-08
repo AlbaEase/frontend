@@ -1,75 +1,95 @@
 import styles from "./Checkbox.module.css";
 import { useState, useEffect } from "react";
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
-import axiosInstance from "../api/loginAxios";
+
+// 사용자 정보 타입 정의
+interface UserInfo {
+    name: string;
+    userType: "OWNER" | "EMPLOYEE";
+    userId: number;
+    email?: string;
+    role?: string;
+}
 
 const Checkbox = () => {
-    /* DB 연결 */
-    const { selectedStore, selectedList, setSelectedList } = useOwnerSchedule();
+    /* 컨텍스트에서 값 가져오기 */
+    const { selectedList, setSelectedList, ownerSchedules } = useOwnerSchedule();
     const [employeesArray, setEmployeeArray] = useState<string[]>([]);
     /* 체크박스 선택 관리 */
     const [isAllSelected, setIsAllSelected] = useState(false);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
-    const token = localStorage.getItem("accessToken"); // 토큰 가져오기
-
-    console.log("selectedList: ", selectedList);
-
+    // 사용자 정보 로드
     useEffect(() => {
-        const fetchEmployees = async () => {
+        const storedUserInfo = localStorage.getItem("userInfo");
+        if (storedUserInfo) {
             try {
-                console.log("useEffect 실행 확인");
-                if (!token) {
-                    console.error("토큰이 없습니다. 인증을 확인하세요.");
-                    return;
-                }
-
-                // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
-                const res = await axiosInstance.get(
-                    `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                const scheduleData = res.data;
-
-                // Set을 사용하여 중복된 user.userId 제거
-                const uniqueUserIds = new Set(
-                    scheduleData.map((schedule: any) => schedule.userId)
-                );
-
-                // 중복된 userId를 제거한 후, fullName을 가져와서 배열에 저장
-                const employeeNames = [...uniqueUserIds].map((userId) => {
-                    const schedule = scheduleData.find(
-                        (schedule: any) => schedule.userId === userId
-                    );
-                    return schedule?.fullName; // 해당 user_id에 해당하는 name만 가져옴
-                });
-
-                // 이름만 저장된 배열을 상태에 저장
-                setEmployeeArray(employeeNames);
+                const parsedUserInfo = JSON.parse(storedUserInfo) as UserInfo;
+                setUserInfo(parsedUserInfo);
+                console.log("체크박스에 로드된 사용자 정보:", parsedUserInfo);
             } catch (error) {
-                console.error("직원 목록 불러오기 실패: ", error);
+                console.error("사용자 정보 파싱 오류:", error);
             }
-        };
-
-        fetchEmployees();
-    }, [selectedStore]);
-
-    // console.log("scheduleData: ", scheduleData);
-
-    // 직원 목록이 업데이트되면 selectedList도 자동으로 업데이트
-    useEffect(() => {
-        if (employeesArray.length > 0) {
-            setSelectedList(employeesArray);
-            setIsAllSelected(true);
         }
-    }, [employeesArray, setSelectedList]);
+    }, []);
+
+    // OwnerScheduleContext에서 가져온 ownerSchedules에서 직원 이름 목록 추출
+    useEffect(() => {
+        if (!ownerSchedules.length) {
+            console.log("스케줄 데이터가 없어 직원 목록을 생성할 수 없습니다.");
+            setEmployeeArray([]);
+            return;
+        }
+
+        console.log("스케줄 데이터에서 직원 목록 추출 시작:", ownerSchedules);
+        
+        // 중복 이름 제거하여 직원 목록 생성
+        const uniqueEmployeeNames = Array.from(
+            new Set(ownerSchedules.map(schedule => schedule.fullName))
+        ).filter(Boolean);
+
+        console.log("추출된 직원 이름 목록:", uniqueEmployeeNames);
+        setEmployeeArray(uniqueEmployeeNames);
+        
+        // 사용자 유형에 따라 선택 목록 처리
+        if (userInfo?.userType === "EMPLOYEE") {
+            // 직원인 경우 자신의 이름만 포함
+            const currentUserName = userInfo.name;
+            // 이름 형식을 확인해서, fullName과 name이 정확히 일치하는지 필터링
+            // data.sql에서는 full name을 사용하고 일부 로그인 시스템은 name만 사용할 수 있음
+            const matchingNames = uniqueEmployeeNames.filter(name => 
+                name.includes(currentUserName) || currentUserName.includes(name)
+            );
+            
+            if (matchingNames.length > 0) {
+                console.log("현재 사용자와 일치하는 이름 찾음:", matchingNames);
+                setSelectedList(matchingNames);
+            } else {
+                console.log("현재 사용자와 일치하는 이름을 찾지 못함, 표시 가능한 모든 이름:", uniqueEmployeeNames);
+                // 직원 유형이지만 이름이 일치하지 않으면, 표시 가능한 이름 중 첫 번째를 선택
+                if (uniqueEmployeeNames.length > 0) {
+                    setSelectedList([uniqueEmployeeNames[0]]);
+                } else {
+                    setSelectedList([]);
+                }
+            }
+        } else {
+            // 사장인 경우 모든 직원 선택
+            console.log("사장님 권한으로 모든 직원 선택");
+            setSelectedList(uniqueEmployeeNames);
+        }
+    }, [ownerSchedules, userInfo, setSelectedList]);
+
+    // 직원 목록이 업데이트될 때 isAllSelected 상태 업데이트
+    useEffect(() => {
+        setIsAllSelected(
+            employeesArray.length > 0 && 
+            selectedList.length === employeesArray.length
+        );
+    }, [employeesArray, selectedList]);
 
     // 문자열 정렬 (오름차순)
-    const sortedArray: string[] = employeesArray.sort();
+    const sortedArray: string[] = [...employeesArray].sort();
 
     /* 전체 선택 및 해제 */
     const handleAllSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +99,6 @@ const Checkbox = () => {
             // 선택이 해제되면
             setSelectedList([]);
         }
-        // setIsAllSelected(e.target.checked);
     };
 
     /* 개별 선택 및 해제 */
@@ -88,23 +107,12 @@ const Checkbox = () => {
             const newList = prev.includes(name)
                 ? prev.filter((item) => item !== name)
                 : [...prev, name];
-
-            // 만약 일일이 선택해서 전체 선택이 되면 전체 선택 버튼 활성화
-            // setIsAllSelected(newList.length === sortedArray.length);
             return newList;
-
-            // if (prev.includes(name)) {
-            //     return prev.filter((item) => item !== name);
-            // } else {
-            //     return [...prev, name];
-            // }
         });
     };
 
-    // isAllSelected 업데이트를 useEffect로 분리하여 렌더링 후 실행
-    useEffect(() => {
-        setIsAllSelected(selectedList.length === sortedArray.length);
-    }, [selectedList, sortedArray]);
+    // 직원 권한인 경우 체크박스 비활성화
+    const isEmployeeUser = userInfo?.userType === "EMPLOYEE";
 
     return (
         <div className={styles.checkbox}>
@@ -113,17 +121,22 @@ const Checkbox = () => {
                     type="checkbox"
                     onChange={handleAllSelect}
                     checked={isAllSelected}
+                    disabled={isEmployeeUser} // 직원인 경우 비활성화
                 />
                 {"전체 선택"}
             </label>
             {sortedArray.map((employeeName, index) => {
                 const repeatedClassName = `name${(index % 10) + 1}`; // 1부터 10까지 반복
                 return (
-                    <label key={employeeName} className={styles[repeatedClassName]}>
+                    <label 
+                        key={employeeName} 
+                        className={`${styles[repeatedClassName]} ${isEmployeeUser ? styles.disabled : ''}`}
+                    >
                         <input
                             type="checkbox"
                             onChange={() => handleSingleSelect(employeeName)}
                             checked={selectedList.includes(employeeName)}
+                            disabled={isEmployeeUser} // 직원인 경우 비활성화
                         />
                         {employeeName}
                     </label>

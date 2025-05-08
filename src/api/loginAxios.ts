@@ -1,11 +1,12 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "http://3.39.237.218:8080", // 백엔드 서버 주소
   headers: {
     "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
   },
-  withCredentials: true,
+  withCredentials: false,
 });
 
 // ✅ 요청 인터셉터에서 최신 토큰 가져오기
@@ -16,7 +17,7 @@ axiosInstance.interceptors.request.use(
 
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
-      console.log("✅ Authorization 헤더 추가됨:", config.headers);
+      console.log("✅ Authorization 헤더 추가됨:", config.headers["Authorization"]);
     } else {
       console.warn(
         "🚨 Authorization 헤더 없음! 토큰이 저장되지 않았거나 불러올 수 없음."
@@ -32,6 +33,8 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error("🚨 API 오류 발생:", error);
+
     if (error.response?.status === 401) {
       console.log("🚨 토큰이 만료되었습니다. 다시 로그인 해주세요.");
       localStorage.removeItem("accessToken");

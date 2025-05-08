@@ -4,6 +4,7 @@ import { useModal } from "../../contexts/ModalContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 import CustomSelect from "../CustomSelect";
 import CustomSelectWorker from "../CustomSelectWorker";
+import { requestShift, requestModification } from "../../api/apiService";
 
 interface CalendarScheduleProps {
     onClose: () => void;
@@ -16,6 +17,10 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
         "all" | "select" | null // 요청 대상 선택 체크박스
     >(null);
     const [selectedWorker, setSelectedWorker] = useState<string[]>([]);
+    const [requestDetails, setRequestDetails] = useState<string>("");
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<boolean>(false);
 
     const { currentDate, selectedName, setSelectedName, otherGroupMembers } =
         useOwnerSchedule();
@@ -33,6 +38,64 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             setSelectedWorker(allWorkers);
         } else {
             setSelectedWorker([]);
+        }
+    };
+
+    const handleRequestDetailsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setRequestDetails(e.target.value);
+    };
+
+    // 백엔드로 대타 요청 또는 근무 수정 요청 전송
+    const sendRequest = async () => {
+        if (!modalData || modalData.length === 0) {
+            setError("스케줄 정보를 찾을 수 없습니다.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            // 현재 매장 ID와 선택된 스케줄 ID 가져오기
+            const storeId = modalData[0].storeId || 1; // 기본값 1
+            const scheduleId = modalData[0].scheduleId;
+
+            if (selectedOption === "select" && selectedWorker.length > 0) {
+                // 특정 근무자 대상 대타 요청
+                await requestShift(storeId, {
+                    toUserId: parseInt(selectedWorker[0]), // 첫 번째 선택된 근무자 ID
+                    scheduleId: scheduleId,
+                    requestType: "SPECIFIC_USER",
+                    requestDate: currentDate.format("YYYY-MM-DD")
+                });
+            } else if (selectedOption === "all") {
+                // 전체 근무자 대상 대타 요청
+                await requestShift(storeId, {
+                    toUserId: 0, // 0은 전체 대상을 의미
+                    scheduleId: scheduleId,
+                    requestType: "ALL_USERS",
+                    requestDate: currentDate.format("YYYY-MM-DD")
+                });
+            } else if (requestDetails) {
+                // 근무 수정 요청 (단계 3에서 요청 내용이 있는 경우)
+                await requestModification(storeId, {
+                    scheduleId: scheduleId,
+                    details: requestDetails
+                });
+            } else {
+                setError("요청 대상을 선택하거나 근무 수정 내용을 입력해주세요.");
+                return;
+            }
+
+            setSuccess(true);
+            setTimeout(() => {
+                onClose(); // 요청 성공 후 모달 닫기
+            }, 2000);
+        } catch (err) {
+            console.error("요청 전송 중 오류 발생:", err);
+            setError("요청을 처리하는 중 오류가 발생했습니다.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -112,6 +175,17 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                     />
                                     근무자 선택하기
                                 </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedOption === null && currentStep === 1}
+                                        onChange={() => {
+                                            setSelectedOption(null);
+                                            setCurrentStep(3); // 근무 수정 요청 단계로 이동
+                                        }}
+                                    />
+                                    근무 수정 요청하기
+                                </label>
                             </div>
                         </div>
 
@@ -189,64 +263,139 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                             <div className={styles.text2}>
                                 {"요청 대상 : "}
                                 <span>
-                                    {selectedWorker.length > 0
-                                        ? selectedWorker.join(", ")
-                                        : "없음"}
+                                    {selectedOption === "all" 
+                                        ? "모든 근무자" 
+                                        : (selectedWorker.length > 0
+                                            ? selectedWorker.join(", ")
+                                            : "없음")}
                                 </span>
                             </div>
                         </div>
-                        <div className={styles.confirm2} onClick={goToNextStep}>
-                            확인
-                        </div>
+                        {error && <div className={styles.errorMessage}>{error}</div>}
+                        {success ? (
+                            <div className={styles.successMessage}>
+                                요청이 성공적으로 전송되었습니다.
+                            </div>
+                        ) : (
+                            <div 
+                                className={`${styles.confirm2} ${loading ? styles.loading : ''}`} 
+                                onClick={loading ? undefined : sendRequest}
+                            >
+                                {loading ? "요청 중..." : "확인"}
+                            </div>
+                        )}
                     </div>
                 );
             case 3:
+                /* 근무 수정 요청 */
                 return (
-                    <div className={styles.content}>
-                        <div className={styles.text3}>
-                            근무 요청이 완료되었습니다.
+                    <div className={styles.content2}>
+                        <div className={styles.askText}>
+                            근무 수정 내용을 입력해주세요
                         </div>
-                        <div className={styles.confirm3} onClick={onClose}>
-                            확인
+                        <div className={styles.step2text}>
+                            <div className={styles.text2}>
+                                {"요청일자 : "}
+                                <span className={styles.schedule}>
+                                    {currentDate.format("YYYY/MM/DD")} |{" "}
+                                </span>
+                                {modalData.length > 0 && (
+                                    <span className={styles.scheduleList}>
+                                        {modalData.map(
+                                            (group: any, index: any) => {
+                                                const startTimeFormatted =
+                                                    group.startTime
+                                                        .split(":")
+                                                        .slice(0, 2)
+                                                        .join(":");
+                                                const endTimeFormatted =
+                                                    group.endTime
+                                                        .split(":")
+                                                        .slice(0, 2)
+                                                        .join(":");
+
+                                                return (
+                                                    <span
+                                                        key={index}
+                                                        className={
+                                                            styles.scheduleItem
+                                                        }>
+                                                        <span
+                                                            className={
+                                                                styles.time
+                                                            }>
+                                                            {startTimeFormatted}{" "}
+                                                            ~ {endTimeFormatted}
+                                                        </span>
+                                                    </span>
+                                                );
+                                            }
+                                        )}
+                                    </span>
+                                )}
+                            </div>
+                            <div className={styles.text2}>
+                                {"기존 근무자 : "}
+                                <span className={styles.selectedName}>
+                                    {selectedName || "선택된 근무자 없음"}
+                                </span>
+                            </div>
+                            <div className={styles.textareaContainer}>
+                                <textarea
+                                    className={styles.modificationDetails}
+                                    placeholder="근무 수정을 원하는 내용을 입력해주세요. (예: 9시~18시에서 10시~19시로 변경 희망)"
+                                    value={requestDetails}
+                                    onChange={handleRequestDetailsChange}
+                                    rows={5}
+                                />
+                            </div>
                         </div>
+                        {error && <div className={styles.errorMessage}>{error}</div>}
+                        {success ? (
+                            <div className={styles.successMessage}>
+                                요청이 성공적으로 전송되었습니다.
+                            </div>
+                        ) : (
+                            <div 
+                                className={`${styles.confirm2} ${loading ? styles.loading : ''}`} 
+                                onClick={loading ? undefined : sendRequest}
+                            >
+                                {loading ? "요청 중..." : "확인"}
+                            </div>
+                        )}
                     </div>
                 );
             default:
-                return <div className={styles.content}>Loading...</div>;
+                return null;
         }
     };
 
-    // 다음 스텝으로 이동
     const goToNextStep = () => {
-        if (selectedWorker.length === 0) {
-            alert("요청 대상을 1명 이상 선택해주세요.");
-            return;
+        if (currentStep === 1) {
+            if (selectedOption === null) {
+                setCurrentStep(3); // 근무 수정 요청 단계로 이동
+            } else {
+                setCurrentStep(2); // 대타 요청 단계로 이동
+            }
+        } else if (currentStep === 2) {
+            sendRequest(); // 대타 요청 전송
         }
-        setCurrentStep((prevStep) => prevStep + 1);
     };
 
     return (
         <div className={styles.modalOverlay}>
-            {/* 모달창 사이즈 동적으로 조정 / modal, secondModal */}
-            <div
-                className={`${styles.modal} ${
-                    currentStep !== 1 ? styles.secondModal : ""
-                }`}>
-                <div className={styles.container} style={{ marginTop: "20px" }}>
+            <div className={styles.modal}>
+                <div
+                    className={styles.container}
+                    style={{ marginTop: "20px" }}>
                     <div className={styles.title}>
-                        {currentStep !== 3 ? "근무 요청하기" : "요청 완료"}
+                        {currentStep === 3 ? "근무 수정 요청" : "대체근무 요청"}
                     </div>
-                    <div
-                        className={`${styles.button} ${
-                            currentStep === 3 ? styles.invisible : ""
-                        }`}
-                        onClick={onClose}>
+                    <div className={styles.button} onClick={onClose}>
                         취소
                     </div>
                 </div>
-                <div className={styles.contentContainer}>
-                    {renderStepContent()}
-                </div>
+                {renderStepContent()}
             </div>
         </div>
     );
