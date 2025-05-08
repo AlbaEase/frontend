@@ -1,12 +1,13 @@
 import axios from "axios";
 
+const apiUrl = import.meta.env.VITE_API_URL || "http://3.39.237.218:8080";
+
 const axiosInstance = axios.create({
-  baseURL: "http://3.39.237.218:8080", // 백엔드 서버 주소
+  baseURL: apiUrl, // 환경변수 또는 기본값 사용
   headers: {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
   },
-  withCredentials: false,
+  withCredentials: false, // CORS 인증 정보 전송 비활성화 - 서버 설정과 맞춰줌
 });
 
 // ✅ 요청 인터셉터에서 최신 토큰 가져오기
