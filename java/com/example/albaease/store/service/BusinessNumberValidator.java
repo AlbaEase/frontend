@@ -15,7 +15,8 @@ import java.util.Map;
 @Service
 public class BusinessNumberValidator {
 
-    private static final String API_URL_VALIDATE = "https://api.odcloud.kr/api/nts-businessman/v1/validate";
+    // 상태조회 API URL로 변경
+    private static final String API_URL_STATUS = "https://api.odcloud.kr/api/nts-businessman/v1/status";
     // 디코딩(Decoding) 키로 반영
     private static final String SERVICE_KEY = "b6dcFOjS9A6AVjlsEzyBBFa+k6XpLrC3j1uo8U1IaLG/WeWSbbDHq+fUtEyFyPk3e+OPMx6HXC8NEU5wL3y4Ng==";
 
@@ -27,30 +28,12 @@ public class BusinessNumberValidator {
             // 하이픈 제거
             String cleanBusinessNumber = businessNumber.replace("-", "");
             log.info("Validating business number: {}", cleanBusinessNumber);
-            
-            // 테스트 모드: API 키 오류가 발생하므로 모든 사업자번호를 유효하게 처리합니다
-            // 실제 API 오류 메시지: "등록되지 않은 인증키 입니다."
-            log.info("테스트 모드: 모든 사업자번호를 유효하게 처리합니다.");
-            return true;
-            
-            /* API 연동 코드는 주석 처리 (API 키 문제 해결 후 다시 활성화)
-            // 요청 데이터 생성
-            Map<String, String> business = new HashMap<>();
-            business.put("b_no", cleanBusinessNumber);
-            business.put("start_dt", "");
-            business.put("p_nm", "");
-            business.put("p_nm2", "");
-            business.put("b_nm", "");
-            business.put("corp_no", "");
-            business.put("b_sector", "");
-            business.put("b_type", "");
-            business.put("b_adr", "");
 
-            List<Map<String, String>> businesses = new ArrayList<>();
-            businesses.add(business);
-
-            Map<String, Object> requestData = new HashMap<>();
-            requestData.put("businesses", businesses);
+            // 요청 데이터 생성 - 상태조회 API 형식으로 변경
+            Map<String, List<String>> requestData = new HashMap<>();
+            List<String> businessNumbers = new ArrayList<>();
+            businessNumbers.add(cleanBusinessNumber);
+            requestData.put("b_no", businessNumbers);
 
             String requestBody = objectMapper.writeValueAsString(requestData);
             log.info("Request body: {}", requestBody);
@@ -63,8 +46,8 @@ public class BusinessNumberValidator {
             // 요청 엔티티 설정
             HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            // API 호출
-            String requestUrl = API_URL_VALIDATE + "?serviceKey=" + SERVICE_KEY + "&returnType=JSON";
+            // API 호출 - 상태조회 API URL로 변경
+            String requestUrl = API_URL_STATUS + "?serviceKey=" + SERVICE_KEY + "&returnType=JSON";
             log.info("Request URL: {}", requestUrl);
 
             ResponseEntity<Map> responseEntity = restTemplate.exchange(requestUrl, HttpMethod.POST, requestEntity, Map.class);
@@ -77,10 +60,11 @@ public class BusinessNumberValidator {
                 List<Map<String, Object>> dataList = (List<Map<String, Object>>) responseBody.get("data");
                 if (!dataList.isEmpty()) {
                     Map<String, Object> data = dataList.get(0);
-                    return "01".equals(data.get("valid"));
+                    // 계속사업자(01) 또는 휴업자(02)인 경우 유효한 사업자로 판단
+                    String status = (String) data.get("b_stt_cd");
+                    return "01".equals(status) || "02".equals(status);
                 }
             }
-            */
         } catch (Exception e) {
             log.error("Error validating business number: {}", e.getMessage(), e);
         }

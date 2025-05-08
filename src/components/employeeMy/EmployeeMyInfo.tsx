@@ -1,18 +1,42 @@
 import styles from "./EmployeeMyInfo.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
-import EditModal from "../Modal/EditModal";
+import EditModal from "../Modal/Edit/EditModal";
+import axiosInstance from "../../api/axios"; // ✅ axios 설정 import
 
 const EmployeeMyInfo = () => {
   const { activeModal, openModal, closeModal } = useModal();
 
   const [userInfo, setUserInfo] = useState({
     fullName: "",
-    phoneNumber: "",
+    email: "",
     password: "********",
     role: "",
     storeName: "",
   });
+
+  // ✅ 사용자 정보 불러오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await axiosInstance.get("/user/me");
+        const { fullName, email, role, storeNames } = response.data;
+        setUserInfo({
+          fullName,
+          email,
+          password: "********",
+          role,
+          storeName: storeNames?.[0] || "없음", // 첫 번째 매장만 표시하거나 없으면 "없음"
+        });
+      } catch (error) {
+        console.error("유저 정보 불러오기 실패:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+
 
   return (
     <div className={styles.employeeMyInfo}>
@@ -29,8 +53,8 @@ const EmployeeMyInfo = () => {
           <div className={styles.contentsContents}>{userInfo.fullName}</div>
         </div>
         <div className={styles.contents}>
-          <div className={styles.contentsTitle}>휴대폰 번호</div>
-          <div className={styles.contentsContents}>{userInfo.phoneNumber}</div>
+          <div className={styles.contentsTitle}>이메일</div>
+          <div className={styles.contentsContents}>{userInfo.email}</div>
         </div>
         <div className={styles.contents}>
           <div className={styles.contentsTitle}>비밀번호</div>

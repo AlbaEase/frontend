@@ -3,6 +3,7 @@ package com.example.albaease.auth.jwt;
 import com.example.albaease.auth.CustomUserDetails;
 import com.example.albaease.auth.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -20,6 +21,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
+    private final StringRedisTemplate redisTemplate;
 
     private static final List<String> PERMIT_ALL_PATHS = Arrays.asList(
             "/user/",
@@ -33,16 +35,15 @@ public class JwtFilter extends OncePerRequestFilter {
     );
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return PERMIT_ALL_PATHS.stream().anyMatch(path::startsWith);
-    }
-
-    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = getTokenFromRequest(request);
         logger.info("doFilterInternal  Extracted token: " + token);
-
+        // 블랙리스트 확인
+        if (token != null && redisTemplate.hasKey("blacklist:" + token)) {
+            logger.warn("토큰이 블랙리스트에 포함되어 있음. 요청 차단.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401
+            return;
+        }
         if (token != null && !jwtUtil.isTokenExpired(token)) {
             String userId = jwtUtil.extractUserId(token);
             logger.info("doFilterInternal  Extracted userId: " + userId);

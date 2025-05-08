@@ -74,6 +74,16 @@ public class AuthController {
     }
 
     //로그아웃
-
+    @Operation(summary = "로그아웃", description = "사용자가 로그아웃합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 요청")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        authService.logout(token);
+        return ResponseEntity.ok("로그아웃 완료");
+    }
 
 }

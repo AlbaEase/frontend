@@ -32,7 +32,7 @@ public class StoreController {
 
     // 매장 정보 조회 (운영 or 근무 전체 매장 조회)
     @GetMapping("/me")
-    public  ResponseEntity<List<StoreResponseDto>> getMyStore(
+    public ResponseEntity<List<StoreResponseDto>> getMyStore(
             Authentication authentication
     ) {
         String username = authentication.getName();

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./EditModal.module.css";
+import axiosInstance from "../../../api/user";
 
 interface AlarmProps {
   onClose: () => void;
@@ -9,9 +10,23 @@ const EditModal: React.FC<AlarmProps> = ({ onClose }) => {
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handleCheck = () => {
-    return;
+  const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    return setPassword(e.target.value);
   };
+
+  const handleCheck = async () => {
+    try {
+      const res = await axiosInstance.post("/user/verify-password", {
+        password,
+      });
+
+      console.log("✅ 인증 성공", res.data);
+      onClose();
+    } catch (error) {
+      setErrorMessage("비밀번호가 일치하지 않습니다.");
+    }
+  };
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
@@ -27,12 +42,14 @@ const EditModal: React.FC<AlarmProps> = ({ onClose }) => {
             <div>
               <input
                 type="password"
-                value={password}
                 className={styles.input}
+                value={password}
+                onChange={handlePassword}
               />
             </div>
           </div>
           <div onClick={handleCheck}> 확인 </div>
+          {errorMessage && <div>{errorMessage}</div>}
         </div>
       </div>
     </div>

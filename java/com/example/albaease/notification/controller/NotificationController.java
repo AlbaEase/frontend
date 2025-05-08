@@ -10,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -23,24 +21,44 @@ import java.security.Principal;
 public class NotificationController {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
-    
+
     // 알림 목록 조회
     @GetMapping("/me")
     public ResponseEntity<NotificationResponse> getNotifications(
+            Principal principal,
             @RequestParam(required = false) Long userId) {
-        
-        // 요청 파라미터로 userId가 제공된 경우 사용, 아니면 현재 인증된 사용자의 ID 사용
-        Long userIdToUse = (userId != null) ? userId : getCurrentUserId();
-        log.info("Getting notifications for userId: {}", userIdToUse);
-        
+
+        log.info("알림 목록 조회 시작 - principal: {}, userId 파라미터: {}", principal.getName(), userId);
+
+        Long userIdToUse;
+        // 요청 파라미터로 userId가 제공된 경우 사용
+        if (userId != null) {
+            userIdToUse = userId;
+            log.info("요청 파라미터로 제공된 userId 사용: {}", userIdToUse);
+        } else {
+            // principal에서 ID 추출 시도
+            try {
+                userIdToUse = Long.parseLong(principal.getName());
+                log.info("Principal에서 추출한 userId: {}", userIdToUse);
+            } catch (NumberFormatException e) {
+                // 이메일인 경우 사용자 ID 조회
+                String email = principal.getName();
+                log.info("Principal이 숫자가 아닌 것으로 판단됨. 이메일로 간주: {}", email);
+                userIdToUse = userRepository.findByEmail(email)
+                        .map(user -> user.getUserId()) // 또는 getId()
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+                log.info("이메일 {}에서 조회한 userId: {}", email, userIdToUse);
+            }
+        }
+
         NotificationResponse response = notificationService.getUserNotifications(userIdToUse);
         return ResponseEntity.ok(response);
     }
-    
+
     // 알림 개별 삭제
     @DeleteMapping("/me/{notificationId}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long notificationId) {
-        log.info("Deleting notification: {}", notificationId);
+    public ResponseEntity<Void> deleteNotification(
+            @PathVariable Long notificationId) {
         notificationService.deleteNotification(notificationId);
         return ResponseEntity.noContent().build();
     }
@@ -48,72 +66,59 @@ public class NotificationController {
     // 알림 전체 삭제
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteAllNotifications(
+            Principal principal,
             @RequestParam(required = false) Long userId) {
-        
-        Long userIdToUse = (userId != null) ? userId : getCurrentUserId();
-        log.info("Deleting all notifications for userId: {}", userIdToUse);
-        
+
+        Long userIdToUse;
+        if (userId != null) {
+            userIdToUse = userId;
+        } else {
+            try {
+                userIdToUse = Long.parseLong(principal.getName());
+            } catch (NumberFormatException e) {
+                // 이메일인 경우 사용자 ID 조회
+                String email = principal.getName();
+                userIdToUse = userRepository.findByEmail(email)
+                        .map(user -> user.getUserId())
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+            }
+        }
+
         notificationService.deleteAllNotifications(userIdToUse);
         return ResponseEntity.noContent().build();
     }
-    
+
     // WebSocket을 통해 알림 전송
     @MessageMapping("/notification")
     @SendToUser("/queue/notifications")
-    public NotificationResponse handleNotification(NotificationRequest request) {
+    public NotificationResponse handleNotification(
+            NotificationRequest request,
+            Principal principal) {
+
         if (request.getUserId() == null) {
-            Long userId = getCurrentUserId();
-            log.info("Setting userId from auth context: {}", userId);
-            request.setUserId(userId);
+            try {
+                Long userId = Long.parseLong(principal.getName());
+                request.setUserId(userId);
+            } catch (NumberFormatException e) {
+                // 이메일인 경우 사용자 ID 조회
+                String email = principal.getName();
+                Long userId = userRepository.findByEmail(email)
+                        .map(user -> user.getUserId())
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+                request.setUserId(userId);
+            }
         }
-        
+
         return notificationService.createNotification(request);
     }
-    
+
     // WebSocket 구독 요청 처리
     @MessageMapping("/subscribe")
     public void subscribe(StompHeaderAccessor headerAccessor, Principal principal) {
-        // WebSocket 세션에 userId 저장
         if (principal != null) {
-            headerAccessor.getSessionAttributes().put("userId", principal.getName());
-            log.info("WebSocket subscription registered for user: {}", principal.getName());
-        }
-    }
-    
-    // 현재 인증된 사용자의 ID 가져오기
-    private Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("인증되지 않은 사용자입니다.");
-        }
-        
-        // 인증 객체의 principal이 사용자 ID인 경우
-        Object principal = authentication.getPrincipal();
-        
-        try {
-            if (principal instanceof String) {
-                // String 형태의 ID 또는 이메일 처리
-                String principalStr = (String) principal;
-                try {
-                    // ID로 파싱 시도
-                    return Long.parseLong(principalStr);
-                } catch (NumberFormatException e) {
-                    // 이메일인 경우 사용자 조회
-                    log.info("Looking up user by email: {}", principalStr);
-                    return userRepository.findByEmail(principalStr)
-                        .map(user -> user.getUserId()) // 또는 getId()
-                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + principalStr));
-                }
-            } else if (principal instanceof Number) {
-                return ((Number) principal).longValue();
-            }
-            
-            // 다른 타입의 principal 처리
-            log.warn("Unknown principal type: {}", principal.getClass().getName());
-            throw new RuntimeException("지원되지 않는 인증 정보입니다.");
-        } catch (Exception e) {
-            log.error("Error extracting user ID from authentication", e);
-            throw new RuntimeException("사용자 ID를 확인할 수 없습니다.", e);
+            String userId = principal.getName();
+            headerAccessor.getSessionAttributes().put("userId", userId);
+            log.info("WebSocket 구독 등록: {}", userId);
         }
     }
 }
