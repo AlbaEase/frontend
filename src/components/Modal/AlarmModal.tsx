@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import styles from "./AlarmModal.module.css";
 import Button from "../Button";
 import { fetchNotifications } from "../../api/apiService";

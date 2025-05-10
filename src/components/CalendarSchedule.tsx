@@ -1,5 +1,6 @@
 import styles from "./CalendarSchedule.module.css";
 import { useModal } from "../contexts/ModalContext";
+import { getUserFromToken } from "../utils/getUserFromToken";
 
 interface CalendarScheduleProps {
     schedules: Schedule[];
@@ -14,11 +15,45 @@ type Schedule = {
 // props로 schedules 배열을 받음
 const CalendarSchedule: React.FC<CalendarScheduleProps> = ({ schedules }) => {
     const { openModal } = useModal(); // useModal 훅 사용
+    // console.log("스케줄", schedules);
+
+    // 추후 수정
+    const handleOpenModal = () => {
+        // 토큰 확인
+        const user = getUserFromToken();
+        if (user) {
+            const fullName = user.fullName;
+            const role = user?.role;
+
+            console.log(role);
+
+            if (role === "WORKER") {
+                // 모든 schedule에 대해 이름 포함 여부 확인
+                if (
+                    fullName &&
+                    schedules.some((schedule) =>
+                        schedule.names.includes(fullName)
+                    )
+                ) {
+                    openModal("request", schedules);
+                } else {
+                    alert("본인의 근무만 요청할 수 있습니다.");
+                    return;
+                }
+            } else {
+                openModal("request", schedules);
+            }
+        } else {
+            alert("로그인 후 이용해주세요.");
+            // 로그인 페이지로 리다이렉트할 수 있도록 수정!
+            return;
+        }
+    };
 
     return (
         <div
             className={styles.calendarSchedule}
-            onClick={() => openModal("request", schedules)} // 모달 열기
+            onClick={handleOpenModal} // 모달 열기
         >
             {schedules.length > 0 ? (
                 schedules.map((group, index) => {

@@ -12,11 +12,11 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
-    console.log("🔍 인터셉터 실행 - 저장된 토큰:", token);
+    // console.log("🔍 인터셉터 실행 - 저장된 토큰:", token);
 
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
-      console.log("✅ Authorization 헤더 추가됨:", config.headers);
+      // console.log("✅ Authorization 헤더 추가됨:", config.headers);
     } else {
       console.warn(
         "🚨 Authorization 헤더 없음! 토큰이 저장되지 않았거나 불러올 수 없음."

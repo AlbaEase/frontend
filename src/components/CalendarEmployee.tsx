@@ -2,15 +2,15 @@ import styles from "./Calendar.module.css";
 import CalendarSchedule from "./CalendarSchedule";
 import { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
+import { useEmployeeSchedule } from "../contexts/EmployeeScheduleContext";
 import "dayjs/locale/ko";
 
 dayjs.locale("ko");
 
 const Calendar = () => {
     const { groupedSchedules, currentDate, setCurrentDate } =
-        useOwnerSchedule();
-    // console.log(groupedSchedules);
+        useEmployeeSchedule();
+    console.log(groupedSchedules);
     const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
     const minDate = dayjs("2025-01-01");

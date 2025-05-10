@@ -1,29 +1,31 @@
 import styles from "./RequestModal.module.css";
 import { useState } from "react";
 import { useModal } from "../../contexts/ModalContext";
-import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
-import CustomSelect from "../CustomSelect";
+import { useEmployeeSchedule } from "../../contexts/EmployeeScheduleContext";
+import { getUserFromToken } from "../../utils/getUserFromToken";
 import CustomSelectWorker from "../CustomSelectWorker";
 
 interface CalendarScheduleProps {
     onClose: () => void;
 }
 
-const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
+const RequestModalEmployee: React.FC<CalendarScheduleProps> = ({ onClose }) => {
+    const currentUser = getUserFromToken()?.sub;    // 현재 사용자 받아오기
+    const fullName = getUserFromToken()?.fullName; // 현재 사용자 이름 받아오기
+
+    console.log(currentUser);
+    console.log(fullName);
+
     const [currentStep, setCurrentStep] = useState(1);
-    // const [selectedName, setSelectedName] = useState(""); // 교환을 요청할 근무자 (기존 근무자)
     const [selectedOption, setSelectedOption] = useState<
         "all" | "select" | null // 요청 대상 선택 체크박스
     >(null);
     const [selectedWorker, setSelectedWorker] = useState<string[]>([]);
 
     const { currentDate, selectedName, setSelectedName, otherGroupMembers } =
-        useOwnerSchedule();
-    const { modalData } = useModal();
+        useEmployeeSchedule();
 
-    const handleNameChange = (name: string) => {
-        setSelectedName(name);
-    };
+    const { modalData } = useModal();
 
     const handleCheckboxChange = (option: "all" | "select") => {
         setSelectedOption(option); // 둘 중 하나만 선택하도록
@@ -82,12 +84,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         </div>
                         <div className={styles.category}>
                             <div className={styles.text}>기존 근무자</div>
-                            <div className={styles.employeeName}>
-                                <CustomSelect
-                                    names={modalData[0].names}
-                                    onSelect={handleNameChange}
-                                />
-                            </div>
+                            <div className={styles.employeeName}>{fullName}</div>
                         </div>
                         <div className={styles.category}>
                             <div className={styles.text1}>요청 대상</div>
@@ -252,4 +249,4 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     );
 };
 
-export default RequestModal;
+export default RequestModalEmployee;

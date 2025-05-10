@@ -4,13 +4,16 @@ import "./index.css";
 import App from "./App.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { OwnerScheduleProvider } from "./contexts/OwnerScheduleContext.tsx";
+import { EmployeeScheduleProvider } from "./contexts/EmployeeScheduleContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
-    <OwnerScheduleProvider>
-        <ModalProvider>
-            <BrowserRouter>
-                <App />
-            </BrowserRouter>
-        </ModalProvider>
-    </OwnerScheduleProvider>
+    <EmployeeScheduleProvider>
+        <OwnerScheduleProvider>
+            <ModalProvider>
+                <BrowserRouter>
+                    <App />
+                </BrowserRouter>
+            </ModalProvider>
+        </OwnerScheduleProvider>
+    </EmployeeScheduleProvider>
 );
