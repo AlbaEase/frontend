@@ -16,4 +16,8 @@ export default defineConfig({
             },
         },
     },
+    define: {
+        // SockJS가 필요로 하는 global 객체 제공
+        global: 'window',
+    },
 });
