@@ -79,9 +79,46 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             setLoading(true);
             setError(null);
 
-            // 현재 매장 ID와 선택된 스케줄 ID 가져오기
-            const storeId = modalData[0].storeId || 1; // 기본값 1
-            const scheduleId = modalData[0].scheduleId;
+            // 디버깅: modalData 구조 확인
+            console.log("전체 modalData:", modalData);
+            console.log("modalData[0]:", modalData[0]);
+            
+            // 현재 날짜에 해당하는 스케줄 찾기
+            const currentDateStr = currentDate.format("YYYY-MM-DD");
+            console.log("현재 날짜:", currentDateStr);
+            
+            // 현재 매장 ID 가져오기
+            const storeId = modalData[0]?.storeId || 1; // 기본값 1
+            console.log("매장 ID:", storeId);
+            
+            // 스케줄 ID 찾기
+            let scheduleId;
+            
+            // 1. modalData가 배열인 경우 (그룹화된 스케줄)
+            if (Array.isArray(modalData) && modalData[0]?.scheduleIds && modalData[0]?.scheduleIds.length > 0) {
+                scheduleId = modalData[0].scheduleIds[0];
+            } 
+            // 2. modalData가 객체인 경우 (단일 스케줄)
+            else if (modalData.scheduleId) {
+                scheduleId = modalData.scheduleId;
+            }
+            // 3. scheduleIds 배열이 있는 경우
+            else if (modalData[0]?.groups && modalData[0]?.groups[0]?.scheduleIds) {
+                scheduleId = modalData[0].groups[0].scheduleIds[0];
+            }
+            // 4. id 필드로 저장된 경우
+            else if (modalData[0]?.id) {
+                scheduleId = modalData[0].id;
+            }
+            // 5. 그 외의 경우 에러 처리
+            else {
+                console.error("스케줄 ID를 찾을 수 없습니다:", modalData);
+                setError("스케줄 ID를 찾을 수 없습니다. 관리자에게 문의하세요.");
+                setLoading(false);
+                return;
+            }
+            
+            console.log("사용할 스케줄 ID:", scheduleId);
             
             // 현재 사용자 정보 가져오기
             const userInfoStr = localStorage.getItem("userInfo");

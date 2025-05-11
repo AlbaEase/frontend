@@ -27,6 +27,8 @@ interface OwnerSchedule {
     endTime: string; // 종료 시간 (21:00)
     repeatDays: string; // 반복 요일
     workDates: Dayjs; // 근무 날짜
+    scheduleId?: number; // 스케줄 ID
+    storeId?: number; // 스토어 ID
 }
 
 interface Store {
@@ -55,7 +57,7 @@ interface OwnerScheduleContextType {
     setOwnerSchedules: React.Dispatch<React.SetStateAction<OwnerSchedule[]>>;
     groupedSchedules: {
         date: string;
-        groups: { startTime: string; endTime: string; names: string[] }[];
+        groups: { startTime: string; endTime: string; names: string[]; scheduleIds: number[]; storeId?: number; workers?: any[] }[];
     }[];
     // 날짜와 같은 시간대에 일하는 알바생 그룹
     currentDate: Dayjs;
@@ -258,7 +260,7 @@ export const OwnerScheduleProvider = ({
             acc[date.format("YYYY-MM-DD")] = []; // 날짜별 빈 배열로 초기화
             return acc;
             // 형식은 날짜(string), 일정 기록하는 객체(시작 시간, 끝 시간, 알바생 명단)
-        }, {} as Record<string, { startTime: string; endTime: string; names: string[] }[]>);
+        }, {} as Record<string, { startTime: string; endTime: string; names: string[]; scheduleIds: number[]; storeId?: number; workers?: any[] }[]>);
 
         filteredSchedules.forEach((schedule) => {
             // repeat_days가 null인 경우, workDate를 기준으로 날짜 매칭
@@ -277,12 +279,16 @@ export const OwnerScheduleProvider = ({
                     if (existingGroup) {
                         // 이미 존재하는 그룹 있으면 이름을 추가
                         existingGroup.names.push(schedule.fullName);
+                        existingGroup.scheduleIds.push(schedule.scheduleId || 0); // 스케줄 ID 추가
                     } else {
                         // 이전에 해당 스케줄 그룹이 없으면 새로 그룹 추가
                         scheduleMap[dateStr].push({
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
                             names: [schedule.fullName],
+                            scheduleIds: [schedule.scheduleId || 0], // 스케줄 ID 추가
+                            storeId: schedule.storeId, // 스토어 ID 추가
+                            workers: [{id: schedule.userId, name: schedule.fullName}] // 근무자 정보 추가
                         });
                     }
                 }
@@ -322,11 +328,17 @@ export const OwnerScheduleProvider = ({
 
                         if (existingGroup) {
                             existingGroup.names.push(schedule.fullName);
+                            existingGroup.scheduleIds.push(schedule.scheduleId || 0); // 스케줄 ID 추가
+                            existingGroup.workers = existingGroup.workers || [];
+                            existingGroup.workers.push({id: schedule.userId, name: schedule.fullName}); // 근무자 정보 추가
                         } else {
                             scheduleMap[dateStr].push({
                                 startTime: schedule.startTime,
                                 endTime: schedule.endTime,
                                 names: [schedule.fullName],
+                                scheduleIds: [schedule.scheduleId || 0], // 스케줄 ID 추가
+                                storeId: schedule.storeId, // 스토어 ID 추가
+                                workers: [{id: schedule.userId, name: schedule.fullName}] // 근무자 정보 추가
                             });
                         }
                     }
