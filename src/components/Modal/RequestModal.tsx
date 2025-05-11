@@ -6,6 +6,8 @@ import CustomSelect from "../CustomSelect";
 import CustomSelectWorker from "../CustomSelectWorker";
 import { requestShift, requestModification } from "../../api/apiService";
 import axios from "axios";
+import { getToken } from "../../api/loginAxios";
+import { ShiftRequest } from "../../types/api"; // ShiftRequest 타입 추가 임포트
 
 // 환경 변수에서 API URL 가져오기
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.39.237.218:8080";
@@ -363,7 +365,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 
                 try {
                     // 요청 타임아웃 설정 (10초)
-                    const requestData = {
+                    const requestData: ShiftRequest = {
                         fromUserId: Number(fromUserId),
                         toUserId: Number(toUserId),
                         scheduleId: Number(scheduleId),
@@ -373,18 +375,8 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     
                     console.log("최종 요청 데이터:", JSON.stringify(requestData, null, 2));
                     
-                    // 직접 axios 인스턴스 생성하여 타임아웃과 헤더 설정
-                    const axiosInstance = axios.create({
-                        baseURL: API_BASE_URL, // 기본 URL 설정 추가
-                        timeout: 10000, // 10초 타임아웃
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    const response = await axiosInstance.post(`/shift-requests/store/${storeId}`, requestData);
-                    
+                    // apiService의 requestShift 함수 사용
+                    const response = await requestShift(storeId, requestData);
                     console.log("대타 요청 응답:", response);
                 } catch (apiError: any) {
                     console.error("API 호출 오류:", apiError);
@@ -433,7 +425,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 
                 try {
                     // 요청 타임아웃 설정 (10초)
-                    const requestData = {
+                    const requestData: ShiftRequest = {
                         fromUserId: Number(fromUserId),
                         scheduleId: Number(scheduleId),
                         requestType: "ALL_USERS",
@@ -442,18 +434,8 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     
                     console.log("최종 요청 데이터:", JSON.stringify(requestData, null, 2));
                     
-                    // 직접 axios 인스턴스 생성하여 타임아웃과 헤더 설정
-                    const axiosInstance = axios.create({
-                        baseURL: API_BASE_URL, // 기본 URL 설정 추가
-                        timeout: 10000, // 10초 타임아웃
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    const response = await axiosInstance.post(`/shift-requests/store/${storeId}`, requestData);
-                    
+                    // apiService의 requestShift 함수 사용
+                    const response = await requestShift(storeId, requestData);
                     console.log("대타 요청 응답:", response);
                 } catch (apiError: any) {
                     console.error("API 호출 오류:", apiError);
@@ -506,18 +488,8 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     
                     console.log("최종 요청 데이터:", JSON.stringify(requestData, null, 2));
                     
-                    // 직접 axios 인스턴스 생성하여 타임아웃과 헤더 설정
-                    const axiosInstance = axios.create({
-                        baseURL: API_BASE_URL, // 기본 URL 설정 추가
-                        timeout: 10000, // 10초 타임아웃
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    const response = await axiosInstance.post(`/shift-modification/store/${storeId}`, requestData);
-                    
+                    // apiService의 requestModification 함수 사용
+                    const response = await requestModification(storeId, requestData);
                     console.log("근무 수정 요청 응답:", response);
                 } catch (apiError: any) {
                     console.error("API 호출 오류:", apiError);

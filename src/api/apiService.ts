@@ -279,9 +279,14 @@ export const requestShift = async (
     console.log(`🔍 최종 대타 요청 데이터:`, JSON.stringify(data, null, 2));
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
     
-    // getToken 사용
+    // 토큰 로그 출력
     const token = getToken();
     console.log(`🔍 사용 중인 토큰:`, token ? `${token.substring(0, 10)}...` : "없음");
+    
+    // 인증 헤더 설정 다시 확인
+    if (token) {
+      axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
+    }
     
     const response = await axiosInstance.post<ShiftResponse>(`/shift-requests/store/${storeId}`, data);
     console.log('✅ 대타 요청 성공:', response.data);
@@ -298,6 +303,14 @@ export const requestShift = async (
         throw new Error(error.response.data.message);
       } else if (error.response.status === 400) {
         throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
+      } else if (error.response.status === 401) {
+        throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
+      } else if (error.response.status === 403) {
+        throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
+      } else if (error.response.status === 404) {
+        throw new Error("요청한 자원을 찾을 수 없습니다.");
+      } else if (error.response.status === 500) {
+        throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
       }
     } else if (error.request) {
       console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
