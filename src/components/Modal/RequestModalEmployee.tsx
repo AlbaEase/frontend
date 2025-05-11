@@ -227,7 +227,9 @@ const RequestModalEmployee: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 {"요청 대상 : "}
                                 <span>
                                     {selectedWorker.length > 0
-                                        ? selectedWorker.join(", ")
+                                        ? selectedWorker
+                                              .map((worker) => worker.name)
+                                              .join(", ")
                                         : "없음"}
                                 </span>
                             </div>
