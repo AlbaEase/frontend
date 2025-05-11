@@ -216,53 +216,172 @@ export const requestShift = async (
       throw new Error("인증 실패: 대타 요청을 할 수 없습니다.");
     }
     
-    // 사용자 정보 확인
-    const userInfoStr = localStorage.getItem("userInfo");
-    if (!userInfoStr) {
-      throw new Error("사용자 정보를 찾을 수 없습니다.");
+    console.log("🔍 원본 요청 데이터:", JSON.stringify(data, null, 2));
+    
+    // 백엔드가 기대하는 데이터 형식으로 변환 - 백엔드는 Long 타입을 사용함
+    const payloadData = {
+      // fromUserId가 0인 경우를 명시적으로 처리 (0도 유효한 ID)
+      fromUserId: data.fromUserId !== undefined ? Number(data.fromUserId) : null,
+      scheduleId: data.scheduleId ? Number(data.scheduleId) : null,
+      requestType: data.requestType,
+      requestDate: data.requestDate
+    };
+    
+    console.log("🔍 변환된 payload - fromUserId:", payloadData.fromUserId, 
+                "타입:", typeof payloadData.fromUserId, 
+                "원본 fromUserId:", data.fromUserId, 
+                "원본 타입:", typeof data.fromUserId);
+    
+    // 특정 사용자에게 요청하는 경우에만 toUserId 추가
+    if (data.requestType === 'SPECIFIC_USER' && data.toUserId !== undefined) {
+      (payloadData as any).toUserId = Number(data.toUserId);
+      console.log("🔍 변환된 payload - toUserId:", (payloadData as any).toUserId, 
+                  "타입:", typeof (payloadData as any).toUserId, 
+                  "원본 toUserId:", data.toUserId, 
+                  "원본 타입:", typeof data.toUserId);
     }
     
-    const userInfo = JSON.parse(userInfoStr);
-    // fromUserId가 없으면 현재 로그인한 사용자 ID 사용
-    if (!data.fromUserId && userInfo.userId !== undefined) {
-      data.fromUserId = userInfo.userId;
+    // fromUserId가 유효한지 확인 (0도 유효한 ID로 간주)
+    // null, undefined 또는 NaN인 경우에만 사용자 정보에서 가져오기 시도
+    if (payloadData.fromUserId === null || payloadData.fromUserId === undefined || isNaN(payloadData.fromUserId)) {
+      console.log("🔍 fromUserId가 없거나 유효하지 않음, 사용자 정보에서 가져오기 시도");
+      
+      const userInfoStr = localStorage.getItem("userInfo");
+      if (!userInfoStr) {
+        throw new Error("요청자 ID가 필요합니다. 사용자 정보를 찾을 수 없습니다.");
+      }
+      
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        console.log("🔍 userInfo 전체 내용:", userInfo);
+        
+        // 가능한 모든 ID 필드 순회하며 검색
+        let userId = null;
+        
+        // 정확한 필드명 먼저 확인 (userId가 0인 경우도 유효한 값으로 처리)
+        if (userInfo.userId !== undefined) {
+          userId = userInfo.userId;
+          console.log("🔍 userInfo.userId 필드 발견:", userId);
+        } 
+        else if (userInfo.id !== undefined) {
+          userId = userInfo.id;
+          console.log("🔍 userInfo.id 필드 발견:", userId);
+        }
+        // 대소문자 구분 없이 모든 필드 검색
+        else {
+          console.log("🔍 정확한 ID 필드를 찾을 수 없어 전체 검색 진행");
+          for (const key in userInfo) {
+            if (typeof key === 'string' && 
+                (key.toLowerCase() === 'userid' || 
+                 key.toLowerCase() === 'id' || 
+                 key.toLowerCase().includes('userid') || 
+                 key.toLowerCase().includes('user_id'))) {
+              if (userInfo[key] !== undefined) {
+                userId = userInfo[key];
+                console.log(`🔍 ${key} 필드에서 ID 발견:`, userId);
+                break;
+              }
+            }
+          }
+        }
+        
+        if (userId !== null && userId !== undefined) {
+          payloadData.fromUserId = Number(userId);
+          console.log("🔍 최종 발견된 fromUserId:", payloadData.fromUserId);
+          
+          // ID가 NaN인 경우만 에러 처리 (0은 유효한 값)
+          if (isNaN(payloadData.fromUserId)) {
+            throw new Error("유효하지 않은 요청자 ID입니다: " + userId);
+          }
+        } else {
+          throw new Error("요청자 ID가 필요합니다. 사용자 정보에서 ID를 찾을 수 없습니다.");
+        }
+      } catch (e) {
+        console.error("🚨 사용자 정보 처리 중 오류:", e);
+        throw new Error("요청자 ID가 필요합니다. 사용자 정보를 처리할 수 없습니다.");
+      }
     }
     
-    // 요청 데이터 검증
-    if (!data.scheduleId) {
+    // 최종 데이터 유효성 검사 (0도 유효한 ID로 인식)
+    if (payloadData.fromUserId === null || payloadData.fromUserId === undefined || isNaN(payloadData.fromUserId)) {
+      throw new Error("요청자 ID가 필요합니다.");
+    }
+    
+    // scheduleId 검증
+    if (payloadData.scheduleId === null || payloadData.scheduleId === undefined || isNaN(payloadData.scheduleId) || payloadData.scheduleId <= 0) {
       throw new Error("유효한 스케줄 ID가 필요합니다.");
     }
     
-    if (data.requestType === 'SPECIFIC_USER' && !data.toUserId) {
-      throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
+    // SPECIFIC_USER 타입일 때 toUserId 검증
+    if (payloadData.requestType === 'SPECIFIC_USER') {
+      if ((payloadData as any).toUserId === undefined || (payloadData as any).toUserId === null || isNaN((payloadData as any).toUserId)) {
+        throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
+      }
+      
+      if (payloadData.fromUserId === (payloadData as any).toUserId) {
+        throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
+      }
     }
     
-    console.log(`🔍 대타 요청 데이터:`, data);
+    // 모든 필드의 값을 로깅
+    console.log('🔍 최종 대타 요청 데이터:');
+    console.log('  - fromUserId:', payloadData.fromUserId, '(타입:', typeof payloadData.fromUserId, ')');
+    console.log('  - scheduleId:', payloadData.scheduleId, '(타입:', typeof payloadData.scheduleId, ')');
+    console.log('  - requestType:', payloadData.requestType, '(타입:', typeof payloadData.requestType, ')');
+    console.log('  - requestDate:', payloadData.requestDate, '(타입:', typeof payloadData.requestDate, ')');
+    
+    if ((payloadData as any).toUserId) {
+      console.log('  - toUserId:', (payloadData as any).toUserId, '(타입:', typeof (payloadData as any).toUserId, ')');
+    }
+    
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
     
-    // getToken 사용
-    const token = getToken();
-    console.log(`🔍 사용 중인 토큰:`, token ? `${token.substring(0, 10)}...` : "없음");
-    
-    const response = await axiosInstance.post<ShiftResponse>(`/shift-requests/store/${storeId}`, data);
-    console.log('✅ 대타 요청 성공:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('🚨 대타 요청 중 오류 발생:', error);
-    if (error.response) {
-      console.error('🚨 응답 데이터:', error.response.data);
-      console.error('🚨 응답 상태:', error.response.status);
-      console.error('🚨 응답 헤더:', error.response.headers);
+    try {
+      // API 요청 구성 - 헤더에 Content-Type 명시적으로 설정
+      const response = await axiosInstance.post<ShiftResponse>(
+        `/shift-requests/store/${storeId}`, 
+        payloadData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      console.log('✅ 대타 요청 성공:', response.data);
+      return response.data;
+    } catch (error: any) {
+      // 에러 상세 분석
+      console.error('🚨 대타 요청 중 오류 발생:', error);
       
-      // 서버 응답 메시지가 있으면 해당 메시지로 오류 표시
-      if (error.response.data && error.response.data.message) {
-        throw new Error(error.response.data.message);
+      if (error.response) {
+        console.error('🚨 응답 상태:', error.response.status);
+        console.error('🚨 응답 데이터:', error.response.data);
+        console.error('🚨 응답 헤더:', error.response.headers);
+        
+        if (error.response.status === 400) {
+          console.error('🚨 서버에 전송된 데이터:', payloadData);
+          throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
+        } else if (error.response.status === 401) {
+          throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
+        } else if (error.response.status === 403) {
+          throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
+        } else if (error.response.status === 404) {
+          throw new Error("요청한 자원을 찾을 수 없습니다.");
+        } else if (error.response.status === 500) {
+          throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
+        }
+      } else if (error.request) {
+        console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
+        throw new Error("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
+      } else {
+        console.error('🚨 오류 메시지:', error.message);
+        throw error;
       }
-    } else if (error.request) {
-      console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
-    } else {
-      console.error('🚨 오류 메시지:', error.message);
+      throw error;
     }
+  } catch (error: any) {
+    console.error('🚨 대타 요청 처리 중 오류:', error);
     throw error;
   }
 };

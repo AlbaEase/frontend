@@ -72,19 +72,45 @@ const LoginPage = () => {
       console.log("✅ 받은 토큰:", token);
       console.log("✅ 사용자 역할:", role);
       console.log("✅ 사용자 이름:", fullName);
+      console.log("✅ 사용자 ID:", userId);
       
       // 토큰은 Bearer 접두사 없이 저장 (백엔드에서 처리함)
       localStorage.setItem("accessToken", token);
       
       // 사용자 정보 객체 생성 - 백엔드 응답 구조 매핑
+      // 특수 케이스: 특정 이메일에 대해 하드코딩된 userId 사용
+      let resolvedUserId = userId;
+      
+      // 백엔드에서 userId가 제공되지 않았거나 올바르지 않은 경우
+      if (resolvedUserId === undefined || resolvedUserId === null) {
+        // 이메일에 따라 임시 userId 할당 (더미 데이터 기반)
+        if (email === 'staff1@albaease.com') { // 김시현
+          resolvedUserId = 3;
+          console.log("✅ 이메일 기반으로 사용자 ID 할당 (김시현):", resolvedUserId);
+        } else if (email === 'staff2@albaease.com') { // 김지희
+          resolvedUserId = 4;
+          console.log("✅ 이메일 기반으로 사용자 ID 할당 (김지희):", resolvedUserId);
+        } else if (email === 'staff3@albaease.com') { // 이서영
+          resolvedUserId = 5;
+          console.log("✅ 이메일 기반으로 사용자 ID 할당 (이서영):", resolvedUserId);
+        } else if (email === 'staff4@albaease.com') { // 조정현
+          resolvedUserId = 6;
+          console.log("✅ 이메일 기반으로 사용자 ID 할당 (조정현):", resolvedUserId);
+        } else if (email === 'staff5@albaease.com') { // 이은우
+          resolvedUserId = 7;
+          console.log("✅ 이메일 기반으로 사용자 ID 할당 (이은우):", resolvedUserId);
+        }
+      }
+      
       const userInfo = {
-        userId: userId || 0,
+        userId: resolvedUserId !== undefined ? resolvedUserId : null,
         name: fullName || "",
-        userType: userType || role, // userType이 응답에 있으면 사용, 없으면 role 사용
+        userType: userType || role,
         email,
-        role // 역할 정보 보존
+        role
       };
       
+      console.log("✅ 최종 사용자 정보:", userInfo);
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
       
       console.log("✅ 저장된 토큰 확인:", localStorage.getItem("accessToken"));
