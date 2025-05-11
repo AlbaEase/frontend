@@ -27,12 +27,22 @@ interface OwnerSchedule {
     endTime: string; // 종료 시간 (21:00)
     repeatDays: string; // 반복 요일
     workDates: Dayjs; // 근무 날짜
+    scheduleId?: number; // 스케줄 ID
+    storeId?: number; // 스토어 ID
 }
 
 interface Store {
     storeId: number;
     name: string;
     storeCode: string;
+}
+
+interface UserInfo {
+    name: string;
+    userType: "OWNER" | "EMPLOYEE";
+    userId: number;
+    email?: string;
+    role?: string;
 }
 
 /* 공유할 context type */
@@ -47,7 +57,7 @@ interface OwnerScheduleContextType {
     setOwnerSchedules: React.Dispatch<React.SetStateAction<OwnerSchedule[]>>;
     groupedSchedules: {
         date: string;
-        groups: { startTime: string; endTime: string; names: string[] }[];
+        groups: { startTime: string; endTime: string; names: string[]; scheduleIds: number[]; storeId?: number; workers?: any[] }[];
     }[];
     // 날짜와 같은 시간대에 일하는 알바생 그룹
     currentDate: Dayjs;
@@ -72,85 +82,145 @@ export const OwnerScheduleProvider = ({
     const [ownerSchedules, setOwnerSchedules] = useState<OwnerSchedule[]>([]);
     const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
     const [selectedName, setSelectedName] = useState(""); // 교환을 요청할 근무자 (기존 근무자)
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null); // 현재 로그인한 사용자 정보
 
-    // localStorage에서 토큰을 가져옵니다.
+    // localStorage에서 토큰과 사용자 정보를 가져옵니다.
     const token = localStorage.getItem("accessToken");
+    
+    // 사용자 정보 로드
+    useEffect(() => {
+        const storedUserInfo = localStorage.getItem("userInfo");
+        if (storedUserInfo) {
+            try {
+                const parsedUserInfo = JSON.parse(storedUserInfo);
+                setUserInfo(parsedUserInfo);
+                console.log("Context에 로드된 사용자 정보:", parsedUserInfo);
+            } catch (error) {
+                console.error("사용자 정보 파싱 오류:", error);
+            }
+        }
+    }, []);
 
     // DB에서 가게 목록 가져오기 (axios로 변경)
     useEffect(() => {
         const fetchStores = async () => {
             try {
                 if (token) {
-                    // axios 요청 헤더에 토큰을 추가합니다.
-                    const res = await axiosInstance.get(
-                        "http://3.39.237.218:8080/store/me",
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
-                            },
-                        }
-                    );
+                    console.log("매장 정보 가져오기 시작, 사용자 타입:", userInfo?.userType);
+                    
+                    // 사용자 유형에 따라 다른 API 호출
+                    // 직원의 경우 자기가 속한 매장만, 사장의 경우 소유한 매장을 가져옵니다.
+                    const apiUrl = userInfo?.userType === "EMPLOYEE" 
+                        ? "/store/employee/me"
+                        : "/store/me";
+                    
+                    console.log("API 요청 URL:", apiUrl);
+                    
+                    const res = await axiosInstance.get(apiUrl);
                     const data = res.data;
 
-                    // console.log("받아온 데이터: ", data);
+                    console.log("받아온 매장 데이터:", data);
 
                     if (!data) {
                         console.error("가게 목록 데이터가 없습니다.");
+                        setStores([]);
                         return;
                     }
 
-                    const filteredStores = data.map((store: any) => ({
-                        storeId: store.storeId,
-                        name: store.name,
-                        storeCode: store.storeCode,
-                    }));
+                    // 직원과 사장의 API 응답 형식이 다를 수 있으므로 적절히 처리
+                    const filteredStores = Array.isArray(data) 
+                        ? data.map((store: Store) => ({
+                            storeId: store.storeId,
+                            name: store.name,
+                            storeCode: store.storeCode,
+                          })) 
+                        : [{ 
+                            storeId: data.storeId,
+                            name: data.name,
+                            storeCode: data.storeCode,
+                          }];
 
+                    console.log("필터링된 매장 목록:", filteredStores);
                     setStores(filteredStores);
+                    
+                    // 매장 목록이 있으면 첫 번째 매장을 기본으로 선택
                     if (filteredStores.length > 0) {
-                        setSelectedStore(filteredStores[0].storeId);
+                        const firstStoreId = filteredStores[0].storeId;
+                        console.log("기본 선택 매장 ID:", firstStoreId);
+                        setSelectedStore(firstStoreId);
+                    } else {
+                        setSelectedStore(0); // 매장이 없으면 0으로 초기화
                     }
                 } else {
                     console.error("토큰이 없습니다. 인증을 확인하세요.");
-                    // 인증 절차를 여기에 추가할 수 있습니다.
+                    setStores([]);
                 }
             } catch (error) {
                 console.error("가게 목록을 불러오는 데 실패했습니다.", error);
+                setStores([]);
             }
         };
 
-        fetchStores();
-    }, []);
+        // 사용자 정보가 로드된 후에만 매장 정보 불러오기
+        if (userInfo) {
+            fetchStores();
+        }
+    }, [userInfo, token]);
 
     // 가게 선택할 때마다 스케줄 다르게 불러오기 (axios로 변경)
     useEffect(() => {
         const fetchSchedules = async () => {
-            if (!selectedStore) return;
+            if (!selectedStore) {
+                console.log("선택된 매장이 없어 스케줄을 불러올 수 없습니다.");
+                setOwnerSchedules([]);
+                return;
+            }
 
             try {
+                console.log(`매장 ID ${selectedStore}의 스케줄 데이터 불러오기 시작`);
+                
                 if (token) {
+                    // 선택된 매장의 스케줄 데이터 가져오기
                     const res = await axiosInstance.get(
-                        `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
-                            },
-                        }
+                        `/schedule/store/${selectedStore}`
                     );
+                    
+                    if (!res.data) {
+                        console.error("스케줄 데이터가 없습니다.");
+                        setOwnerSchedules([]);
+                        return;
+                    }
+                    
                     const data: OwnerSchedule[] = res.data;
-                    setOwnerSchedules(data);
+                    console.log(`매장 ID ${selectedStore}의 스케줄 데이터:`, data);
+                    
+                    // 만약 사용자가 직원이라면 자신의 스케줄만 필터링
+                    if (userInfo?.userType === "EMPLOYEE") {
+                        const userSchedules = data.filter(schedule => 
+                            schedule.userId === userInfo.userId
+                        );
+                        console.log("현재 사용자의 스케줄만 필터링:", userSchedules);
+                        setOwnerSchedules(userSchedules);
+                    } else {
+                        // 사장님인 경우 모든 스케줄 표시
+                        console.log("사장님 권한으로 모든 스케줄 표시");
+                        setOwnerSchedules(data);
+                    }
                 } else {
                     console.error("토큰이 없습니다. 인증을 확인하세요.");
+                    setOwnerSchedules([]);
                 }
             } catch (error) {
                 console.error(
                     "스케줄 데이터를 불러오는 데 실패했습니다.",
                     error
                 );
+                setOwnerSchedules([]);
             }
         };
 
         fetchSchedules();
-    }, [selectedStore]);
+    }, [selectedStore, token, userInfo]);
 
     // useEffect(() => {
     //     console.log("현재 ownerSchedules 데이터: ", ownerSchedules);
@@ -190,7 +260,7 @@ export const OwnerScheduleProvider = ({
             acc[date.format("YYYY-MM-DD")] = []; // 날짜별 빈 배열로 초기화
             return acc;
             // 형식은 날짜(string), 일정 기록하는 객체(시작 시간, 끝 시간, 알바생 명단)
-        }, {} as Record<string, { startTime: string; endTime: string; names: string[] }[]>);
+        }, {} as Record<string, { startTime: string; endTime: string; names: string[]; scheduleIds: number[]; storeId?: number; workers?: any[] }[]>);
 
         filteredSchedules.forEach((schedule) => {
             // repeat_days가 null인 경우, workDate를 기준으로 날짜 매칭
@@ -209,12 +279,16 @@ export const OwnerScheduleProvider = ({
                     if (existingGroup) {
                         // 이미 존재하는 그룹 있으면 이름을 추가
                         existingGroup.names.push(schedule.fullName);
+                        existingGroup.scheduleIds.push(schedule.scheduleId || 0); // 스케줄 ID 추가
                     } else {
                         // 이전에 해당 스케줄 그룹이 없으면 새로 그룹 추가
                         scheduleMap[dateStr].push({
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
                             names: [schedule.fullName],
+                            scheduleIds: [schedule.scheduleId || 0], // 스케줄 ID 추가
+                            storeId: schedule.storeId, // 스토어 ID 추가
+                            workers: [{id: schedule.userId, name: schedule.fullName}] // 근무자 정보 추가
                         });
                     }
                 }
@@ -254,11 +328,17 @@ export const OwnerScheduleProvider = ({
 
                         if (existingGroup) {
                             existingGroup.names.push(schedule.fullName);
+                            existingGroup.scheduleIds.push(schedule.scheduleId || 0); // 스케줄 ID 추가
+                            existingGroup.workers = existingGroup.workers || [];
+                            existingGroup.workers.push({id: schedule.userId, name: schedule.fullName}); // 근무자 정보 추가
                         } else {
                             scheduleMap[dateStr].push({
                                 startTime: schedule.startTime,
                                 endTime: schedule.endTime,
                                 names: [schedule.fullName],
+                                scheduleIds: [schedule.scheduleId || 0], // 스케줄 ID 추가
+                                storeId: schedule.storeId, // 스토어 ID 추가
+                                workers: [{id: schedule.userId, name: schedule.fullName}] // 근무자 정보 추가
                             });
                         }
                     }

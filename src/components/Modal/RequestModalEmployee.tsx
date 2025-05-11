@@ -4,7 +4,7 @@ import { useModal } from "../../contexts/ModalContext";
 import { useEmployeeSchedule } from "../../contexts/EmployeeScheduleContext";
 import { getUserFromToken } from "../../utils/getUserFromToken";
 import CustomSelectWorker from "../CustomSelectWorker";
-import axios from "axios";
+// import axios from "axios";
 
 interface CalendarScheduleProps {
     onClose: () => void;

@@ -1,14 +1,23 @@
 import styles from "./Checkbox.module.css";
 import { useState, useEffect } from "react";
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
-import axiosInstance from "../api/loginAxios";
+
+// 사용자 정보 타입 정의
+interface UserInfo {
+    name: string;
+    userType: "OWNER" | "EMPLOYEE";
+    userId: number;
+    email?: string;
+    role?: string;
+}
 
 const Checkbox = () => {
-    /* DB 연결 */
-    const { selectedStore, selectedList, setSelectedList } = useOwnerSchedule();
+    /* 컨텍스트에서 값 가져오기 */
+    const { selectedList, setSelectedList, ownerSchedules } = useOwnerSchedule();
     const [employeesArray, setEmployeeArray] = useState<string[]>([]);
     /* 체크박스 선택 관리 */
     const [isAllSelected, setIsAllSelected] = useState(false);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
     const token = localStorage.getItem("accessToken"); // 토큰 가져오기
 
@@ -16,13 +25,25 @@ const Checkbox = () => {
     // console.log("selectedStore:", selectedStore);
 
     useEffect(() => {
-        const fetchEmployees = async () => {
+        const storedUserInfo = localStorage.getItem("userInfo");
+        if (storedUserInfo) {
             try {
-                console.log("useEffect 실행 확인");
-                if (!token) {
-                    console.error("토큰이 없습니다. 인증을 확인하세요.");
-                    return;
-                }
+                const parsedUserInfo = JSON.parse(storedUserInfo) as UserInfo;
+                setUserInfo(parsedUserInfo);
+                console.log("체크박스에 로드된 사용자 정보:", parsedUserInfo);
+            } catch (error) {
+                console.error("사용자 정보 파싱 오류:", error);
+            }
+        }
+    }, []);
+
+    // OwnerScheduleContext에서 가져온 ownerSchedules에서 직원 이름 목록 추출
+    useEffect(() => {
+        if (!ownerSchedules.length) {
+            console.log("스케줄 데이터가 없어 직원 목록을 생성할 수 없습니다.");
+            setEmployeeArray([]);
+            return;
+        }
 
                 // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
                 const res = await axiosInstance.get(
@@ -66,16 +87,16 @@ const Checkbox = () => {
 
     // console.log("scheduleData: ", scheduleData);
 
-    // 직원 목록이 업데이트되면 selectedList도 자동으로 업데이트
+    // 직원 목록이 업데이트될 때 isAllSelected 상태 업데이트
     useEffect(() => {
-        if (employeesArray.length > 0) {
-            setSelectedList(employeesArray);
-            setIsAllSelected(true);
-        }
-    }, [employeesArray, setSelectedList]);
+        setIsAllSelected(
+            employeesArray.length > 0 && 
+            selectedList.length === employeesArray.length
+        );
+    }, [employeesArray, selectedList]);
 
     // 문자열 정렬 (오름차순)
-    const sortedArray: string[] = employeesArray.sort();
+    const sortedArray: string[] = [...employeesArray].sort();
 
     /* 전체 선택 및 해제 */
     const handleAllSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +106,6 @@ const Checkbox = () => {
             // 선택이 해제되면
             setSelectedList([]);
         }
-        // setIsAllSelected(e.target.checked);
     };
 
     /* 개별 선택 및 해제 */
@@ -94,23 +114,12 @@ const Checkbox = () => {
             const newList = prev.includes(name)
                 ? prev.filter((item) => item !== name)
                 : [...prev, name];
-
-            // 만약 일일이 선택해서 전체 선택이 되면 전체 선택 버튼 활성화
-            // setIsAllSelected(newList.length === sortedArray.length);
             return newList;
-
-            // if (prev.includes(name)) {
-            //     return prev.filter((item) => item !== name);
-            // } else {
-            //     return [...prev, name];
-            // }
         });
     };
 
-    // isAllSelected 업데이트를 useEffect로 분리하여 렌더링 후 실행
-    useEffect(() => {
-        setIsAllSelected(selectedList.length === sortedArray.length);
-    }, [selectedList, sortedArray]);
+    // 직원 권한인 경우 체크박스 비활성화
+    const isEmployeeUser = userInfo?.userType === "EMPLOYEE";
 
     return (
         <div className={styles.checkbox}>
@@ -119,17 +128,22 @@ const Checkbox = () => {
                     type="checkbox"
                     onChange={handleAllSelect}
                     checked={isAllSelected}
+                    disabled={isEmployeeUser} // 직원인 경우 비활성화
                 />
                 {"전체 선택"}
             </label>
             {sortedArray.map((employeeName, index) => {
                 const repeatedClassName = `name${(index % 10) + 1}`; // 1부터 10까지 반복
                 return (
-                    <label key={employeeName} className={styles[repeatedClassName]}>
+                    <label 
+                        key={employeeName} 
+                        className={`${styles[repeatedClassName]} ${isEmployeeUser ? styles.disabled : ''}`}
+                    >
                         <input
                             type="checkbox"
                             onChange={() => handleSingleSelect(employeeName)}
                             checked={selectedList.includes(employeeName)}
+                            disabled={isEmployeeUser} // 직원인 경우 비활성화
                         />
                         {employeeName}
                     </label>

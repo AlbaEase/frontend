@@ -4,17 +4,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, ChangeEvent } from "react";
 import axiosInstance from "../../api/axios"; // ✅ axios 설정 파일
 import { AxiosError } from "axios"; // 이 줄을 최상단 import 구문에 추가
+// choalba1!
 
 const RegisterPage = () => {
   const [role, setRole] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  // const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [code, setCode] = useState<string>("");
-  const [id, setId] = useState<string>("");
+  // const [id, setId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [passwordCheck, setPasswordCheck] = useState<string>("");
-  const [isPhoneVerified, setIsPhoneVerified] = useState<boolean>(false);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
 
   // 라디오 버튼 핸들러
   const handleRadio = (e: ChangeEvent<HTMLInputElement>) => {
@@ -28,15 +30,18 @@ const RegisterPage = () => {
   const handleLastName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLastName(e.target.value);
   };
-  const handlePhoneNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhoneNumber(e.target.value);
+  // const handlePhoneNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setPhoneNumber(e.target.value);
+  // };
+  const handleEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
   };
   const handleCode = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCode(e.target.value);
   };
-  const handleId = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setId(e.target.value);
-  };
+  // const handleId = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setId(e.target.value);
+  // };
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
   };
@@ -52,18 +57,22 @@ const RegisterPage = () => {
       case 1:
         return role !== "";
       case 2:
+        const isFirstNameValid = firstName.length >= 1 && firstName.length <= 5; // ✨ 이름 유효성 추가
         const isLastNameValid = lastName.length >= 1 && lastName.length <= 2;
-        const isFirstNameValid = firstName.length >= 2 && firstName.length <= 5;
-        const isPhoneValid = phoneNumber.length === 11;
-        return isFirstNameValid && isLastNameValid && isPhoneValid;
+        const isemailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          email
+        );
+        return isFirstNameValid && isLastNameValid && isemailValid;
+
       case 3:
         const isCodeValid = code.length === 6;
         return isCodeValid;
       case 4:
-        const isIdValid = id.length >= 8;
+        // const isIdValid = id.length >= 8;
+ 
         const isPasswordValid = password.length >= 8;
         const isPasswordCheckValid = password === passwordCheck;
-        return isIdValid && isPasswordValid && isPasswordCheckValid;
+        return   isPasswordValid && isPasswordCheckValid;
       case 5:
         return (
           requiredCheckBox.termsOfService &&
@@ -111,11 +120,11 @@ const RegisterPage = () => {
   // 인증번호 발급
   const handleRequestVerificationCode = async () => {
     try {
-      console.log("요청 데이터:", { phoneNumber });
+      console.log("요청 데이터:", { email });
       const response = await axiosInstance.post(
-        "/user/send-sms",
-        { phoneNumber },
-        { withCredentials: true }
+        "/user/send-mail",
+        { email }
+        // { withCredentials: true }
       );
       console.log("응답 데이터:", response.data);
       alert(response.data.message || "인증번호가 발송되었습니다!");
@@ -129,12 +138,12 @@ const RegisterPage = () => {
   const handleVerifyCode = async () => {
     try {
       const response = await axiosInstance.post(
-        "/user/verify-sms",
-        { phoneNumber, verificationCode: code },
-        { withCredentials: true }
+        "/user/verify-mail",
+        { email, verificationCode: code },
+        // { withCredentials: true }
       );
       if (response.status === 200) {
-        setIsPhoneVerified(true);
+        setIsEmailVerified(true);
         alert("인증이 완료되었습니다!");
         handleNext();
       } else {
@@ -154,7 +163,7 @@ const RegisterPage = () => {
     try {
       const response = await axiosInstance.post(
         "/user/check-id",
-        { id },
+        { email },
         { withCredentials: true }
       );
       if (response.data.isDuplicate) {
@@ -170,8 +179,8 @@ const RegisterPage = () => {
   // 최종 회원가입
   const handleRegister = async () => {
     try {
-      if (!isPhoneVerified) {
-        alert("전화번호 인증을 먼저 완료해주세요.");
+      if (!isEmailVerified) {
+        alert("이메일 인증을 먼저 완료해주세요.");
         return;
       }
 
@@ -179,12 +188,13 @@ const RegisterPage = () => {
         socialType: "NONE",
         lastName,
         firstName,
-        id,
+        email,
         password,
         confirmPassword: passwordCheck,
-        phoneNumber,
+        // phoneNumber,
+        // email,
         role,
-        isPhoneVerified,
+        // isEmailVerified,
       };
 
       console.log("전송 데이터:", userData);
@@ -307,10 +317,10 @@ const RegisterPage = () => {
               </div>
               <div>
                 <input
-                  type="tel"
-                  placeholder="전화번호"
-                  value={phoneNumber}
-                  onChange={handlePhoneNumber}
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={handleEmail}
                   className={styles.input}
                 />
               </div>
@@ -351,10 +361,10 @@ const RegisterPage = () => {
               </div>
               <div>
                 <input
-                  type="text"
-                  placeholder="전화번호"
-                  value={phoneNumber}
-                  onChange={handlePhoneNumber}
+                  type="email"
+                  placeholder="alba@naver.com"
+                  value={email}
+                  onChange={handleEmail}
                   className={styles.input}
                 />
               </div>
@@ -398,10 +408,10 @@ const RegisterPage = () => {
               </div>
               <div>
                 <input
-                  type="text"
-                  placeholder="전화번호"
-                  value={phoneNumber}
-                  onChange={handlePhoneNumber}
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={handleEmail}
                   className={styles.input}
                 />
               </div>
@@ -409,14 +419,14 @@ const RegisterPage = () => {
                 className={styles.fontStyle}
                 style={{ textAlign: "left", marginTop: "5px" }}
               >
-                전화번호 인증완료
+                이메일 인증완료
               </div>
               <div className={styles.wrapper}>
                 <input
                   type="text"
-                  placeholder="아이디"
-                  value={id}
-                  onChange={handleId}
+                  placeholder="이메일"
+                  value={email}
+                  onChange={handleEmail}
                   className={styles.input}
                   style={{ paddingRight: "90px" }}
                 />
@@ -594,3 +604,8 @@ export default RegisterPage;
 
 // 코드가 길어져 step별로 컴포넌트 나눌예정
 // 급한 거 없으니 나중에 구현하고 해보기
+
+
+
+
+// 지금 회원가입부터 다시 시작
