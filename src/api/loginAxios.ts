@@ -48,12 +48,19 @@ export const setAuthToken = (token: string): void => {
 // 사용자 정보 설정 함수
 export const setUserInfo = (userInfo: any): void => {
   if (userInfo) {
+    // 이메일이 staff1@albaease.com인 경우 (김시현) userId가 없으면 3으로 설정
+    if (userInfo.email === 'staff1@albaease.com' && (userInfo.userId === undefined || userInfo.userId === null)) {
+      console.log("김시현 사용자 감지: userId를 3으로 설정합니다.");
+      userInfo.userId = 3;
+    }
+    
     // userId가 0인 경우에도 유효한 값으로 처리
     const processedUserInfo = {
       ...userInfo,
       userId: userInfo.userId !== undefined ? Number(userInfo.userId) : null
     };
     
+    console.log("저장될 사용자 정보:", processedUserInfo);
     localStorage.setItem(USER_INFO_KEY, JSON.stringify(processedUserInfo));
   } else {
     localStorage.removeItem(USER_INFO_KEY);

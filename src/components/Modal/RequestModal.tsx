@@ -320,6 +320,36 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 fromUserId = userInfo.id;
             }
             
+            // 여전히 userId가 없고 이메일이 있는 경우 이메일로 ID 할당 시도
+            if ((fromUserId === undefined || fromUserId === null) && userInfo.email) {
+                console.log("userId와 id 필드 모두 없음, 이메일로 ID 할당 시도:", userInfo.email);
+                
+                // 특정 이메일에 따른 userId 할당 (더미 데이터 기반)
+                if (userInfo.email === 'staff1@albaease.com') { // 김시현
+                    fromUserId = 3;
+                    console.log("이메일 기반으로 사용자 ID 할당 (김시현):", fromUserId);
+                } else if (userInfo.email === 'staff2@albaease.com') { // 김지희
+                    fromUserId = 4;
+                    console.log("이메일 기반으로 사용자 ID 할당 (김지희):", fromUserId);
+                } else if (userInfo.email === 'staff3@albaease.com') { // 이서영
+                    fromUserId = 5;
+                    console.log("이메일 기반으로 사용자 ID 할당 (이서영):", fromUserId);
+                } else if (userInfo.email === 'staff4@albaease.com') { // 조정현
+                    fromUserId = 6;
+                    console.log("이메일 기반으로 사용자 ID 할당 (조정현):", fromUserId);
+                } else if (userInfo.email === 'staff5@albaease.com') { // 이은우
+                    fromUserId = 7;
+                    console.log("이메일 기반으로 사용자 ID 할당 (이은우):", fromUserId);
+                }
+                
+                // 할당된 ID가 있으면 userInfo 업데이트 및 저장
+                if (fromUserId !== undefined && fromUserId !== null) {
+                    userInfo.userId = fromUserId;
+                    localStorage.setItem("userInfo", JSON.stringify(userInfo));
+                    console.log("사용자 ID 할당 및 저장 완료:", fromUserId);
+                }
+            }
+            
             // 요청자 ID 유효성 검사 (undefined나 null인 경우만 검사, 0은 유효한 ID)
             if (fromUserId === undefined || fromUserId === null) {
                 console.error("유효한 요청자 ID가 없습니다:", userInfo);
