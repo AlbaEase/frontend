@@ -215,6 +215,28 @@ export const requestShift = async (
     if (!checkAuthAndSetToken()) {
       throw new Error("인증 실패: 대타 요청을 할 수 없습니다.");
     }
+    
+    // 사용자 정보 확인
+    const userInfoStr = localStorage.getItem("userInfo");
+    if (!userInfoStr) {
+      throw new Error("사용자 정보를 찾을 수 없습니다.");
+    }
+    
+    const userInfo = JSON.parse(userInfoStr);
+    // fromUserId가 없으면 현재 로그인한 사용자 ID 사용
+    if (!data.fromUserId && userInfo.userId !== undefined) {
+      data.fromUserId = userInfo.userId;
+    }
+    
+    // 요청 데이터 검증
+    if (!data.scheduleId) {
+      throw new Error("유효한 스케줄 ID가 필요합니다.");
+    }
+    
+    if (data.requestType === 'SPECIFIC_USER' && !data.toUserId) {
+      throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
+    }
+    
     console.log(`🔍 대타 요청 데이터:`, data);
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
     
@@ -231,6 +253,11 @@ export const requestShift = async (
       console.error('🚨 응답 데이터:', error.response.data);
       console.error('🚨 응답 상태:', error.response.status);
       console.error('🚨 응답 헤더:', error.response.headers);
+      
+      // 서버 응답 메시지가 있으면 해당 메시지로 오류 표시
+      if (error.response.data && error.response.data.message) {
+        throw new Error(error.response.data.message);
+      }
     } else if (error.request) {
       console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
     } else {

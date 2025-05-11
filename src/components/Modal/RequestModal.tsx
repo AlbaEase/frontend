@@ -1,5 +1,5 @@
 import styles from "./RequestModal.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 import CustomSelect from "../CustomSelect";
@@ -8,6 +8,12 @@ import { requestShift, requestModification } from "../../api/apiService";
 
 interface CalendarScheduleProps {
     onClose: () => void;
+}
+
+// 근무자 정보 인터페이스
+interface WorkerInfo {
+    id: string;
+    name: string;
 }
 
 const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
@@ -21,10 +27,29 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<boolean>(false);
+    const [workerList, setWorkerList] = useState<WorkerInfo[]>([]);
 
     const { currentDate, selectedName, setSelectedName, otherGroupMembers } =
         useOwnerSchedule();
     const { modalData } = useModal();
+    
+    // otherGroupMembers를 WorkerInfo[] 형식으로 변환
+    useEffect(() => {
+        if (otherGroupMembers && otherGroupMembers.length > 0) {
+            // 형식 변환: 사용자 이름에서 ID와 이름이 포함된 객체로
+            const formattedWorkers = otherGroupMembers.map(memberName => {
+                // 이름에서 ID 추출 (예시 - 실제 구현은 백엔드 데이터 구조에 맞게 수정 필요)
+                const memberInfo = modalData?.[0]?.workers?.find((w: { name: string; id: number }) => w.name === memberName);
+                
+                return {
+                    id: memberInfo?.id.toString() || memberName, // ID가 있으면 사용, 없으면 이름 사용
+                    name: memberName
+                };
+            });
+            
+            setWorkerList(formattedWorkers);
+        }
+    }, [otherGroupMembers, modalData]);
 
     const handleNameChange = (name: string) => {
         setSelectedName(name);
@@ -33,9 +58,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const handleCheckboxChange = (option: "all" | "select") => {
         setSelectedOption(option); // 둘 중 하나만 선택하도록
         if (option === "all") {
-            /* 여기 수정해야 됨!!!!!!!!!!!!!!!!!! */
-            const allWorkers = otherGroupMembers;
-            setSelectedWorker(allWorkers);
+            setSelectedWorker([]);
         } else {
             setSelectedWorker([]);
         }
@@ -59,10 +82,30 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             // 현재 매장 ID와 선택된 스케줄 ID 가져오기
             const storeId = modalData[0].storeId || 1; // 기본값 1
             const scheduleId = modalData[0].scheduleId;
+            
+            // 현재 사용자 정보 가져오기
+            const userInfoStr = localStorage.getItem("userInfo");
+            if (!userInfoStr) {
+                setError("사용자 정보를 찾을 수 없습니다.");
+                setLoading(false);
+                return;
+            }
+            
+            const userInfo = JSON.parse(userInfoStr);
+            const fromUserId = userInfo.userId; // 요청자 ID
 
             if (selectedOption === "select" && selectedWorker.length > 0) {
                 // 특정 근무자 대상 대타 요청
+                console.log("특정 근무자에게 대타 요청:", {
+                    fromUserId,
+                    toUserId: parseInt(selectedWorker[0]),
+                    scheduleId,
+                    requestType: "SPECIFIC_USER",
+                    requestDate: currentDate.format("YYYY-MM-DD")
+                });
+                
                 await requestShift(storeId, {
+                    fromUserId, // 요청자 ID 추가
                     toUserId: parseInt(selectedWorker[0]), // 첫 번째 선택된 근무자 ID
                     scheduleId: scheduleId,
                     requestType: "SPECIFIC_USER",
@@ -70,14 +113,26 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 });
             } else if (selectedOption === "all") {
                 // 전체 근무자 대상 대타 요청
+                console.log("전체 근무자에게 대타 요청:", {
+                    fromUserId,
+                    scheduleId,
+                    requestType: "ALL_USERS",
+                    requestDate: currentDate.format("YYYY-MM-DD")
+                });
+                
                 await requestShift(storeId, {
-                    toUserId: 0, // 0은 전체 대상을 의미
+                    fromUserId, // 요청자 ID 추가
                     scheduleId: scheduleId,
                     requestType: "ALL_USERS",
                     requestDate: currentDate.format("YYYY-MM-DD")
                 });
             } else if (requestDetails) {
                 // 근무 수정 요청 (단계 3에서 요청 내용이 있는 경우)
+                console.log("근무 수정 요청:", {
+                    scheduleId,
+                    details: requestDetails
+                });
+                
                 await requestModification(storeId, {
                     scheduleId: scheduleId,
                     details: requestDetails
@@ -91,13 +146,23 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             setTimeout(() => {
                 onClose(); // 요청 성공 후 모달 닫기
             }, 2000);
-        } catch (err) {
+        } catch (err: any) {
             console.error("요청 전송 중 오류 발생:", err);
-            setError("요청을 처리하는 중 오류가 발생했습니다.");
+            if (err.message) {
+                setError(err.message);
+            } else {
+                setError("요청을 처리하는 중 오류가 발생했습니다.");
+            }
         } finally {
             setLoading(false);
         }
     };
+
+    // 컴포넌트 마운트 시 콘솔에 modalData 출력
+    useEffect(() => {
+        console.log("RequestModal - modalData:", modalData);
+        console.log("RequestModal - otherGroupMembers:", otherGroupMembers);
+    }, [modalData, otherGroupMembers]);
 
     // 각 스텝에 따른 콘텐츠
     const renderStepContent = () => {
@@ -193,7 +258,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         {selectedOption === "select" && (
                             <div className={styles.selelctWorker}>
                                 <CustomSelectWorker
-                                    names={otherGroupMembers} // 모든 근무자 이름을 flat한 배열로 변환
+                                    names={workerList} // 변환된 WorkerInfo 배열 전달
                                     selectedWorkers={selectedWorker}
                                     onSelect={setSelectedWorker}
                                 />
