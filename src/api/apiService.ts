@@ -216,107 +216,96 @@ export const requestShift = async (
       throw new Error("인증 실패: 대타 요청을 할 수 없습니다.");
     }
     
-    // 사용자 정보 확인
-    const userInfoStr = localStorage.getItem("userInfo");
-    if (!userInfoStr) {
-      throw new Error("사용자 정보를 찾을 수 없습니다.");
+    // 백엔드가 기대하는 데이터 형식으로 변환
+    const payloadData = {
+      fromUserId: Number(data.fromUserId) || null,
+      scheduleId: Number(data.scheduleId) || null,
+      requestType: data.requestType,
+      requestDate: data.requestDate
+    };
+    
+    // 특정 사용자에게 요청하는 경우에만 toUserId 추가
+    if (data.requestType === 'SPECIFIC_USER' && data.toUserId) {
+      (payloadData as any).toUserId = Number(data.toUserId);
     }
     
-    const userInfo = JSON.parse(userInfoStr);
-    // fromUserId가 없으면 현재 로그인한 사용자 ID 사용
-    if (!data.fromUserId && userInfo.userId !== undefined) {
-      data.fromUserId = userInfo.userId;
+    // 데이터 유효성 검사
+    if (!payloadData.fromUserId) {
+      throw new Error("요청자 ID가 필요합니다.");
     }
     
-    // 요청 데이터 검증
-    if (!data.scheduleId) {
+    if (!payloadData.scheduleId) {
       throw new Error("유효한 스케줄 ID가 필요합니다.");
     }
     
-    if (data.requestType === 'SPECIFIC_USER' && !data.toUserId) {
+    if (payloadData.requestType === 'SPECIFIC_USER' && !(payloadData as any).toUserId) {
       throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
     }
     
-    // 데이터 유효성 추가 검증
-    if (data.fromUserId === data.toUserId) {
+    // 중복 검사도 수행
+    if (payloadData.fromUserId === (payloadData as any).toUserId) {
       throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
     }
     
-    if (!data.requestDate) {
-      // 요청 날짜가 없으면 현재 날짜로 설정
-      data.requestDate = new Date().toISOString().split('T')[0];
+    // 모든 필드의 값을 로깅
+    console.log('🔍 대타 요청 데이터 필드:');
+    console.log('  - fromUserId:', payloadData.fromUserId, '(타입:', typeof payloadData.fromUserId, ')');
+    console.log('  - scheduleId:', payloadData.scheduleId, '(타입:', typeof payloadData.scheduleId, ')');
+    console.log('  - requestType:', payloadData.requestType, '(타입:', typeof payloadData.requestType, ')');
+    console.log('  - requestDate:', payloadData.requestDate, '(타입:', typeof payloadData.requestDate, ')');
+    
+    if ((payloadData as any).toUserId) {
+      console.log('  - toUserId:', (payloadData as any).toUserId, '(타입:', typeof (payloadData as any).toUserId, ')');
     }
     
-    // 모든 필드가 올바른 타입인지 확인
-    if (typeof data.fromUserId !== 'number') {
-      console.warn("fromUserId가 숫자가 아닙니다. 변환을 시도합니다:", data.fromUserId);
-      data.fromUserId = Number(data.fromUserId);
-      
-      if (isNaN(data.fromUserId)) {
-        throw new Error("요청자 ID가 유효한 숫자가 아닙니다.");
-      }
-    }
-    
-    if (data.toUserId !== undefined && typeof data.toUserId !== 'number') {
-      console.warn("toUserId가 숫자가 아닙니다. 변환을 시도합니다:", data.toUserId);
-      data.toUserId = Number(data.toUserId);
-      
-      if (isNaN(data.toUserId)) {
-        throw new Error("대상 사용자 ID가 유효한 숫자가 아닙니다.");
-      }
-    }
-    
-    if (typeof data.scheduleId !== 'number') {
-      console.warn("scheduleId가 숫자가 아닙니다. 변환을 시도합니다:", data.scheduleId);
-      data.scheduleId = Number(data.scheduleId);
-      
-      if (isNaN(data.scheduleId)) {
-        throw new Error("스케줄 ID가 유효한 숫자가 아닙니다.");
-      }
-    }
-    
-    // 최종 요청 데이터 로깅
-    console.log(`🔍 최종 대타 요청 데이터:`, JSON.stringify(data, null, 2));
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
     
-    // 토큰 로그 출력
-    const token = getToken();
-    console.log(`🔍 사용 중인 토큰:`, token ? `${token.substring(0, 10)}...` : "없음");
-    
-    // 인증 헤더 설정 다시 확인
-    if (token) {
-      axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
-    }
-    
-    const response = await axiosInstance.post<ShiftResponse>(`/shift-requests/store/${storeId}`, data);
-    console.log('✅ 대타 요청 성공:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('🚨 대타 요청 중 오류 발생:', error);
-    if (error.response) {
-      console.error('🚨 응답 데이터:', error.response.data);
-      console.error('🚨 응답 상태:', error.response.status);
-      console.error('🚨 응답 헤더:', error.response.headers);
+    try {
+      // API 요청 구성 - 명시적 헤더와 간소화된 데이터
+      const response = await axiosInstance.post<ShiftResponse>(
+        `/shift-requests/store/${storeId}`, 
+        payloadData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      console.log('✅ 대타 요청 성공:', response.data);
+      return response.data;
+    } catch (error: any) {
+      // 에러 상세 분석
+      console.error('🚨 대타 요청 중 오류 발생:', error);
       
-      // 서버 응답 메시지가 있으면 해당 메시지로 오류 표시
-      if (error.response.data && error.response.data.message) {
-        throw new Error(error.response.data.message);
-      } else if (error.response.status === 400) {
-        throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
-      } else if (error.response.status === 401) {
-        throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
-      } else if (error.response.status === 403) {
-        throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
-      } else if (error.response.status === 404) {
-        throw new Error("요청한 자원을 찾을 수 없습니다.");
-      } else if (error.response.status === 500) {
-        throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
+      if (error.response) {
+        console.error('🚨 응답 상태:', error.response.status);
+        console.error('🚨 응답 데이터:', error.response.data);
+        console.error('🚨 응답 헤더:', error.response.headers);
+        
+        if (error.response.status === 400) {
+          console.error('🚨 서버에 전송된 데이터:', payloadData);
+          throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
+        } else if (error.response.status === 401) {
+          throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
+        } else if (error.response.status === 403) {
+          throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
+        } else if (error.response.status === 404) {
+          throw new Error("요청한 자원을 찾을 수 없습니다.");
+        } else if (error.response.status === 500) {
+          throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
+        }
+      } else if (error.request) {
+        console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
+        throw new Error("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
+      } else {
+        console.error('🚨 오류 메시지:', error.message);
+        throw error;
       }
-    } else if (error.request) {
-      console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
-    } else {
-      console.error('🚨 오류 메시지:', error.message);
+      throw error;
     }
+  } catch (error: any) {
+    console.error('🚨 대타 요청 처리 중 오류:', error);
     throw error;
   }
 };

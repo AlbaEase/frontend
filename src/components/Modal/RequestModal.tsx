@@ -244,23 +244,36 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             // 스케줄 ID 찾기
             let scheduleId;
             
+            // 모달 데이터 디버깅
+            console.log("모달 데이터 타입:", typeof modalData, Array.isArray(modalData));
+            console.log("모달 데이터 첫 항목:", modalData[0]);
+            
             // 1. modalData가 배열인 경우 (그룹화된 스케줄)
             if (Array.isArray(modalData) && modalData[0]?.scheduleIds && modalData[0]?.scheduleIds.length > 0) {
                 scheduleId = modalData[0].scheduleIds[0];
+                console.log("케이스 1: scheduleIds 배열에서 추출", scheduleId);
             } 
             // 2. modalData가 객체인 경우 (단일 스케줄)
-            else if (modalData.scheduleId) {
+            else if (modalData && typeof modalData === 'object' && 'scheduleId' in modalData) {
                 scheduleId = modalData.scheduleId;
+                console.log("케이스 2: scheduleId 직접 추출", scheduleId);
             }
             // 3. scheduleIds 배열이 있는 경우
             else if (modalData[0]?.groups && modalData[0]?.groups[0]?.scheduleIds) {
                 scheduleId = modalData[0].groups[0].scheduleIds[0];
+                console.log("케이스 3: groups.scheduleIds에서 추출", scheduleId);
             }
             // 4. id 필드로 저장된 경우
             else if (modalData[0]?.id) {
                 scheduleId = modalData[0].id;
+                console.log("케이스 4: id에서 추출", scheduleId);
             }
-            // 5. 그 외의 경우 에러 처리
+            // 5. 스케줄ID 배열이 직접 있는 경우
+            else if (modalData[0]?.schedule?.scheduleId) {
+                scheduleId = modalData[0].schedule.scheduleId;
+                console.log("케이스 5: schedule.scheduleId에서 추출", scheduleId);
+            }
+            // 6. 그 외의 경우 에러 처리
             else {
                 console.error("스케줄 ID를 찾을 수 없습니다:", modalData);
                 setError("스케줄 ID를 찾을 수 없습니다. 관리자에게 문의하세요.");
@@ -364,7 +377,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 });
                 
                 try {
-                    // 요청 타임아웃 설정 (10초)
+                    // 요청 데이터 구성 - 필수 필드만 포함
                     const requestData: ShiftRequest = {
                         fromUserId: Number(fromUserId),
                         toUserId: Number(toUserId),
@@ -373,7 +386,22 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         requestDate: currentDate.format("YYYY-MM-DD")
                     };
                     
-                    console.log("최종 요청 데이터:", JSON.stringify(requestData, null, 2));
+                    // 스케줄 ID가 0이 아닌지 확인
+                    if (!requestData.scheduleId || requestData.scheduleId === 0 || isNaN(requestData.scheduleId)) {
+                        throw new Error("유효한 스케줄 ID가 필요합니다.");
+                    }
+                    
+                    // toUserId가 유효한지 확인
+                    if (!requestData.toUserId || isNaN(requestData.toUserId)) {
+                        throw new Error("대상 사용자 ID가 필요합니다.");
+                    }
+                    
+                    // 자기 자신에게 요청하는지 확인
+                    if (requestData.fromUserId === requestData.toUserId) {
+                        throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
+                    }
+                    
+                    console.log("대타 요청 데이터:", JSON.stringify(requestData, null, 2));
                     
                     // apiService의 requestShift 함수 사용
                     const response = await requestShift(storeId, requestData);
@@ -424,7 +452,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 });
                 
                 try {
-                    // 요청 타임아웃 설정 (10초)
+                    // 요청 데이터 구성 - 필수 필드만 포함
                     const requestData: ShiftRequest = {
                         fromUserId: Number(fromUserId),
                         scheduleId: Number(scheduleId),
@@ -432,7 +460,12 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         requestDate: currentDate.format("YYYY-MM-DD")
                     };
                     
-                    console.log("최종 요청 데이터:", JSON.stringify(requestData, null, 2));
+                    // 스케줄 ID가 0이 아닌지 확인
+                    if (!requestData.scheduleId || requestData.scheduleId === 0 || isNaN(requestData.scheduleId)) {
+                        throw new Error("유효한 스케줄 ID가 필요합니다.");
+                    }
+                    
+                    console.log("대타 요청 데이터:", JSON.stringify(requestData, null, 2));
                     
                     // apiService의 requestShift 함수 사용
                     const response = await requestShift(storeId, requestData);
