@@ -1,5 +1,6 @@
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
+import { WebSocketProvider } from "./contexts/WebSocketContext";
 
 import Footer from "./components/Footer";
 import LandingPage from "./Pages/Common/LandingPage";
@@ -13,10 +14,17 @@ import EmployeeMainPage from "./Pages/Employee/EmployeeMainPage";
 import EmployeeMyPage from "./Pages/Employee/EmployeeMyPage";
 import EmployeeMySalary from "./Pages/Employee/EmployeeMySalary";
 import EmployeeMyChange from "./Pages/Employee/EmployeeMyChange";
+import { useEffect } from "react";
+import { checkAuthAndSetToken } from "./api/apiService";
 
 function App() {
+  // 앱이 로드될 때 인증 상태 확인
+  useEffect(() => {
+    checkAuthAndSetToken();
+  }, []);
+
   return (
-    <>
+    <WebSocketProvider>
       <Routes>
         <Route path="" element={<LandingPage />}></Route>
         <Route path="login" element={<LoginPage />}></Route>
@@ -37,7 +45,7 @@ function App() {
         ></Route>
       </Routes>
       <Footer />
-    </>
+    </WebSocketProvider>
   );
 }
 
