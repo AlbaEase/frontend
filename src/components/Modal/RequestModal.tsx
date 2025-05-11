@@ -302,16 +302,44 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             }
             
             const userInfo = JSON.parse(userInfoStr);
-            const fromUserId = userInfo.userId; // 요청자 ID
+            console.log("사용자 정보 전체:", userInfo); // 디버깅: 전체 사용자 정보 확인
             
-            // 요청자 ID 유효성 검사
+            let fromUserId = userInfo.userId; // 요청자 ID
+            
+            // 추가 디버깅: userId 확인
+            console.log("userInfo 객체 내의 사용자 ID 필드 확인:");
+            for (const key in userInfo) {
+                if (key.toLowerCase().includes('id') || key.toLowerCase().includes('userid')) {
+                    console.log(`  - ${key}: ${userInfo[key]} (타입: ${typeof userInfo[key]})`);
+                }
+            }
+            
+            // userId 없는 경우 대안으로 id 필드 사용
+            if (fromUserId === undefined && userInfo.id !== undefined) {
+                console.log("userId 필드 없음, id 필드를 대신 사용:", userInfo.id);
+                fromUserId = userInfo.id;
+            }
+            
+            // 요청자 ID 유효성 검사 (undefined나 null인 경우만 검사, 0은 유효한 ID)
             if (fromUserId === undefined || fromUserId === null) {
-                setError("유효한 요청자 ID가 없습니다.");
+                console.error("유효한 요청자 ID가 없습니다:", userInfo);
+                setError("유효한 요청자 ID가 없습니다. 다시 로그인해 주세요.");
                 setLoading(false);
                 return;
             }
             
-            console.log("요청자 ID:", fromUserId);
+            // 명시적으로 숫자로 변환
+            fromUserId = Number(fromUserId);
+            
+            if (isNaN(fromUserId)) {
+                console.error("요청자 ID가 유효한 숫자가 아닙니다:", fromUserId);
+                setError("요청자 ID가 유효한 숫자가 아닙니다. 다시 로그인해 주세요.");
+                setLoading(false);
+                return;
+            }
+            
+            // 로그 개선: 숫자 변환 결과와 타입 정보를 명확히 출력
+            console.log(`최종 사용할 요청자 ID: ${fromUserId} (타입: ${typeof fromUserId}, 0인지 여부: ${fromUserId === 0})`);
 
             if (selectedOption === "select" && selectedWorker.length > 0) {
                 // 특정 근무자 대상 대타 요청
@@ -377,7 +405,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 });
                 
                 try {
-                    // 요청 데이터 구성 - 필수 필드만 포함
+                    // 요청 데이터 구성 - 필수 필드만 포함하고 숫자 타입 명시적 지정
                     const requestData: ShiftRequest = {
                         fromUserId: Number(fromUserId),
                         toUserId: Number(toUserId),
@@ -386,13 +414,23 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         requestDate: currentDate.format("YYYY-MM-DD")
                     };
                     
+                    // 디버깅: 최종 요청 데이터 출력
+                    console.log("대타 요청 최종 데이터:", {
+                        fromUserId: requestData.fromUserId, 
+                        fromUserIdType: typeof requestData.fromUserId,
+                        toUserId: requestData.toUserId, 
+                        toUserIdType: typeof requestData.toUserId,
+                        scheduleId: requestData.scheduleId, 
+                        scheduleIdType: typeof requestData.scheduleId
+                    });
+                    
                     // 스케줄 ID가 0이 아닌지 확인
-                    if (!requestData.scheduleId || requestData.scheduleId === 0 || isNaN(requestData.scheduleId)) {
+                    if (requestData.scheduleId === undefined || requestData.scheduleId === null || isNaN(requestData.scheduleId)) {
                         throw new Error("유효한 스케줄 ID가 필요합니다.");
                     }
                     
                     // toUserId가 유효한지 확인
-                    if (!requestData.toUserId || isNaN(requestData.toUserId)) {
+                    if (requestData.toUserId === undefined || requestData.toUserId === null || isNaN(requestData.toUserId)) {
                         throw new Error("대상 사용자 ID가 필요합니다.");
                     }
                     
@@ -406,6 +444,14 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     // apiService의 requestShift 함수 사용
                     const response = await requestShift(storeId, requestData);
                     console.log("대타 요청 응답:", response);
+                    
+                    // 요청 성공 처리
+                    setSuccess(true);
+                    setLoading(false);
+                    setTimeout(() => {
+                        onClose(); // 요청 성공 후 모달 닫기
+                    }, 2000);
+                    
                 } catch (apiError: any) {
                     console.error("API 호출 오류:", apiError);
                     
@@ -461,7 +507,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     };
                     
                     // 스케줄 ID가 0이 아닌지 확인
-                    if (!requestData.scheduleId || requestData.scheduleId === 0 || isNaN(requestData.scheduleId)) {
+                    if (requestData.scheduleId === undefined || requestData.scheduleId === null || isNaN(requestData.scheduleId)) {
                         throw new Error("유효한 스케줄 ID가 필요합니다.");
                     }
                     

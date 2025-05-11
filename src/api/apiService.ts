@@ -216,39 +216,115 @@ export const requestShift = async (
       throw new Error("인증 실패: 대타 요청을 할 수 없습니다.");
     }
     
-    // 백엔드가 기대하는 데이터 형식으로 변환
+    console.log("🔍 원본 요청 데이터:", JSON.stringify(data, null, 2));
+    
+    // 백엔드가 기대하는 데이터 형식으로 변환 - 백엔드는 Long 타입을 사용함
     const payloadData = {
-      fromUserId: Number(data.fromUserId) || null,
-      scheduleId: Number(data.scheduleId) || null,
+      // fromUserId가 0인 경우를 명시적으로 처리 (0도 유효한 ID)
+      fromUserId: data.fromUserId !== undefined ? Number(data.fromUserId) : null,
+      scheduleId: data.scheduleId ? Number(data.scheduleId) : null,
       requestType: data.requestType,
       requestDate: data.requestDate
     };
     
+    console.log("🔍 변환된 payload - fromUserId:", payloadData.fromUserId, 
+                "타입:", typeof payloadData.fromUserId, 
+                "원본 fromUserId:", data.fromUserId, 
+                "원본 타입:", typeof data.fromUserId);
+    
     // 특정 사용자에게 요청하는 경우에만 toUserId 추가
-    if (data.requestType === 'SPECIFIC_USER' && data.toUserId) {
+    if (data.requestType === 'SPECIFIC_USER' && data.toUserId !== undefined) {
       (payloadData as any).toUserId = Number(data.toUserId);
+      console.log("🔍 변환된 payload - toUserId:", (payloadData as any).toUserId, 
+                  "타입:", typeof (payloadData as any).toUserId, 
+                  "원본 toUserId:", data.toUserId, 
+                  "원본 타입:", typeof data.toUserId);
     }
     
-    // 데이터 유효성 검사
-    if (!payloadData.fromUserId) {
+    // fromUserId가 유효한지 확인 (0도 유효한 ID로 간주)
+    // null, undefined 또는 NaN인 경우에만 사용자 정보에서 가져오기 시도
+    if (payloadData.fromUserId === null || payloadData.fromUserId === undefined || isNaN(payloadData.fromUserId)) {
+      console.log("🔍 fromUserId가 없거나 유효하지 않음, 사용자 정보에서 가져오기 시도");
+      
+      const userInfoStr = localStorage.getItem("userInfo");
+      if (!userInfoStr) {
+        throw new Error("요청자 ID가 필요합니다. 사용자 정보를 찾을 수 없습니다.");
+      }
+      
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        console.log("🔍 userInfo 전체 내용:", userInfo);
+        
+        // 가능한 모든 ID 필드 순회하며 검색
+        let userId = null;
+        
+        // 정확한 필드명 먼저 확인 (userId가 0인 경우도 유효한 값으로 처리)
+        if (userInfo.userId !== undefined) {
+          userId = userInfo.userId;
+          console.log("🔍 userInfo.userId 필드 발견:", userId);
+        } 
+        else if (userInfo.id !== undefined) {
+          userId = userInfo.id;
+          console.log("🔍 userInfo.id 필드 발견:", userId);
+        }
+        // 대소문자 구분 없이 모든 필드 검색
+        else {
+          console.log("🔍 정확한 ID 필드를 찾을 수 없어 전체 검색 진행");
+          for (const key in userInfo) {
+            if (typeof key === 'string' && 
+                (key.toLowerCase() === 'userid' || 
+                 key.toLowerCase() === 'id' || 
+                 key.toLowerCase().includes('userid') || 
+                 key.toLowerCase().includes('user_id'))) {
+              if (userInfo[key] !== undefined) {
+                userId = userInfo[key];
+                console.log(`🔍 ${key} 필드에서 ID 발견:`, userId);
+                break;
+              }
+            }
+          }
+        }
+        
+        if (userId !== null && userId !== undefined) {
+          payloadData.fromUserId = Number(userId);
+          console.log("🔍 최종 발견된 fromUserId:", payloadData.fromUserId);
+          
+          // ID가 NaN인 경우만 에러 처리 (0은 유효한 값)
+          if (isNaN(payloadData.fromUserId)) {
+            throw new Error("유효하지 않은 요청자 ID입니다: " + userId);
+          }
+        } else {
+          throw new Error("요청자 ID가 필요합니다. 사용자 정보에서 ID를 찾을 수 없습니다.");
+        }
+      } catch (e) {
+        console.error("🚨 사용자 정보 처리 중 오류:", e);
+        throw new Error("요청자 ID가 필요합니다. 사용자 정보를 처리할 수 없습니다.");
+      }
+    }
+    
+    // 최종 데이터 유효성 검사 (0도 유효한 ID로 인식)
+    if (payloadData.fromUserId === null || payloadData.fromUserId === undefined || isNaN(payloadData.fromUserId)) {
       throw new Error("요청자 ID가 필요합니다.");
     }
     
-    if (!payloadData.scheduleId) {
+    // scheduleId 검증
+    if (payloadData.scheduleId === null || payloadData.scheduleId === undefined || isNaN(payloadData.scheduleId) || payloadData.scheduleId <= 0) {
       throw new Error("유효한 스케줄 ID가 필요합니다.");
     }
     
-    if (payloadData.requestType === 'SPECIFIC_USER' && !(payloadData as any).toUserId) {
-      throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
-    }
-    
-    // 중복 검사도 수행
-    if (payloadData.fromUserId === (payloadData as any).toUserId) {
-      throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
+    // SPECIFIC_USER 타입일 때 toUserId 검증
+    if (payloadData.requestType === 'SPECIFIC_USER') {
+      if ((payloadData as any).toUserId === undefined || (payloadData as any).toUserId === null || isNaN((payloadData as any).toUserId)) {
+        throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
+      }
+      
+      if (payloadData.fromUserId === (payloadData as any).toUserId) {
+        throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
+      }
     }
     
     // 모든 필드의 값을 로깅
-    console.log('🔍 대타 요청 데이터 필드:');
+    console.log('🔍 최종 대타 요청 데이터:');
     console.log('  - fromUserId:', payloadData.fromUserId, '(타입:', typeof payloadData.fromUserId, ')');
     console.log('  - scheduleId:', payloadData.scheduleId, '(타입:', typeof payloadData.scheduleId, ')');
     console.log('  - requestType:', payloadData.requestType, '(타입:', typeof payloadData.requestType, ')');
@@ -261,7 +337,7 @@ export const requestShift = async (
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
     
     try {
-      // API 요청 구성 - 명시적 헤더와 간소화된 데이터
+      // API 요청 구성 - 헤더에 Content-Type 명시적으로 설정
       const response = await axiosInstance.post<ShiftResponse>(
         `/shift-requests/store/${storeId}`, 
         payloadData,

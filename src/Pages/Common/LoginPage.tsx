@@ -72,17 +72,18 @@ const LoginPage = () => {
       console.log("✅ 받은 토큰:", token);
       console.log("✅ 사용자 역할:", role);
       console.log("✅ 사용자 이름:", fullName);
+      console.log("✅ 사용자 ID:", userId);
       
       // 토큰은 Bearer 접두사 없이 저장 (백엔드에서 처리함)
       localStorage.setItem("accessToken", token);
       
       // 사용자 정보 객체 생성 - 백엔드 응답 구조 매핑
       const userInfo = {
-        userId: userId || 0,
+        userId: userId !== undefined ? userId : null,
         name: fullName || "",
-        userType: userType || role, // userType이 응답에 있으면 사용, 없으면 role 사용
+        userType: userType || role,
         email,
-        role // 역할 정보 보존
+        role
       };
       
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
