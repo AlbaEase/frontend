@@ -9,6 +9,7 @@ import {
 import dayjs, { Dayjs } from "dayjs";
 import axiosInstance from "../api/loginAxios";
 import { getUserFromToken } from "../utils/getUserFromToken";
+// import { getGroupedSchedules } from "../utils/schedulesUtils";
 
 interface EmployeeSchedule {
     userId: number; // 알바생 아이디
@@ -37,16 +38,29 @@ interface EmployeeScheduleContextType {
     setEmployeeSchedules: React.Dispatch<
         React.SetStateAction<EmployeeSchedule[]>
     >;
-    groupedSchedules: {
+    viewedSchedules: {
         date: string;
         groups: { startTime: string; endTime: string; names: string[] }[];
     }[];
+    // groupedSchedules: {
+    //    date: string;
+    //    groups: { startTime: string; endTime: string; names: string[] }[];
+    //}[];
+    groupedSchedules: {
+        date: string;
+        groups: {
+            startTime: string;
+            endTime: string;
+            users: { name: string; userId: number }[];
+        }[];
+    }[];
+
     // 날짜와 같은 시간대에 일하는 알바생 그룹
     currentDate: Dayjs;
     setCurrentDate: React.Dispatch<React.SetStateAction<Dayjs>>;
     selectedName: string;
     setSelectedName: React.Dispatch<React.SetStateAction<string>>;
-    otherGroupMembers: string[];
+    otherGroupMembers: { userId: number, name: string }[];
 }
 
 const EmployeeScheduleContext = createContext<
@@ -152,8 +166,7 @@ export const EmployeeScheduleProvider = ({
         fetchSchedules();
     }, [selectedStore]);
 
-    /* 스케줄 그룹화 */
-    const groupedSchedules = useMemo(() => {
+    const viewedSchedules = useMemo(() => {
         /* selectedList에 있는 알바생들의 일정만 filteredSchedules에 저장 */
         const filteredSchedules = employeeSchedules.filter((schedule) =>
             selectedList.includes(schedule.fullName)
@@ -270,9 +283,127 @@ export const EmployeeScheduleProvider = ({
             ), // startTime 기준 정렬
         }));
 
-        // console.log("groupedSchedules 결과: ", result);
+        // console.log("viewedSchedules 결과: ", result);
         return result;
     }, [selectedList, employeeSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
+
+    /* 스케줄 그룹화 */
+    const groupedSchedules = useMemo(() => {
+        /* selectedList에 있는 알바생들의 일정만 filteredSchedules에 저장 */
+        const allSchedules = employeeSchedules;
+        /* currentDate를 기준으로 한 달의 시작일과 종료일을 계산 */
+        const startOfMonth = currentDate.startOf("month");
+        const endOfMonth = currentDate.endOf("month");
+
+        /* 각 일자별 배열 */
+        const monthDates: Dayjs[] = [];
+        let currentDateInMonth = startOfMonth;
+
+        /* 해당 월의 시작부터 끝까지 배열에 저장 */
+        while (
+            currentDateInMonth.isBefore(endOfMonth, "day") ||
+            currentDateInMonth.isSame(endOfMonth, "day")
+        ) {
+            monthDates.push(currentDateInMonth);
+            currentDateInMonth = currentDateInMonth.add(1, "day");
+        }
+
+        /* 날짜별 스케줄을 저장하는 객체
+         * 날짜를 키로 하고 각 날짜에 시작, 종료, 알바생 명단을 저장 */
+        const scheduleMap = monthDates.reduce((acc, date) => {
+            acc[date.format("YYYY-MM-DD")] = []; // 날짜별 빈 배열로 초기화
+            return acc;
+            // 형식은 날짜(string), 일정 기록하는 객체(시작 시간, 끝 시간, 알바생 명단)
+        }, {} as Record<string, { startTime: string; endTime: string; users: { name: string; userId: number }[] }[]>);
+
+        allSchedules.forEach((schedule) => {
+            // user는 schedule에서 가져온 알바생 이름과 id
+            const user = { name: schedule.fullName, userId: schedule.userId };
+
+            // repeat_days가 null인 경우, workDate를 기준으로 날짜 매칭
+            if (!schedule.repeatDays) {
+                const workDate = dayjs(schedule.workDates); // workDate를 Dayjs로 변환
+                if (workDate.month() === currentDate.month()) {
+                    // 스케줄의 월이 현재 날짜의 월과 같으면
+                    const dateStr = workDate.format("YYYY-MM-DD"); // 해당 날짜에 스케줄 추가
+                    const existingGroup = scheduleMap[dateStr].find(
+                        // 동일한 스케줄 있는지 찾음
+                        (group) =>
+                            group.startTime === schedule.startTime &&
+                            group.endTime === schedule.endTime
+                    );
+
+                    if (existingGroup) {
+                        // 이미 존재하는 그룹 있으면 이름을 추가
+                        existingGroup.users.push(user);
+                    } else {
+                        // 이전에 해당 스케줄 그룹이 없으면 새로 그룹 추가
+                        scheduleMap[dateStr].push({
+                            startTime: schedule.startTime,
+                            endTime: schedule.endTime,
+                            users: [user],
+                        });
+                    }
+                }
+            }
+
+            // repeat_days가 null이 아닌 경우, 요일을 기준으로 반복되는 스케줄 계산
+            /* 시작 날짜 가져와서 그날부터 추가하도록 수정해야 됨 */
+            else {
+                const dayOfWeekStrings = [
+                    "SUN",
+                    "MON",
+                    "TUE",
+                    "WED",
+                    "THU",
+                    "FRI",
+                    "SAT",
+                ];
+
+                monthDates.forEach((date) => {
+                    const dayOfWeek = dayOfWeekStrings[date.day()]; // 해당 날짜의 요일, 2025-02-13의 경우 "목"
+
+                    // 반복 요일 배열에 해당 날짜의 요일이 포함되어 있으면 스케줄 추가
+                    if (schedule.repeatDays.includes(dayOfWeek)) {
+                        const dateStr = date.format("YYYY-MM-DD");
+
+                        // scheduleMap[dateStr]가 존재하지 않으면 빈 배열로 초기화
+                        if (!scheduleMap[dateStr]) {
+                            scheduleMap[dateStr] = [];
+                        }
+
+                        // 해당 날짜에 이미 같은 시간대의 스케줄이 있다면, 알바생 이름 추가
+                        const existingGroup = scheduleMap[dateStr].find(
+                            (group) =>
+                                group.startTime === schedule.startTime &&
+                                group.endTime === schedule.endTime
+                        );
+
+                        if (existingGroup) {
+                            existingGroup.users.push(user);
+                        } else {
+                            scheduleMap[dateStr].push({
+                                startTime: schedule.startTime,
+                                endTime: schedule.endTime,
+                                users: [user],
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+        // 날짜별로 그룹화된 스케줄을 배열로 변환
+        const result = Object.entries(scheduleMap).map(([dateStr, groups]) => ({
+            date: dateStr,
+            groups: groups.sort((a, b) =>
+                a.startTime.localeCompare(b.startTime)
+            ), // startTime 기준 정렬
+        }));
+
+        console.log("groupedSchedules 결과: ", result);
+        return result;
+    }, [employeeSchedules, currentDate]); // 데이터베이스에 변경이 있을 때만 재계산
 
     /* 근무하는 날짜 또는 시간이 다른 그룹의 명단 */
     const otherGroupMembers = useMemo(() => {
@@ -284,9 +415,8 @@ export const EmployeeScheduleProvider = ({
 
         // 2. currentDate에 해당하는 그룹에서 선택된 알바생의 그룹 찾기
         const myGroup = currentDateGroups.find((group) =>
-            group.names.includes(selectedName)
+            group.users.map((user) => user.name).includes(selectedName)
         );
-
         if (!myGroup) return []; // 만약 나의 그룹이 없다면 빈 배열 리턴
 
         // 3. 나의 그룹에 포함되지 않은 다른 사람들 필터링
@@ -296,12 +426,17 @@ export const EmployeeScheduleProvider = ({
 
             // 현재 날짜 그룹에서 선택된 알바생의 그룹에 포함되지 않은 사람들
             return currentDateGroups.every(
-                (group) => !group.names.includes(schedule.fullName)
+                (group) =>
+                    !group.users.some((user) => user.name === schedule.fullName)
             );
         });
 
-        return nonOverlappingWorkers.map((schedule) => schedule.fullName);
-    }, [employeeSchedules, groupedSchedules, currentDate]);
+        // nonOverlappingWorkers를 { id, name } 형태로 반환
+        return nonOverlappingWorkers.map((schedule) => ({
+            userId: schedule.userId, // 근무자의 id
+            name: schedule.fullName, // 근무자의 이름
+        }));
+    }, [employeeSchedules, groupedSchedules, currentDate, selectedName]);
 
     return (
         <EmployeeScheduleContext.Provider
@@ -314,6 +449,7 @@ export const EmployeeScheduleProvider = ({
                 setSelectedList,
                 employeeSchedules,
                 setEmployeeSchedules,
+                viewedSchedules,
                 groupedSchedules,
                 currentDate,
                 setCurrentDate,
@@ -333,3 +469,33 @@ export const useEmployeeSchedule = () => {
     }
     return context;
 };
+
+// /* 근무하는 날짜 또는 시간이 다른 그룹의 명단 */
+// const otherGroupMembers = useMemo(() => {
+//     // 1. 그룹화된 스케줄에서 currentDate에 해당하는 그룹 찾기
+//     const currentDateGroups =
+//         groupedSchedules.find(
+//             (group) => group.date === currentDate.format("YYYY-MM-DD")
+//         )?.groups || [];
+
+//     // 2. currentDate에 해당하는 그룹에서 선택된 알바생의 그룹 찾기
+//     const myGroup = currentDateGroups.find((group) =>
+//         group.users.map((user) => user.name).includes(selectedName)
+//     );
+//     if (!myGroup) return []; // 만약 나의 그룹이 없다면 빈 배열 리턴
+
+//     // 3. 나의 그룹에 포함되지 않은 다른 사람들 필터링
+//     const nonOverlappingWorkers = employeeSchedules.filter((schedule) => {
+//         // 자기 자신 제외
+//         if (schedule.fullName === selectedName) return false;
+
+//         // 현재 날짜 그룹에서 선택된 알바생의 그룹에 포함되지 않은 사람들
+//         // 나중에 id로 비교하도록 수정해야 함
+//         return currentDateGroups.every(
+//             (group) =>
+//                 !group.users.some((user) => user.name === schedule.fullName)
+//         );
+//     });
+
+//     return nonOverlappingWorkers.map((schedule) => schedule.fullName);
+// }, [employeeSchedules, groupedSchedules, currentDate]);

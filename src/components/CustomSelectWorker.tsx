@@ -4,7 +4,7 @@ import styles from "./CustomSelectWorker.module.css"; // 스타일 파일
 interface CustomSelectWorkerProps {
     names: string[]; // 근무자 이름 목록
     selectedWorkers: string[]; // 선택된 근무자 목록
-    onSelect: React.Dispatch<React.SetStateAction<string[]>>; // 선택된 근무자 목록을 업데이트하는 함수
+    onSelect: (selectedNames: string[]) => void; // 선택된 근무자 목록을 업데이트하는 함수
 }
 
 const CustomSelectWorker: React.FC<CustomSelectWorkerProps> = ({

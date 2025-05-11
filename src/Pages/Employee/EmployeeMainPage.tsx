@@ -2,7 +2,7 @@ import { useModal } from "../../contexts/ModalContext";
 import Alarm from "../../components/Alarm";
 import AlbaAdd from "../../components/AlbaAdd";
 import CalendarEmployee from "../../components/CalendarEmployee";
-import Choice from "../../components/Choice";
+import ChoiceEmployee from "../../components/ChoiceEmployee";
 import PartTimeEmployee from "../../components/PartTimeEmployee";
 import SelectRadio from "../../components/SelectRadio";
 import AlbaAddModal from "../../components/Modal/AlbaAddModal";
@@ -29,7 +29,7 @@ const EmployeeMainPage = () => {
         <div className={styles.mainContents}>
           <PartTimeEmployee />
           <CalendarEmployee />
-          <Choice />
+          <ChoiceEmployee />
         </div>
         <div className={styles.bottomContents}>
           <Alarm onClick={() => openModal("alarm")} />

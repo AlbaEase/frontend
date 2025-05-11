@@ -8,9 +8,9 @@ import "dayjs/locale/ko";
 dayjs.locale("ko");
 
 const Calendar = () => {
-    const { groupedSchedules, currentDate, setCurrentDate } =
+    const { viewedSchedules, currentDate, setCurrentDate } =
         useEmployeeSchedule();
-    console.log(groupedSchedules);
+    console.log(viewedSchedules);
     const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
     const minDate = dayjs("2025-01-01");
@@ -98,7 +98,7 @@ const Calendar = () => {
 
                     // groupedSchedules에서 해당 날짜의 데이터를 찾기
                     const schedulesForDate =
-                        groupedSchedules.find(
+                        viewedSchedules.find(
                             (schedule) => schedule.date === dateStr
                         )?.groups || [];
 
