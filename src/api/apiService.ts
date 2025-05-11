@@ -237,7 +237,46 @@ export const requestShift = async (
       throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
     }
     
-    console.log(`🔍 대타 요청 데이터:`, data);
+    // 데이터 유효성 추가 검증
+    if (data.fromUserId === data.toUserId) {
+      throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
+    }
+    
+    if (!data.requestDate) {
+      // 요청 날짜가 없으면 현재 날짜로 설정
+      data.requestDate = new Date().toISOString().split('T')[0];
+    }
+    
+    // 모든 필드가 올바른 타입인지 확인
+    if (typeof data.fromUserId !== 'number') {
+      console.warn("fromUserId가 숫자가 아닙니다. 변환을 시도합니다:", data.fromUserId);
+      data.fromUserId = Number(data.fromUserId);
+      
+      if (isNaN(data.fromUserId)) {
+        throw new Error("요청자 ID가 유효한 숫자가 아닙니다.");
+      }
+    }
+    
+    if (data.toUserId !== undefined && typeof data.toUserId !== 'number') {
+      console.warn("toUserId가 숫자가 아닙니다. 변환을 시도합니다:", data.toUserId);
+      data.toUserId = Number(data.toUserId);
+      
+      if (isNaN(data.toUserId)) {
+        throw new Error("대상 사용자 ID가 유효한 숫자가 아닙니다.");
+      }
+    }
+    
+    if (typeof data.scheduleId !== 'number') {
+      console.warn("scheduleId가 숫자가 아닙니다. 변환을 시도합니다:", data.scheduleId);
+      data.scheduleId = Number(data.scheduleId);
+      
+      if (isNaN(data.scheduleId)) {
+        throw new Error("스케줄 ID가 유효한 숫자가 아닙니다.");
+      }
+    }
+    
+    // 최종 요청 데이터 로깅
+    console.log(`🔍 최종 대타 요청 데이터:`, JSON.stringify(data, null, 2));
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
     
     // getToken 사용
@@ -257,6 +296,8 @@ export const requestShift = async (
       // 서버 응답 메시지가 있으면 해당 메시지로 오류 표시
       if (error.response.data && error.response.data.message) {
         throw new Error(error.response.data.message);
+      } else if (error.response.status === 400) {
+        throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
       }
     } else if (error.request) {
       console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);

@@ -26,21 +26,38 @@ const CustomSelectWorker: React.FC<CustomSelectWorkerProps> = ({
         ? names as WorkerInfo[]
         : (names as string[]).map(name => ({ id: name, name }));
     
+    // 컴포넌트 마운트 시 근무자 목록 로깅
+    useEffect(() => {
+        console.log("CustomSelectWorker - 근무자 목록:", workerInfos);
+    }, [workerInfos]);
+    
     // 근무자를 클릭했을 때 선택/해제하는 함수
-    const handleSelectWorker = (workerId: string) => {
+    const handleSelectWorker = (workerId: string, workerName: string) => {
+        console.log(`근무자 선택 클릭 - ID: ${workerId}, 이름: ${workerName}`);
+        
         if (selectedWorkers.includes(workerId)) {
             // 이미 선택된 근무자라면, 선택 해제
+            console.log(`근무자 선택 해제: ${workerId}`);
             onSelect(selectedWorkers.filter((id) => id !== workerId));
         } else {
             // 선택되지 않은 근무자라면, 추가
-            onSelect([...selectedWorkers, workerId]);
+            console.log(`근무자 선택 추가: ${workerId}`);
+            onSelect([workerId]); // 단일 선택으로 변경 (다중 선택 대신)
         }
     };
 
     // selectedWorkers가 업데이트될 때마다 콘솔에 로그 찍기
     useEffect(() => {
-        console.log("selectedWorkers 확인 (ID 목록): ", selectedWorkers);
-    }, [selectedWorkers]); // selectedWorkers가 변경될 때마다 실행됨
+        console.log("CustomSelectWorker - 선택된 근무자 ID 목록: ", selectedWorkers);
+        
+        // 선택된 근무자 정보 출력
+        if (selectedWorkers.length > 0) {
+            const selectedWorkerInfo = workerInfos.find(worker => worker.id === selectedWorkers[0]);
+            if (selectedWorkerInfo) {
+                console.log(`선택된 근무자 정보 - ID: ${selectedWorkerInfo.id}, 이름: ${selectedWorkerInfo.name}`);
+            }
+        }
+    }, [selectedWorkers, workerInfos]); // selectedWorkers가 변경될 때마다 실행됨
 
     return (
         <div className={styles.workerSelectContainer}>
@@ -53,7 +70,7 @@ const CustomSelectWorker: React.FC<CustomSelectWorkerProps> = ({
                                 ? styles.selected
                                 : ""
                         }`}
-                        onClick={() => handleSelectWorker(worker.id)} // 클릭 시 선택/해제
+                        onClick={() => handleSelectWorker(worker.id, worker.name)} // 클릭 시 선택/해제
                     >
                         {worker.name}
                     </li>
