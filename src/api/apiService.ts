@@ -49,8 +49,8 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
     
     const userInfo = JSON.parse(userInfoStr) as { userId?: number };
     
-    // 사용자 ID를 쿼리 파라미터로 전달
-    if (userInfo && userInfo.userId) {
+    // 사용자 ID를 쿼리 파라미터로 전달 (userId가 0이어도 유효한 것으로 처리)
+    if (userInfo && (userInfo.userId !== undefined && userInfo.userId !== null)) {
       const response = await axiosInstance.get<NotificationResponse>(`/notification/me?userId=${userInfo.userId}`);
       console.log("✅ 알림 데이터 가져옴:", response.data);
       return response.data.notifications || [];
@@ -93,11 +93,12 @@ export const deleteAllNotifications = async (): Promise<boolean> => {
     
     if (userInfoStr) {
       const userInfo = JSON.parse(userInfoStr) as { userId?: number };
-      userId = userInfo.userId || null;
+      // userId가 0이어도 유효한 것으로 처리
+      userId = userInfo.userId !== undefined ? userInfo.userId : null;
     }
     
     // userId가 있으면 쿼리 파라미터로 전달
-    const url = userId ? `/notification/me?userId=${userId}` : '/notification/me';
+    const url = userId !== null ? `/notification/me?userId=${userId}` : '/notification/me';
     await axiosInstance.delete(url);
     
     console.log('✅ 모든 알림 삭제 완료');
@@ -123,10 +124,11 @@ export const fetchModificationRequests = async (): Promise<ModificationResponse[
     
     if (userInfoStr) {
       const userInfo = JSON.parse(userInfoStr) as { userId?: number };
-      userId = userInfo.userId || null;
+      // userId가 0이어도 유효한 것으로 처리
+      userId = userInfo.userId !== undefined ? userInfo.userId : null;
     }
     
-    if (!userId) {
+    if (userId === null) {
       console.error("🚨 유효한 사용자 ID가 없습니다");
       return [];
     }
