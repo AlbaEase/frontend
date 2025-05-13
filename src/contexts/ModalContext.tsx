@@ -4,12 +4,12 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface ModalContextType {
   /* 열 때 어떤 모달창인지 타입 명시 */
   openModal: (
-    modal: "alarm" | "albaAdd" | "request" | "edit",
+    modal: "alarm" | "albaAdd" | "request" | "edit" | "done",
     data?: any
   ) => void;
   closeModal: () => void;
   /* 활성화 된 타입 */
-  activeModal: "alarm" | "albaAdd" | "request" | "edit" | null;
+  activeModal: "alarm" | "albaAdd" | "request" | "edit" | "done" | null;
   /* 전달된 데이터를 저장할 변수 */
   modalData: any;
 }
@@ -18,12 +18,12 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export const ModalProvider = ({ children }: { children: ReactNode }) => {
   const [activeModal, setActiveModal] = useState<
-    "alarm" | "albaAdd" | "request" | "edit" | null
+    "alarm" | "albaAdd" | "request" | "edit" | "done" |null
   >(null);
   const [modalData, setModalData] = useState<any>(null); // 데이터 저장
 
   const openModal = (
-    modal: "alarm" | "albaAdd" | "request" | "edit",
+    modal: "alarm" | "albaAdd" | "request" | "edit" | "done",
     data?: any
   ) => {
     setActiveModal(modal);

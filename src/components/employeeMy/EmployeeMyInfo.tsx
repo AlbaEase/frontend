@@ -2,55 +2,81 @@ import styles from "./EmployeeMyInfo.module.css";
 import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import EditModal from "../Modal/Edit/EditModal";
-import axiosInstance from "../../api/axios"; // ✅ axios 설정 import
+import DoneModal from "../Modal/Edit/DoneModal";
+import axiosInstance from "../../api/loginAxios"
+
 
 const EmployeeMyInfo = () => {
   const { activeModal, openModal, closeModal } = useModal();
+  const [isEditing, setIsEditing] = useState(false);
 
   const [userInfo, setUserInfo] = useState({
     fullName: "",
     email: "",
     password: "********",
     role: "",
-    storeName: "",
+    storeNames: [] as string[],
   });
 
-  // ✅ 사용자 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
         const response = await axiosInstance.get("/user/me");
-        const { fullName, email, role, storeNames } = response.data;
+        console.log("🔍 유저 정보:", response.data);
+
         setUserInfo({
-          fullName,
-          email,
-          password: "********",
-          role,
-          storeName: storeNames?.[0] || "없음", // 첫 번째 매장만 표시하거나 없으면 "없음"
-        });
-      } catch (error) {
+          fullName: response.data.fullName || "",
+          email: response.data.email || "",
+          password: "********", // 실제 비번은 보여주지 않음
+          role: response.data.role || "",
+          storeNames: response.data.storeNames || [],
+       });
+      } catch (error: any) {
         console.error("유저 정보 불러오기 실패:", error);
+
+        if (error.response?.status === 401) {
+          localStorage.removeItem("accessToken");
+          window.location.href = "/login";
+        }
       }
     };
 
-    fetchUserInfo();
-  }, []);
-
-
+  fetchUserInfo();
+}, []);
 
   return (
     <div className={styles.employeeMyInfo}>
       <div className={styles.title}>
         <div className={styles.titleT}>나의 정보</div>
-
-        <div className={styles.titleEdit} onClick={() => openModal("edit")}>
-          내 정보 수정하기
+        <div
+          className={styles.titleEdit}
+          onClick={() => {
+            if (isEditing) {
+              openModal("done");
+              console.log("수정 완료 버튼 클릭됨");
+            } else {
+              openModal("edit"); // 비밀번호 확인 모달 열기
+            }
+          }}
+        >
+          {isEditing ? "수정 완료" : "내 정보 수정하기"}
         </div>
       </div>
       <div className={styles.content}>
-        <div className={styles.contents}>
-          <div className={styles.contentsTitle}>이름</div>
-          <div className={styles.contentsContents}>{userInfo.fullName}</div>
+       <div className={styles.contents}>
+        <div className={styles.contentsTitle}>이름</div>
+          {isEditing ? (
+            <div
+              className={styles.contentsContentsTrue}
+              onClick={() => handleEditField("fullName")}
+            >
+              {userInfo.fullName || "이름 없음"}
+            </div>
+          ) : (
+            <div className={styles.contentsContents}>
+              {userInfo.fullName || "이름 없음"}
+            </div>
+          )}
         </div>
         <div className={styles.contents}>
           <div className={styles.contentsTitle}>이메일</div>
@@ -66,11 +92,12 @@ const EmployeeMyInfo = () => {
         </div>
         <div className={styles.contents}>
           <div className={styles.contentsTitle}>근무 매장</div>
-          <div className={styles.contentsContents}>{userInfo.storeName}</div>
+          <div className={styles.contentsContents}>{userInfo.storeNames}</div>
         </div>
       </div>
       {/* activeModal이 "edit"일 때 EditModal 렌더링 */}
-      {activeModal === "edit" && <EditModal onClose={closeModal} />}
+      {activeModal === "edit" && <EditModal onClose={closeModal} onSuccess={() => setIsEditing(true)}/>}
+      {activeModal === "done" && <DoneModal onClose={closeModal} onSuccess={() => setIsEditing(false)}/>}
     </div>
   );
 };
