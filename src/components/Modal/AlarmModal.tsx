@@ -7,6 +7,8 @@ import {
   updateModificationStatus, 
   updateShiftStatus 
 } from "../../api/apiService";
+import { useWebSocket } from "../../contexts/WebSocketContext";
+import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 
 interface AlarmProps {
   onClose: () => void;
@@ -37,6 +39,14 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [processingNotification, setProcessingNotification] = useState<number | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // 웹소켓 컨텍스트 사용
+  const { lastNotification, markNotificationsRead } = useWebSocket();
+  
+  // 스케줄 컨텍스트 사용
+  const { setOwnerSchedules, selectedStore } = useOwnerSchedule();
 
   // 알림 데이터 가져오기
   useEffect(() => {
@@ -46,6 +56,8 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         const data = await fetchNotifications();
         if (Array.isArray(data)) {
           setNotifications(data);
+          // 알림을 읽음 상태로 표시
+          markNotificationsRead();
         } else {
           setError("알림 데이터 형식이 잘못되었습니다.");
         }
@@ -58,17 +70,49 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
     };
 
     fetchData();
-  }, []);
+  }, [markNotificationsRead]);
+
+  // 새 알림이 오면 목록 갱신
+  useEffect(() => {
+    if (lastNotification) {
+      // 이미 목록에 있는지 확인
+      const exists = notifications.some(notif => notif.id === lastNotification.id);
+      
+      if (!exists) {
+        setNotifications(prev => [lastNotification, ...prev]);
+      }
+    }
+  }, [lastNotification, notifications]);
 
   // 알림 수락 처리
   const handleAccept = async (notification: Notification) => {
     try {
+      setProcessingNotification(notification.id);
+      setError(null);
+      setSuccessMessage(null);
+      
+      let response;
+      
       if (notification.modificationStatus !== undefined) {
         // 근무 수정 요청 승인
-        await updateModificationStatus(notification.id, 'APPROVED');
+        response = await updateModificationStatus(notification.id, 'APPROVED');
+        console.log("근무 수정 요청 승인 응답:", response);
+        setSuccessMessage("근무 수정 요청이 승인되었습니다.");
+        
+        // 스케줄 업데이트 - 수정 요청이 승인된 경우
+        if (response && response.scheduleId) {
+          await fetchUpdatedSchedules();
+        }
       } else if (notification.shiftStatus !== undefined) {
         // 근무 교대 요청 승인
-        await updateShiftStatus(notification.id, 'APPROVED');
+        response = await updateShiftStatus(notification.id, 'APPROVED');
+        console.log("근무 교대 요청 승인 응답:", response);
+        setSuccessMessage("근무 교대 요청이 승인되었습니다.");
+        
+        // 스케줄 업데이트 - 대타 요청이 승인된 경우
+        if (response && response.scheduleId) {
+          await fetchUpdatedSchedules();
+        }
       }
       
       // 알림 삭제
@@ -76,21 +120,35 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       
       // 화면에서 알림 제거
       setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
+      
+      // 타이머 설정하여 3초 후 성공 메시지 제거
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      
     } catch (err) {
       console.error("알림 수락 처리 중 오류:", err);
       setError("요청을 처리하는 중 오류가 발생했습니다.");
+    } finally {
+      setProcessingNotification(null);
     }
   };
 
   // 알림 거절 처리
   const handleReject = async (notification: Notification) => {
     try {
+      setProcessingNotification(notification.id);
+      setError(null);
+      setSuccessMessage(null);
+      
       if (notification.modificationStatus !== undefined) {
         // 근무 수정 요청 거절
         await updateModificationStatus(notification.id, 'REJECTED');
+        setSuccessMessage("근무 수정 요청이 거절되었습니다.");
       } else if (notification.shiftStatus !== undefined) {
         // 근무 교대 요청 거절
         await updateShiftStatus(notification.id, 'REJECTED');
+        setSuccessMessage("근무 교대 요청이 거절되었습니다.");
       }
       
       // 알림 삭제
@@ -98,9 +156,42 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       
       // 화면에서 알림 제거
       setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
+      
+      // 타이머 설정하여 3초 후 성공 메시지 제거
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      
     } catch (err) {
       console.error("알림 거절 처리 중 오류:", err);
       setError("요청을 처리하는 중 오류가 발생했습니다.");
+    } finally {
+      setProcessingNotification(null);
+    }
+  };
+
+  // 한국 시간으로 변환하는 함수
+  const formatKoreanTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      
+      // 한국 시간으로 변환 (UTC+9)
+      const koreanTime = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+      
+      // 날짜 형식 지정 (YYYY. M. D. 오전/오후 H:MM)
+      const year = koreanTime.getUTCFullYear();
+      const month = koreanTime.getUTCMonth() + 1;
+      const day = koreanTime.getUTCDate();
+      const hours = koreanTime.getUTCHours();
+      const minutes = koreanTime.getUTCMinutes().toString().padStart(2, '0');
+      
+      const ampm = hours < 12 ? '오전' : '오후';
+      const displayHours = hours % 12 || 12;
+      
+      return `${year}. ${month}. ${day}. ${ampm} ${displayHours}:${minutes}`;
+    } catch (error) {
+      console.error("날짜 변환 중 오류:", error);
+      return dateString;
     }
   };
 
@@ -113,7 +204,7 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           <div>
             <span style={{ fontWeight: "700" }}>근무 수정 요청</span>
           </div>
-          <div>{new Date(notification.createdAt).toLocaleString()}</div>
+          <div>{formatKoreanTime(notification.createdAt)}</div>
           <div>{notification.message}</div>
           {notification.details && <div>요청 내용: {notification.details}</div>}
         </div>
@@ -127,7 +218,7 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           <div>
             <span style={{ fontWeight: "700" }}>대타 요청</span>
           </div>
-          <div>{new Date(notification.createdAt).toLocaleString()}</div>
+          <div>{formatKoreanTime(notification.createdAt)}</div>
           <div>{notification.message}</div>
         </div>
       );
@@ -137,9 +228,45 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
     return (
       <div className={styles.alarmContent}>
         <div>{notification.message}</div>
-        <div>{new Date(notification.createdAt).toLocaleString()}</div>
+        <div>{formatKoreanTime(notification.createdAt)}</div>
       </div>
     );
+  };
+
+  // 스케줄 데이터 갱신 함수
+  const fetchUpdatedSchedules = async () => {
+    try {
+      // 현재 선택된 매장의 스케줄 데이터를 다시 불러옴
+      if (!selectedStore) {
+        console.log("선택된 매장이 없어 스케줄을 업데이트할 수 없습니다.");
+        return;
+      }
+      
+      console.log(`매장 ID ${selectedStore}의 스케줄 데이터 갱신 시작`);
+      
+      // 토큰 가져오기
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        console.error("토큰이 없습니다. 인증을 확인하세요.");
+        return;
+      }
+      
+      // 스케줄 데이터 가져오기
+      const axiosInstance = await import("../../api/loginAxios").then(module => module.default);
+      const res = await axiosInstance.get(`/schedule/store/${selectedStore}`);
+      
+      if (!res.data) {
+        console.error("스케줄 데이터가 없습니다.");
+        return;
+      }
+      
+      // 스케줄 데이터 업데이트
+      setOwnerSchedules(res.data);
+      console.log("스케줄 데이터가 성공적으로 업데이트되었습니다:", res.data);
+      
+    } catch (error) {
+      console.error("스케줄 데이터 갱신 중 오류 발생:", error);
+    }
   };
 
   return (
@@ -156,6 +283,10 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
             <p className={styles.errorMessage}>{error}</p>
           )}
           
+          {successMessage && (
+            <p className={styles.successMessage}>{successMessage}</p>
+          )}
+          
           {loading ? (
             <p style={{ textAlign: "center", padding: "20px" }}>알림을 불러오는 중...</p>
           ) : notifications.length > 0 ? (
@@ -163,26 +294,26 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
               <div key={notification.id} className={styles.contentBox}>
                 {renderNotificationMessage(notification)}
                 
-                {/* 승인/거절이 필요한 알림인 경우에만 버튼 표시 */}
-                {(notification.modificationStatus === 'PENDING' || notification.shiftStatus === 'PENDING') && (
-                  <div className={styles.alarmButton}>
-                    <Button
-                      width="105px"
-                      height="35px"
-                      onClick={() => handleAccept(notification)}
-                    >
-                      수락하기
-                    </Button>
-                    <Button
-                      width="105px"
-                      height="35px"
-                      variant="gray"
-                      onClick={() => handleReject(notification)}
-                    >
-                      거절하기
-                    </Button>
-                  </div>
-                )}
+                {/* 모든 알림에 대해 수락/거절 버튼 표시 */}
+                <div className={styles.alarmButton}>
+                  <Button
+                    width="105px"
+                    height="35px"
+                    onClick={() => handleAccept(notification)}
+                    disabled={processingNotification === notification.id}
+                  >
+                    {processingNotification === notification.id ? "처리 중..." : "수락하기"}
+                  </Button>
+                  <Button
+                    width="105px"
+                    height="35px"
+                    variant="gray"
+                    onClick={() => handleReject(notification)}
+                    disabled={processingNotification === notification.id}
+                  >
+                    {processingNotification === notification.id ? "처리 중..." : "거절하기"}
+                  </Button>
+                </div>
               </div>
             ))
           ) : (
