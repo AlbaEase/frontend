@@ -1,11 +1,16 @@
-import { Client, StompSubscription, IMessage, StompHeaders, IFrame } from '@stomp/stompjs';
+import { Client, StompSubscription, IMessage, IFrame } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import '../utils/sockjs-polyfill'; // 폴리필 명시적으로 가져오기
 
 // API 서버 URL 설정
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const isDev = import.meta.env.MODE === 'development';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+                    (isDev ? 'http://localhost:8080' : 'http://3.39.237.218:8080');
 // SockJS 사용을 위한 엔드포인트 수정
 const WS_ENDPOINT = `${API_BASE_URL}/ws`;
+
+// 디버깅을 위해 현재 사용 중인 API URL 출력
+console.log(`현재 API URL: ${API_BASE_URL}, 환경: ${isDev ? '개발' : '프로덕션'}`);
 
 interface WebSocketCallbacks {
   onConnect?: () => void;
