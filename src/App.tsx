@@ -16,11 +16,20 @@ import EmployeeMySalary from "./Pages/Employee/EmployeeMySalary";
 import EmployeeMyChange from "./Pages/Employee/EmployeeMyChange";
 import { useEffect } from "react";
 import { checkAuthAndSetToken } from "./api/apiService";
+import { setupScheduleUpdateListener } from "./components/Calendar";
 
 function App() {
   // 앱이 로드될 때 인증 상태 확인
   useEffect(() => {
     checkAuthAndSetToken();
+    
+    // 스케줄 업데이트 이벤트 리스너 설정
+    setupScheduleUpdateListener();
+    
+    // 컴포넌트 언마운트 시 필요한 정리 작업은 여기에 추가
+    return () => {
+      // 이벤트 리스너 제거 등의 작업
+    };
   }, []);
 
   return (

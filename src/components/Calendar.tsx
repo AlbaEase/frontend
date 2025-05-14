@@ -1,9 +1,11 @@
 import styles from "./Calendar.module.css";
 import CalendarSchedule from "./CalendarSchedule";
 import { useState, useEffect } from "react";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
 import "dayjs/locale/ko";
+import { fetchSchedules } from "../api/apiService";
+import { getUserInfo } from "../api/loginAxios";
 
 dayjs.locale("ko");
 
@@ -138,6 +140,31 @@ const Calendar = () => {
 };
 
 export default Calendar;
+
+// 스케줄 데이터 갱신 이벤트를 들을 커스텀 이벤트
+export const setupScheduleUpdateListener = () => {
+    // 스케줄 업데이트 이벤트 구독
+    window.addEventListener("scheduleUpdated", (event: Event) => {
+        console.log("스케줄 업데이트 이벤트 감지됨");
+        // 필요시 추가 데이터 처리
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail) {
+            console.log("업데이트된 스케줄 정보:", customEvent.detail);
+        }
+        
+        // 페이지 리로드로 모든 데이터 갱신
+        window.location.reload();
+    });
+};
+
+// 스케줄 데이터 갱신 이벤트 발생 함수
+export const triggerScheduleUpdate = (updatedSchedule: any = null) => {
+    const event = new CustomEvent("scheduleUpdated", { 
+        detail: updatedSchedule 
+    });
+    window.dispatchEvent(event);
+    console.log("스케줄 업데이트 이벤트 발생시킴");
+};
 
 /*  
 <div

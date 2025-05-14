@@ -4,10 +4,11 @@ import { useModal } from "../../contexts/ModalContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 import CustomSelect from "../CustomSelect";
 import CustomSelectWorker from "../CustomSelectWorker";
-import { requestShift, requestModification } from "../../api/apiService";
+import { requestShift, requestModification, fetchSchedules } from "../../api/apiService";
 import axios from "axios";
-import { getToken } from "../../api/loginAxios";
+import { getToken, getUserInfo } from "../../api/loginAxios";
 import { ShiftRequest } from "../../types/api"; // ShiftRequest 타입 추가 임포트
+import { API_URL } from "../../utils/config";
 
 // 환경 변수에서 API URL 가져오기
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.39.237.218:8080";
@@ -21,6 +22,34 @@ interface WorkerInfo {
     id: string; // CustomSelectWorker와 호환되도록 string 타입으로 변경
     name: string;
 }
+
+// 사용자 정보 가져오기 함수
+const fetchUserById = async (email: string): Promise<number | null> => {
+    try {
+        const token = getToken();
+        if (!token) {
+            console.error("인증 토큰이 없습니다");
+            return null;
+        }
+        
+        // 사용자 정보 요청
+        const response = await axios.get(`${API_URL}/user/find-by-email?email=${email}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        
+        if (response.data && response.data.userId) {
+            console.log(`이메일 ${email}에 해당하는 사용자 ID를 서버에서 가져옴:`, response.data.userId);
+            return response.data.userId;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error(`이메일 ${email}에 해당하는 사용자 ID를 가져오는 중 오류 발생:`, error);
+        return null;
+    }
+};
 
 const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -296,63 +325,35 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             console.log("사용할 스케줄 ID:", scheduleId);
             
             // 현재 사용자 정보 가져오기
-            const userInfoStr = localStorage.getItem("userInfo");
-            if (!userInfoStr) {
+            const userInfo = getUserInfo();
+            if (!userInfo) {
                 setError("사용자 정보를 찾을 수 없습니다.");
                 setLoading(false);
                 return;
             }
             
-            const userInfo = JSON.parse(userInfoStr);
-            console.log("사용자 정보 전체:", userInfo); // 디버깅: 전체 사용자 정보 확인
+            console.log("사용자 정보:", userInfo);
             
-            let fromUserId = userInfo.userId; // 요청자 ID
+            // 사용자 ID 가져오기
+            let fromUserId = userInfo.userId;
             
-            // 추가 디버깅: userId 확인
-            console.log("userInfo 객체 내의 사용자 ID 필드 확인:");
-            for (const key in userInfo) {
-                if (key.toLowerCase().includes('id') || key.toLowerCase().includes('userid')) {
-                    console.log(`  - ${key}: ${userInfo[key]} (타입: ${typeof userInfo[key]})`);
-                }
-            }
-            
-            // userId 없는 경우 대안으로 id 필드 사용
-            if (fromUserId === undefined && userInfo.id !== undefined) {
-                console.log("userId 필드 없음, id 필드를 대신 사용:", userInfo.id);
-                fromUserId = userInfo.id;
-            }
-            
-            // 여전히 userId가 없고 이메일이 있는 경우 이메일로 ID 할당 시도
+            // userId가 없고 이메일이 있는 경우 API를 통해 사용자 ID 조회
             if ((fromUserId === undefined || fromUserId === null) && userInfo.email) {
-                console.log("userId와 id 필드 모두 없음, 이메일로 ID 할당 시도:", userInfo.email);
+                console.log("userId가 없음, 이메일로 API 조회:", userInfo.email);
                 
-                // 특정 이메일에 따른 userId 할당 (더미 데이터 기반)
-                if (userInfo.email === 'staff1@albaease.com') { // 김시현
-                    fromUserId = 3;
-                    console.log("이메일 기반으로 사용자 ID 할당 (김시현):", fromUserId);
-                } else if (userInfo.email === 'staff2@albaease.com') { // 김지희
-                    fromUserId = 4;
-                    console.log("이메일 기반으로 사용자 ID 할당 (김지희):", fromUserId);
-                } else if (userInfo.email === 'staff3@albaease.com') { // 이서영
-                    fromUserId = 5;
-                    console.log("이메일 기반으로 사용자 ID 할당 (이서영):", fromUserId);
-                } else if (userInfo.email === 'staff4@albaease.com') { // 조정현
-                    fromUserId = 6;
-                    console.log("이메일 기반으로 사용자 ID 할당 (조정현):", fromUserId);
-                } else if (userInfo.email === 'staff5@albaease.com') { // 이은우
-                    fromUserId = 7;
-                    console.log("이메일 기반으로 사용자 ID 할당 (이은우):", fromUserId);
-                }
+                // 서버 API에서 사용자 ID 조회
+                const userId = await fetchUserById(userInfo.email);
                 
-                // 할당된 ID가 있으면 userInfo 업데이트 및 저장
-                if (fromUserId !== undefined && fromUserId !== null) {
-                    userInfo.userId = fromUserId;
+                if (userId !== null) {
+                    fromUserId = userId;
+                    // 사용자 정보 업데이트
+                    userInfo.userId = userId;
                     localStorage.setItem("userInfo", JSON.stringify(userInfo));
-                    console.log("사용자 ID 할당 및 저장 완료:", fromUserId);
+                    console.log("서버에서 사용자 ID 조회 성공:", fromUserId);
                 }
             }
             
-            // 요청자 ID 유효성 검사 (undefined나 null인 경우만 검사, 0은 유효한 ID)
+            // 요청자 ID 유효성 검사
             if (fromUserId === undefined || fromUserId === null) {
                 console.error("유효한 요청자 ID가 없습니다:", userInfo);
                 setError("유효한 요청자 ID가 없습니다. 다시 로그인해 주세요.");
@@ -370,8 +371,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                 return;
             }
             
-            // 로그 개선: 숫자 변환 결과와 타입 정보를 명확히 출력
-            console.log(`최종 사용할 요청자 ID: ${fromUserId} (타입: ${typeof fromUserId}, 0인지 여부: ${fromUserId === 0})`);
+            console.log(`최종 사용할 요청자 ID: ${fromUserId} (타입: ${typeof fromUserId})`);
 
             if (selectedOption === "select" && selectedWorker.length > 0) {
                 // 특정 근무자 대상 대타 요청

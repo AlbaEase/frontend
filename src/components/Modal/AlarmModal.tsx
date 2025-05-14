@@ -9,6 +9,7 @@ import {
 } from "../../api/apiService";
 import { useWebSocket } from "../../contexts/WebSocketContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
+import { triggerScheduleUpdate } from "../Calendar";
 
 interface AlarmProps {
   onClose: () => void;
@@ -102,6 +103,10 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         // 스케줄 업데이트 - 수정 요청이 승인된 경우
         if (response && response.scheduleId) {
           await fetchUpdatedSchedules();
+          // 스케줄 갱신 이벤트 발생
+          if (response.schedule) {
+            triggerScheduleUpdate(response.schedule);
+          }
         }
       } else if (notification.shiftStatus !== undefined) {
         // 근무 교대 요청 승인
@@ -112,6 +117,11 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         // 스케줄 업데이트 - 대타 요청이 승인된 경우
         if (response && response.scheduleId) {
           await fetchUpdatedSchedules();
+          // 스케줄 갱신 이벤트 발생
+          if (response.schedule) {
+            triggerScheduleUpdate(response.schedule);
+            console.log('스케줄 갱신 이벤트 발생:', response.schedule);
+          }
         }
       }
       
@@ -270,6 +280,38 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       
     } catch (error) {
       console.error("스케줄 데이터 갱신 중 오류 발생:", error);
+    }
+  };
+
+  // 대타 요청 승인/거절 처리
+  const handleShiftResponse = async (shiftId: number, action: 'APPROVED' | 'REJECTED') => {
+    try {
+      setLoading(true);
+      console.log(`대타 요청 ${action === 'APPROVED' ? '승인' : '거절'} 처리 중...`);
+      
+      const result = await updateShiftStatus(shiftId, action);
+      console.log('처리 결과:', result);
+      
+      // 승인된 경우 스케줄 데이터 갱신 이벤트 발생
+      if (action === 'APPROVED') {
+        console.log('대타 요청이 승인되었습니다. 스케줄 데이터를 갱신합니다.');
+        // 스케줄 갱신 이벤트 발생
+        triggerScheduleUpdate(result.schedule);
+      }
+      
+      setSuccessMessage(`대타 요청이 ${action === 'APPROVED' ? '승인' : '거절'}되었습니다.`);
+      
+      // 처리된 알림 삭제
+      await deleteNotification(result.id);
+      
+      setNotifications(prev => 
+        prev.filter(notification => notification.id !== result.id)
+      );
+    } catch (error) {
+      console.error('대타 요청 처리 중 오류 발생:', error);
+      setError('대타 요청 처리 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -22,8 +22,19 @@ export const getToken = (): string | null => {
   return localStorage.getItem(TOKEN_KEY);
 };
 
+// 사용자 정보 타입 정의
+export interface UserInfo {
+  userId?: number;
+  email?: string;
+  fullName?: string;
+  role?: string;
+  storeName?: string;
+  storeId?: number;
+  [key: string]: any; // 기타 필드는 any 타입으로 허용
+}
+
 // 사용자 정보 가져오기 함수
-export const getUserInfo = (): any | null => {
+export const getUserInfo = (): UserInfo | null => {
   const userInfoStr = localStorage.getItem(USER_INFO_KEY);
   if (!userInfoStr) return null;
   
@@ -47,14 +58,8 @@ export const setAuthToken = (token: string): void => {
 };
 
 // 사용자 정보 설정 함수
-export const setUserInfo = (userInfo: any): void => {
+export const setUserInfo = (userInfo: UserInfo): void => {
   if (userInfo) {
-    // 이메일이 staff1@albaease.com인 경우 (김시현) userId가 없으면 3으로 설정
-    if (userInfo.email === 'staff1@albaease.com' && (userInfo.userId === undefined || userInfo.userId === null)) {
-      console.log("김시현 사용자 감지: userId를 3으로 설정합니다.");
-      userInfo.userId = 3;
-    }
-    
     // userId가 0인 경우에도 유효한 값으로 처리
     const processedUserInfo = {
       ...userInfo,

@@ -7,7 +7,9 @@ import {
   ModificationRequest,
   ModificationResponse,
   ShiftRequest,
-  ShiftResponse
+  ShiftResponse,
+  Schedule,
+  ScheduleResponse
 } from "../types/api";
 
 // 로그인 상태 확인 및 토큰 설정
@@ -395,13 +397,64 @@ export const updateShiftStatus = async (
     if (!checkAuthAndSetToken()) {
       throw new Error("인증 실패: 대타 요청 상태를 변경할 수 없습니다.");
     }
+    
+    console.log(`🔍 대타 요청 ID ${shiftId} 상태 업데이트 시도: ${status}`);
+    
     const response = await axiosInstance.patch<ShiftResponse>(
       `/shift-requests/${shiftId}/status?status=${status}`
     );
+    
     console.log(`✅ 대타 요청 ID ${shiftId} 상태 업데이트 완료:`, response.data);
+    
+    // 승인된 경우 스케줄 데이터 갱신이 필요함을 알림
+    if (status === 'APPROVED' && response.data.schedule) {
+      console.log('✅ 대타 요청이 승인되었습니다. 스케줄 변경이 필요합니다.');
+      // 변경된 스케줄 정보 로깅
+      console.log('📅 변경된 스케줄 정보:', response.data.schedule);
+    }
+    
     return response.data;
   } catch (error) {
     console.error(`🚨 대타 요청 ID ${shiftId} 상태 업데이트 중 오류 발생:`, error);
     throw error;
+  }
+};
+
+// ======= 스케줄(Schedule) 관련 API =======
+
+// 스케줄 목록 조회
+export const fetchSchedules = async (storeId: number, year: number, month: number): Promise<Schedule[]> => {
+  try {
+    if (!checkAuthAndSetToken()) {
+      console.error("🚨 인증 실패: 스케줄을 가져올 수 없습니다.");
+      return [];
+    }
+    
+    // 월 데이터는 0부터 시작하므로 백엔드에 맞게 1을 더함
+    const apiMonth = month + 1;
+    
+    const response = await axiosInstance.get<ScheduleResponse>(`/schedules/store/${storeId}/month?year=${year}&month=${apiMonth}`);
+    console.log("✅ 스케줄 데이터 가져옴:", response.data);
+    return response.data.schedules || [];
+  } catch (error) {
+    console.error("🚨 스케줄 데이터를 가져오는 중 오류 발생:", error);
+    return [];
+  }
+};
+
+// 특정 날짜의 스케줄 목록 조회
+export const fetchDailySchedules = async (storeId: number, date: string): Promise<Schedule[]> => {
+  try {
+    if (!checkAuthAndSetToken()) {
+      console.error("🚨 인증 실패: 일별 스케줄을 가져올 수 없습니다.");
+      return [];
+    }
+    
+    const response = await axiosInstance.get<ScheduleResponse>(`/schedules/store/${storeId}/date?date=${date}`);
+    console.log(`✅ ${date} 일자 스케줄 데이터 가져옴:`, response.data);
+    return response.data.schedules || [];
+  } catch (error) {
+    console.error(`🚨 ${date} 일자 스케줄 데이터를 가져오는 중 오류 발생:`, error);
+    return [];
   }
 };
