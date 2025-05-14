@@ -75,7 +75,17 @@ const EmployeeMyCh = () => {
             const workDate = mod.schedule?.workDate || 'Unknown';
             const startTime = mod.schedule?.startTime || '';
             const endTime = mod.schedule?.endTime || '';
-            const formattedDate = `${workDate.substring(2, 10).replace(/-/g, '.')} / ${startTime}~${endTime}`;
+            
+            // 날짜 문자열을 Date 객체로 변환
+            const date = new Date(workDate);
+            // 한국 시간으로 변환 (UTC+9)
+            const koreanDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+            // 날짜 형식 지정 (YY.MM.DD)
+            const year = koreanDate.getUTCFullYear().toString().substring(2);
+            const month = (koreanDate.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = koreanDate.getUTCDate().toString().padStart(2, '0');
+            
+            const formattedDate = `${year}.${month}.${day} / ${startTime}~${endTime}`;
             
             displayData.push({
               id: mod.modificationId,
@@ -95,7 +105,17 @@ const EmployeeMyCh = () => {
             const workDate = shift.schedule?.workDate || shift.requestDate || 'Unknown';
             const startTime = shift.schedule?.startTime || '';
             const endTime = shift.schedule?.endTime || '';
-            const formattedDate = `${workDate.substring(2, 10).replace(/-/g, '.')} / ${startTime}~${endTime}`;
+            
+            // 날짜 문자열을 Date 객체로 변환
+            const date = new Date(workDate);
+            // 한국 시간으로 변환 (UTC+9)
+            const koreanDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+            // 날짜 형식 지정 (YY.MM.DD)
+            const year = koreanDate.getUTCFullYear().toString().substring(2);
+            const month = (koreanDate.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = koreanDate.getUTCDate().toString().padStart(2, '0');
+            
+            const formattedDate = `${year}.${month}.${day} / ${startTime}~${endTime}`;
             
             displayData.push({
               id: shift.shiftId,

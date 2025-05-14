@@ -173,17 +173,21 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
   // 한국 시간으로 변환하는 함수
   const formatKoreanTime = (dateString: string) => {
     try {
+      // 원본 UTC 날짜 파싱
       const date = new Date(dateString);
       
       // 한국 시간으로 변환 (UTC+9)
-      const koreanTime = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+      // 기존 방식은 UTC 시간을 기준으로 계산하므로 문제가 있을 수 있음
+      // 새로운 방식: 로컬 시간으로 변환한 후 9시간 추가
+      const koreanTime = new Date(date);
+      koreanTime.setHours(koreanTime.getHours() + 9);
       
       // 날짜 형식 지정 (YYYY. M. D. 오전/오후 H:MM)
-      const year = koreanTime.getUTCFullYear();
-      const month = koreanTime.getUTCMonth() + 1;
-      const day = koreanTime.getUTCDate();
-      const hours = koreanTime.getUTCHours();
-      const minutes = koreanTime.getUTCMinutes().toString().padStart(2, '0');
+      const year = koreanTime.getFullYear();
+      const month = koreanTime.getMonth() + 1;
+      const day = koreanTime.getDate();
+      const hours = koreanTime.getHours();
+      const minutes = koreanTime.getMinutes().toString().padStart(2, '0');
       
       const ampm = hours < 12 ? '오전' : '오후';
       const displayHours = hours % 12 || 12;
