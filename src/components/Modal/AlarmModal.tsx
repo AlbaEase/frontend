@@ -55,12 +55,15 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       try {
         setLoading(true);
         const data = await fetchNotifications();
+        console.log("알림 데이터 응답:", data);
+        
         if (Array.isArray(data)) {
           setNotifications(data);
           // 알림을 읽음 상태로 표시
           markNotificationsRead();
         } else {
           setError("알림 데이터 형식이 잘못되었습니다.");
+          console.error("알림 데이터 형식 오류:", data);
         }
       } catch (err) {
         setError("알림을 가져오는 중 오류가 발생했습니다.");
@@ -105,7 +108,16 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           await fetchUpdatedSchedules();
           // 스케줄 갱신 이벤트 발생
           if (response.schedule) {
-            triggerScheduleUpdate(response.schedule);
+            // Schedule 타입을 ScheduleUpdateDetail 타입으로 변환
+            const scheduleUpdateDetail = {
+              scheduleId: response.schedule.scheduleId,
+              userId: response.schedule.userId,
+              userName: response.schedule.userName,
+              startTime: response.schedule.startTime,
+              endTime: response.schedule.endTime,
+              date: response.schedule.workDate
+            };
+            triggerScheduleUpdate(scheduleUpdateDetail);
           }
         }
       } else if (notification.shiftStatus !== undefined) {
@@ -119,8 +131,17 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           await fetchUpdatedSchedules();
           // 스케줄 갱신 이벤트 발생
           if (response.schedule) {
-            triggerScheduleUpdate(response.schedule);
-            console.log('스케줄 갱신 이벤트 발생:', response.schedule);
+            // Schedule 타입을 ScheduleUpdateDetail 타입으로 변환
+            const scheduleUpdateDetail = {
+              scheduleId: response.schedule.scheduleId,
+              userId: response.schedule.userId,
+              userName: response.schedule.userName,
+              startTime: response.schedule.startTime,
+              endTime: response.schedule.endTime,
+              date: response.schedule.workDate
+            };
+            triggerScheduleUpdate(scheduleUpdateDetail);
+            console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
           }
         }
       }
@@ -211,6 +232,8 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
 
   // 알림 형식에 따른 메시지 렌더링
   const renderNotificationMessage = (notification: Notification) => {
+    console.log('렌더링할 알림 데이터:', notification);
+    
     // 수정 요청인 경우
     if (notification.modificationStatus !== undefined) {
       return (
@@ -280,38 +303,6 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       
     } catch (error) {
       console.error("스케줄 데이터 갱신 중 오류 발생:", error);
-    }
-  };
-
-  // 대타 요청 승인/거절 처리
-  const handleShiftResponse = async (shiftId: number, action: 'APPROVED' | 'REJECTED') => {
-    try {
-      setLoading(true);
-      console.log(`대타 요청 ${action === 'APPROVED' ? '승인' : '거절'} 처리 중...`);
-      
-      const result = await updateShiftStatus(shiftId, action);
-      console.log('처리 결과:', result);
-      
-      // 승인된 경우 스케줄 데이터 갱신 이벤트 발생
-      if (action === 'APPROVED') {
-        console.log('대타 요청이 승인되었습니다. 스케줄 데이터를 갱신합니다.');
-        // 스케줄 갱신 이벤트 발생
-        triggerScheduleUpdate(result.schedule);
-      }
-      
-      setSuccessMessage(`대타 요청이 ${action === 'APPROVED' ? '승인' : '거절'}되었습니다.`);
-      
-      // 처리된 알림 삭제
-      await deleteNotification(result.id);
-      
-      setNotifications(prev => 
-        prev.filter(notification => notification.id !== result.id)
-      );
-    } catch (error) {
-      console.error('대타 요청 처리 중 오류 발생:', error);
-      setError('대타 요청 처리 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
     }
   };
 

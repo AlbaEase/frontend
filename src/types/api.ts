@@ -27,6 +27,10 @@ export interface Notification {
   createdAt: string;
   scheduleId?: number;
   details?: string;
+  fromUserId?: number;
+  toUserId?: number;
+  shiftStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  modificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface NotificationResponse {

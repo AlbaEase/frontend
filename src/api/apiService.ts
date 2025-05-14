@@ -41,23 +41,13 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
       return [];
     }
     
-    // 사용자 정보를 로컬 스토리지에서 가져오기
-    const userInfoStr = localStorage.getItem("userInfo");
-    
-    if (!userInfoStr) {
-      console.error("🚨 사용자 정보를 찾을 수 없습니다.");
-      return [];
-    }
-    
-    const userInfo = JSON.parse(userInfoStr) as { userId?: number };
-    
-    // 사용자 ID를 쿼리 파라미터로 전달 (userId가 0이어도 유효한 것으로 처리)
-    if (userInfo && (userInfo.userId !== undefined && userInfo.userId !== null)) {
-      const response = await axiosInstance.get<NotificationResponse>(`/notification/me?userId=${userInfo.userId}`);
+    // /user/me 엔드포인트를 통해 현재 로그인한 사용자 정보 조회
+    try {
+      const response = await axiosInstance.get<NotificationResponse>(`/notification/me`);
       console.log("✅ 알림 데이터 가져옴:", response.data);
       return response.data.notifications || [];
-    } else {
-      console.error("🚨 유효한 사용자 ID가 없습니다:", userInfo);
+    } catch (error) {
+      console.error("🚨 알림 데이터를 가져오는 중 오류 발생:", error);
       return [];
     }
   } catch (error) {
@@ -89,19 +79,9 @@ export const deleteAllNotifications = async (): Promise<boolean> => {
       console.error("🚨 인증 실패: 알림을 삭제할 수 없습니다.");
       return false;
     }
-    // 사용자 정보를 로컬 스토리지에서 가져오기
-    const userInfoStr = localStorage.getItem("userInfo");
-    let userId: number | null = null;
     
-    if (userInfoStr) {
-      const userInfo = JSON.parse(userInfoStr) as { userId?: number };
-      // userId가 0이어도 유효한 것으로 처리
-      userId = userInfo.userId !== undefined ? userInfo.userId : null;
-    }
-    
-    // userId가 있으면 쿼리 파라미터로 전달
-    const url = userId !== null ? `/notification/me?userId=${userId}` : '/notification/me';
-    await axiosInstance.delete(url);
+    // /notification/me 엔드포인트를 직접 호출
+    await axiosInstance.delete('/notification/me');
     
     console.log('✅ 모든 알림 삭제 완료');
     return true;

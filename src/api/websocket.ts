@@ -86,21 +86,28 @@ export const connectWebSocket = (token: string, callbacks: WebSocketCallbacks = 
 
       // 개인 알림 구독
       if (stompClient) {
-        subscription = stompClient.subscribe('/user/queue/notifications', (message: IMessage) => {
-          try {
-            const notification = JSON.parse(message.body);
-            console.log('Received notification:', notification);
-            if (callbacks.onNotification) {
-              callbacks.onNotification(notification);
+        try {
+          console.log('개인 알림 구독 시도 중...');
+          subscription = stompClient.subscribe('/user/queue/notifications', (message: IMessage) => {
+            try {
+              console.log('알림 메시지 수신:', message.body);
+              const notification = JSON.parse(message.body);
+              console.log('Received notification:', notification);
+              if (callbacks.onNotification) {
+                callbacks.onNotification(notification);
+              }
+            } catch (error) {
+              console.error('알림 메시지 처리 중 오류:', error);
+              console.error('원본 메시지:', message.body);
             }
-          } catch (error) {
-            console.error('알림 메시지 처리 중 오류:', error);
-            console.error('원본 메시지:', message.body);
-          }
-        }, {
-          // 구독 시에도 인증 헤더 포함
-          Authorization: `Bearer ${token}`
-        });
+          }, {
+            // 구독 시에도 인증 헤더 포함
+            Authorization: `Bearer ${token}`
+          });
+          console.log('알림 구독 성공:', subscription);
+        } catch (error) {
+          console.error('알림 구독 중 오류 발생:', error);
+        }
       }
 
       // 연결 완료 콜백
@@ -110,13 +117,20 @@ export const connectWebSocket = (token: string, callbacks: WebSocketCallbacks = 
 
       // 사용자 구독 등록 (백엔드에 알림)
       if (stompClient) {
-        stompClient.publish({
-          destination: '/app/subscribe',
-          body: JSON.stringify({}),
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        try {
+          console.log('사용자 등록 메시지 전송 중...');
+          stompClient.publish({
+            destination: '/app/subscribe',
+            body: JSON.stringify({}),
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          console.log('사용자 등록 메시지 전송 완료');
+        } catch (error) {
+          console.error('사용자 등록 메시지 전송 중 오류:', error);
+        }
       }
     };
 

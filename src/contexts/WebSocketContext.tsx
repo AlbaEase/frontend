@@ -67,22 +67,45 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       },
       onNotification: (data) => {
         console.log('New notification received:', data);
+        
+        // 알림 데이터를 받았으므로 새 알림 표시
         setHasNewNotification(true);
         
         try {
-          // 서버에서 받은 알림 데이터를 Notification 타입으로 안전하게, 사용 가능한 키 변환
-          const notification: Notification = {
+          // 데이터 형식 확인 및 기본값 설정
+          const notificationData: Notification = {
+            // 필수 필드는 기본값으로 설정
             id: typeof data.id === 'number' ? data.id : 0,
             userId: typeof data.userId === 'number' ? data.userId : 0,
-            type: (data.type as string) === 'ALL_USERS' ? 'ALL_USERS' : 'SPECIFIC_USER',
+            type: data.type === 'ALL_USERS' ? 'ALL_USERS' : 'SPECIFIC_USER',
             message: typeof data.message === 'string' ? data.message : '',
-            readStatus: (data.readStatus as string) === 'READ' ? 'READ' : 'UNREAD',
+            readStatus: data.readStatus === 'READ' ? 'READ' : 'UNREAD',
             createdAt: typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString(),
-            scheduleId: typeof data.scheduleId === 'number' ? data.scheduleId : undefined,
-            details: typeof data.details === 'string' ? data.details : undefined
           };
           
-          setLastNotification(notification);
+          // 선택적 필드 추가
+          if (typeof data.scheduleId === 'number') notificationData.scheduleId = data.scheduleId;
+          if (typeof data.details === 'string') notificationData.details = data.details;
+          if (typeof data.fromUserId === 'number') notificationData.fromUserId = data.fromUserId;
+          if (typeof data.toUserId === 'number') notificationData.toUserId = data.toUserId;
+          
+          // 상태 필드 추가
+          if (data.shiftStatus) {
+            notificationData.shiftStatus = data.shiftStatus as 'PENDING' | 'APPROVED' | 'REJECTED';
+          }
+          if (data.modificationStatus) {
+            notificationData.modificationStatus = data.modificationStatus as 'PENDING' | 'APPROVED' | 'REJECTED';
+          }
+          
+          console.log('처리된 알림 데이터:', notificationData);
+          setLastNotification(notificationData);
+          
+          // 즉시 알림 목록을 다시 가져오는 방식으로 처리할 수도 있음
+          // fetchNotifications().then(data => {
+          //   if (Array.isArray(data)) {
+          //     setNotifications(data);
+          //   }
+          // });
         } catch (error) {
           console.error('알림 데이터 처리 중 오류:', error);
           console.error('원본 데이터:', data);
