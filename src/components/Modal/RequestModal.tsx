@@ -29,6 +29,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
         "all" | "select" | null // 요청 대상 선택 체크박스
     >(null);
     const [selectedWorker, setSelectedWorker] = useState<string[]>([]);
+    const [selectedWorkerNames, setSelectedWorkerNames] = useState<string[]>([]);
     const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(null); // 선택된 근무자의 ID
     const [requestDetails, setRequestDetails] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
@@ -151,11 +152,12 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
     const handleCheckboxChange = (option: "all" | "select") => {
         setSelectedOption(option); // 둘 중 하나만 선택하도록
         if (option === "all") {
+            // 전체 근무자 선택 시 빈 배열로 설정 (모든 근무자 대상)
             setSelectedWorker([]);
-            setSelectedWorkerId(null);
+            setSelectedWorkerNames([]);
         } else {
             setSelectedWorker([]);
-            setSelectedWorkerId(null);
+            setSelectedWorkerNames([]);
         }
     };
 
@@ -759,7 +761,15 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 <CustomSelectWorker
                                     names={workerList}
                                     selectedWorkers={selectedWorker}
-                                    onSelect={setSelectedWorker}
+                                    onSelect={(selected) => {
+                                        setSelectedWorker(selected);
+                                        // 선택된 ID에 해당하는 이름을 찾아서 설정
+                                        const selectedNames = selected.map(id => {
+                                            const worker = workerList.find(w => w.id === id);
+                                            return worker ? worker.name : id;
+                                        });
+                                        setSelectedWorkerNames(selectedNames);
+                                    }}
                                 />
                             </div>
                         )}
@@ -829,8 +839,8 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 <span>
                                     {selectedOption === "all" 
                                         ? "모든 근무자" 
-                                        : (selectedWorker.length > 0
-                                            ? selectedWorker.join(", ")
+                                        : (selectedWorkerNames.length > 0
+                                            ? selectedWorkerNames.join(", ")
                                             : "없음")}
                                 </span>
                             </div>
