@@ -1,5 +1,22 @@
 // API 응답 및 요청 타입 정의
 
+// 사용자 관련 타입
+export interface User {
+  id: number;
+  email: string;
+  fullName?: string;
+  name?: string;
+  role: string;
+  userType?: string;
+  storeId?: number;
+  storeName?: string;
+  userId?: number;
+}
+
+export interface UserResponse {
+  user: User;
+}
+
 // 알림 관련 타입
 export interface Notification {
   id: number;

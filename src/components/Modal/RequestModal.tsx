@@ -1,21 +1,15 @@
+import React, { useState, useEffect } from "react";
 import styles from "./RequestModal.module.css";
-import { useState, useEffect } from "react";
-import { useModal } from "../../contexts/ModalContext";
-import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
+import "react-datepicker/dist/react-datepicker.css";
 import CustomSelect from "../CustomSelect";
 import CustomSelectWorker from "../CustomSelectWorker";
-import { requestShift, requestModification, fetchSchedules } from "../../api/apiService";
+import { requestShift, requestModification } from "../../api/apiService";
 import axios from "axios";
 import { getToken, getUserInfo } from "../../api/loginAxios";
 import { ShiftRequest } from "../../types/api"; // ShiftRequest 타입 추가 임포트
+import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
+import { useModal } from "../../contexts/ModalContext";
 import { API_URL } from "../../utils/config";
-
-// 환경 변수에서 API URL 가져오기
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.39.237.218:8080";
-
-interface CalendarScheduleProps {
-    onClose: () => void;
-}
 
 // 근무자 정보 인터페이스
 interface WorkerInfo {
@@ -23,8 +17,18 @@ interface WorkerInfo {
     name: string;
 }
 
-// 사용자 정보 가져오기 함수
-const fetchUserById = async (email: string): Promise<number | null> => {
+// 워커 검색 결과 타입 정의
+interface Worker {
+    name: string;
+    id: string | number;
+}
+
+interface CalendarScheduleProps {
+    onClose: () => void;
+}
+
+// 사용자 정보 가져오기 함수 - API 호출로 사용자 정보 조회
+const fetchCurrentUserId = async (): Promise<number | null> => {
     try {
         const token = getToken();
         if (!token) {
@@ -32,21 +36,122 @@ const fetchUserById = async (email: string): Promise<number | null> => {
             return null;
         }
         
-        // 사용자 정보 요청
-        const response = await axios.get(`${API_URL}/user/find-by-email?email=${email}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
+        try {
+            // /user/me 엔드포인트를 통해 사용자 정보 요청
+            console.log("GET /user/me API 호출 시작");
+            const response = await axios.get(`${API_URL}/user/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            if (response.data && response.data.id !== undefined) {
+                console.log("사용자 정보 조회 성공:", response.data);
+                
+                // 응답 데이터에서 userId 필드도 확인
+                const userId = response.data.id || response.data.userId;
+                
+                // 로컬 스토리지 사용자 정보 업데이트
+                const userInfo = getUserInfo();
+                if (userInfo) {
+                    userInfo.userId = userId;
+                    localStorage.setItem("userInfo", JSON.stringify(userInfo));
+                    console.log("로컬 스토리지 사용자 정보 업데이트:", userInfo);
+                }
+                
+                return Number(userId);
             }
-        });
-        
-        if (response.data && response.data.userId) {
-            console.log(`이메일 ${email}에 해당하는 사용자 ID를 서버에서 가져옴:`, response.data.userId);
-            return response.data.userId;
+            
+            console.warn("/user/me API에서 ID 필드를 찾을 수 없습니다");
+            
+            // 사용자 정보를 로컬 스토리지에서 확인
+            const userInfo = getUserInfo();
+            if (userInfo && userInfo.userId !== undefined && userInfo.userId !== null) {
+                console.log("로컬 스토리지에서 사용자 ID 확인:", userInfo.userId);
+                return Number(userInfo.userId);
+            }
+            
+            // 토큰 디코딩을 통한 사용자 ID 추출 시도
+            try {
+                const tokenParts = token.split('.');
+                if (tokenParts.length === 3) {
+                    const payload = JSON.parse(atob(tokenParts[1]));
+                    if (payload.userId || payload.user_id || payload.id || payload.sub) {
+                        const extractedId = payload.userId || payload.user_id || payload.id || payload.sub;
+                        console.log("JWT 토큰에서 userId 추출:", extractedId);
+                        
+                        // 로컬 스토리지 업데이트
+                        if (userInfo) {
+                            userInfo.userId = Number(extractedId);
+                            localStorage.setItem("userInfo", JSON.stringify(userInfo));
+                            console.log("JWT 토큰 정보로 로컬 스토리지 업데이트");
+                        }
+                        
+                        return Number(extractedId);
+                    }
+                }
+            } catch (tokenError) {
+                console.warn("JWT 토큰 디코딩 실패:", tokenError);
+            }
+            
+            // 스토어 API를 통한 사용자 정보 조회 시도
+            try {
+                console.log("스토어 API를 통한 사용자 정보 조회 시도");
+                const storeResponse = await axios.get(`${API_URL}/store/me`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                
+                if (storeResponse.data && storeResponse.data.userId) {
+                    console.log("스토어 API에서 사용자 ID 발견:", storeResponse.data.userId);
+                    
+                    // 로컬 스토리지 업데이트
+                    if (userInfo) {
+                        userInfo.userId = Number(storeResponse.data.userId);
+                        localStorage.setItem("userInfo", JSON.stringify(userInfo));
+                    }
+                    
+                    return Number(storeResponse.data.userId);
+                }
+            } catch (storeError) {
+                console.warn("스토어 API 조회 실패:", storeError);
+            }
+            
+            console.warn("모든 방법으로 사용자 ID 조회 실패");
+            return null;
+        } catch (error) {
+            console.warn("사용자 정보 조회 API 실패:", error);
+            
+            // 사용자 정보를 로컬 스토리지에서 확인 (API 실패 시)
+            const userInfo = getUserInfo();
+            if (userInfo && userInfo.userId !== undefined && userInfo.userId !== null) {
+                console.log("로컬 스토리지에서 사용자 ID 확인 (API 실패 후):", userInfo.userId);
+                return Number(userInfo.userId);
+            }
+            
+            // 토큰 디코딩을 통한 사용자 ID 추출 시도 (백업)
+            try {
+                const token = getToken();
+                if (token) {
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length === 3) {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        if (payload.userId || payload.user_id || payload.id || payload.sub) {
+                            const extractedId = payload.userId || payload.user_id || payload.id || payload.sub;
+                            console.log("JWT 토큰에서 userId 추출 (API 실패 후):", extractedId);
+                            return Number(extractedId);
+                        }
+                    }
+                }
+            } catch (tokenError) {
+                console.warn("JWT 토큰 디코딩 실패 (API 실패 후):", tokenError);
+            }
+            
+            return null;
         }
-        
-        return null;
     } catch (error) {
-        console.error(`이메일 ${email}에 해당하는 사용자 ID를 가져오는 중 오류 발생:`, error);
+        console.error(`사용자 정보를 가져오는 중 오류 발생:`, error);
         return null;
     }
 };
@@ -100,7 +205,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     modalData.forEach(item => {
                         // 2-1. 직접 workers 배열이 있는 경우
                         if (item.workers && Array.isArray(item.workers)) {
-                            const worker = item.workers.find((w: any) => w.name === memberName);
+                            const worker = item.workers.find((w: Worker) => w.name === memberName);
                             if (worker && worker.id !== undefined) {
                                 workerId = worker.id.toString();
                                 foundWorker = true;
@@ -110,9 +215,9 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         
                         // 2-2. groups 배열 안에 workers가 있는 경우
                         if (!foundWorker && item.groups && Array.isArray(item.groups)) {
-                            item.groups.forEach((group: any) => {
+                            item.groups.forEach((group: { workers?: Worker[] }) => {
                                 if (group.workers && Array.isArray(group.workers)) {
-                                    const worker = group.workers.find((w: any) => w.name === memberName);
+                                    const worker = group.workers.find((w: Worker) => w.name === memberName);
                                     if (worker && worker.id !== undefined) {
                                         workerId = worker.id.toString();
                                         foundWorker = true;
@@ -131,7 +236,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         const userListStr = localStorage.getItem("userList");
                         if (userListStr) {
                             const userList = JSON.parse(userListStr);
-                            const foundUser = userList.find((u: any) => u.name === memberName);
+                            const foundUser = userList.find((u: Worker) => u.name === memberName);
                             if (foundUser && foundUser.id !== undefined) {
                                 workerId = foundUser.id.toString();
                                 foundWorker = true;
@@ -169,7 +274,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
         if (modalData && Array.isArray(modalData)) {
             modalData.forEach(item => {
                 if (item.workers && Array.isArray(item.workers)) {
-                    const worker = item.workers.find((w: any) => w.name === name);
+                    const worker = item.workers.find((w: Worker) => w.name === name);
                     if (worker && worker.id) {
                         console.log(`선택된 근무자 ${name}의 ID: ${worker.id}`);
                     }
@@ -222,7 +327,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         
                         modalData.forEach(item => {
                             if (item.workers && Array.isArray(item.workers)) {
-                                const worker = item.workers.find((w: any) => w.name === selectedWorkerInfo.name);
+                                const worker = item.workers.find((w: Worker) => w.name === selectedWorkerInfo.name);
                                 if (worker && worker.id !== undefined) {
                                     foundId = worker.id;
                                     console.log(`modalData에서 ${selectedWorkerInfo.name}의 ID를 찾음: ${foundId}`);
@@ -337,19 +442,19 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             // 사용자 ID 가져오기
             let fromUserId = userInfo.userId;
             
-            // userId가 없고 이메일이 있는 경우 API를 통해 사용자 ID 조회
+            // 사용자 ID가 없고 이메일이 있는 경우 API를 통해 사용자 ID 조회
             if ((fromUserId === undefined || fromUserId === null) && userInfo.email) {
-                console.log("userId가 없음, 이메일로 API 조회:", userInfo.email);
+                console.log("userId가 없음, 이메일로 ID 조회:", userInfo.email);
                 
                 // 서버 API에서 사용자 ID 조회
-                const userId = await fetchUserById(userInfo.email);
+                const userId = await fetchCurrentUserId();
                 
                 if (userId !== null) {
                     fromUserId = userId;
                     // 사용자 정보 업데이트
                     userInfo.userId = userId;
                     localStorage.setItem("userInfo", JSON.stringify(userInfo));
-                    console.log("서버에서 사용자 ID 조회 성공:", fromUserId);
+                    console.log("사용자 ID 조회 성공:", fromUserId);
                 }
             }
             
@@ -400,7 +505,7 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                             if (modalData && Array.isArray(modalData)) {
                                 for (const item of modalData) {
                                     if (item.workers && Array.isArray(item.workers)) {
-                                        const worker = item.workers.find((w: any) => w.name === workerName);
+                                        const worker = item.workers.find((w: Worker) => w.name === workerName);
                                         if (worker && worker.id !== undefined) {
                                             toUserId = Number(worker.id);
                                             console.log(`modalData에서 ${workerName}의 ID를 찾음: ${toUserId}`);
@@ -484,39 +589,11 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                         onClose(); // 요청 성공 후 모달 닫기
                     }, 2000);
                     
-                } catch (apiError: any) {
+                } catch (apiError) {
                     console.error("API 호출 오류:", apiError);
                     
                     // 상세 에러 정보 로깅
-                    if (apiError.response) {
-                        // 서버가 응답을 반환한 경우
-                        console.error("응답 데이터:", apiError.response.data);
-                        console.error("응답 상태:", apiError.response.status);
-                        console.error("응답 헤더:", apiError.response.headers);
-                        
-                        if (apiError.response.status === 400) {
-                            setError("잘못된 요청입니다. 입력 데이터를 확인해 주세요.");
-                        } else if (apiError.response.status === 401) {
-                            setError("인증에 실패했습니다. 다시 로그인해 주세요.");
-                        } else if (apiError.response.status === 403) {
-                            setError("권한이 없습니다.");
-                        } else if (apiError.response.status === 404) {
-                            setError("요청한 자원을 찾을 수 없습니다.");
-                        } else if (apiError.response.status === 500) {
-                            setError("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
-                        } else {
-                            setError(apiError.response.data?.message || "대타 요청 중 오류가 발생했습니다.");
-                        }
-                    } else if (apiError.request) {
-                        // 요청은 보냈으나 응답을 받지 못한 경우
-                        console.error("요청은 보냈으나 응답이 없음:", apiError.request);
-                        setError("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
-                    } else {
-                        // 요청 설정 중 오류 발생
-                        console.error("요청 설정 중 오류:", apiError.message);
-                        setError(apiError.message || "대타 요청 중 오류가 발생했습니다.");
-                    }
-                    
+                    setError("대타 요청 중 오류가 발생했습니다.");
                     setLoading(false);
                     return;
                 }
@@ -548,39 +625,11 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     // apiService의 requestShift 함수 사용
                     const response = await requestShift(storeId, requestData);
                     console.log("대타 요청 응답:", response);
-                } catch (apiError: any) {
+                } catch (apiError) {
                     console.error("API 호출 오류:", apiError);
                     
                     // 상세 에러 정보 로깅
-                    if (apiError.response) {
-                        // 서버가 응답을 반환한 경우
-                        console.error("응답 데이터:", apiError.response.data);
-                        console.error("응답 상태:", apiError.response.status);
-                        console.error("응답 헤더:", apiError.response.headers);
-                        
-                        if (apiError.response.status === 400) {
-                            setError("잘못된 요청입니다. 입력 데이터를 확인해 주세요.");
-                        } else if (apiError.response.status === 401) {
-                            setError("인증에 실패했습니다. 다시 로그인해 주세요.");
-                        } else if (apiError.response.status === 403) {
-                            setError("권한이 없습니다.");
-                        } else if (apiError.response.status === 404) {
-                            setError("요청한 자원을 찾을 수 없습니다.");
-                        } else if (apiError.response.status === 500) {
-                            setError("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
-                        } else {
-                            setError(apiError.response.data?.message || "대타 요청 중 오류가 발생했습니다.");
-                        }
-                    } else if (apiError.request) {
-                        // 요청은 보냈으나 응답을 받지 못한 경우
-                        console.error("요청은 보냈으나 응답이 없음:", apiError.request);
-                        setError("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
-                    } else {
-                        // 요청 설정 중 오류 발생
-                        console.error("요청 설정 중 오류:", apiError.message);
-                        setError(apiError.message || "대타 요청 중 오류가 발생했습니다.");
-                    }
-                    
+                    setError("대타 요청 중 오류가 발생했습니다.");
                     setLoading(false);
                     return;
                 }
@@ -602,39 +651,11 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                     // apiService의 requestModification 함수 사용
                     const response = await requestModification(storeId, requestData);
                     console.log("근무 수정 요청 응답:", response);
-                } catch (apiError: any) {
+                } catch (apiError) {
                     console.error("API 호출 오류:", apiError);
                     
                     // 상세 에러 정보 로깅
-                    if (apiError.response) {
-                        // 서버가 응답을 반환한 경우
-                        console.error("응답 데이터:", apiError.response.data);
-                        console.error("응답 상태:", apiError.response.status);
-                        console.error("응답 헤더:", apiError.response.headers);
-                        
-                        if (apiError.response.status === 400) {
-                            setError("잘못된 요청입니다. 입력 데이터를 확인해 주세요.");
-                        } else if (apiError.response.status === 401) {
-                            setError("인증에 실패했습니다. 다시 로그인해 주세요.");
-                        } else if (apiError.response.status === 403) {
-                            setError("권한이 없습니다.");
-                        } else if (apiError.response.status === 404) {
-                            setError("요청한 자원을 찾을 수 없습니다.");
-                        } else if (apiError.response.status === 500) {
-                            setError("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
-                        } else {
-                            setError(apiError.response.data?.message || "근무 수정 요청 중 오류가 발생했습니다.");
-                        }
-                    } else if (apiError.request) {
-                        // 요청은 보냈으나 응답을 받지 못한 경우
-                        console.error("요청은 보냈으나 응답이 없음:", apiError.request);
-                        setError("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
-                    } else {
-                        // 요청 설정 중 오류 발생
-                        console.error("요청 설정 중 오류:", apiError.message);
-                        setError(apiError.message || "근무 수정 요청 중 오류가 발생했습니다.");
-                    }
-                    
+                    setError("근무 수정 요청 중 오류가 발생했습니다.");
                     setLoading(false);
                     return;
                 }
@@ -647,9 +668,9 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
             setTimeout(() => {
                 onClose(); // 요청 성공 후 모달 닫기
             }, 2000);
-        } catch (err: any) {
+        } catch (err) {
             console.error("요청 전송 중 오류 발생:", err);
-            if (err.message) {
+            if (err instanceof Error) {
                 setError(err.message);
             } else {
                 setError("요청을 처리하는 중 오류가 발생했습니다.");
@@ -678,18 +699,16 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 {currentDate.format("YYYY/MM/DD")} |{" "}
                                 {modalData.length > 0 && (
                                     <span className={styles.scheduleList}>
-                                        {modalData.map((group: any, index: any) => {
+                                        {modalData.map((group: { startTime: string; endTime: string }, index: number) => {
                                             // "HH:mm:ss"에서 시와 분만 추출
                                             const startTimeFormatted =
                                                 group.startTime
-                                                    .split(":")
-                                                    .slice(0, 2)
-                                                    .join(":");
+                                                    ? group.startTime.split(":").slice(0, 2).join(":")
+                                                    : "시작 시간 없음";
                                             const endTimeFormatted =
                                                 group.endTime
-                                                    .split(":")
-                                                    .slice(0, 2)
-                                                    .join(":");
+                                                    ? group.endTime.split(":").slice(0, 2).join(":")
+                                                    : "종료 시간 없음";
 
                                             return (
                                                 <span
@@ -764,10 +783,10 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                     onSelect={(selected) => {
                                         setSelectedWorker(selected);
                                         // 선택된 ID에 해당하는 이름을 찾아서 설정
-                                        const selectedNames = selected.map(id => {
+                                        const selectedNames = Array.isArray(selected) ? selected.map(id => {
                                             const worker = workerList.find(w => w.id === id);
                                             return worker ? worker.name : id;
-                                        });
+                                        }) : [];
                                         setSelectedWorkerNames(selectedNames);
                                     }}
                                 />
@@ -794,37 +813,33 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 </span>
                                 {modalData.length > 0 && (
                                     <span className={styles.scheduleList}>
-                                        {modalData.map(
-                                            (group: any, index: any) => {
-                                                // "HH:mm:ss"에서 시와 분만 추출
-                                                const startTimeFormatted =
-                                                    group.startTime
-                                                        .split(":")
-                                                        .slice(0, 2)
-                                                        .join(":");
-                                                const endTimeFormatted =
-                                                    group.endTime
-                                                        .split(":")
-                                                        .slice(0, 2)
-                                                        .join(":");
+                                        {modalData.map((group: { startTime: string; endTime: string }, index: number) => {
+                                            // "HH:mm:ss"에서 시와 분만 추출
+                                            const startTimeFormatted =
+                                                group.startTime
+                                                    ? group.startTime.split(":").slice(0, 2).join(":")
+                                                    : "시작 시간 없음";
+                                            const endTimeFormatted =
+                                                group.endTime
+                                                    ? group.endTime.split(":").slice(0, 2).join(":")
+                                                    : "종료 시간 없음";
 
-                                                return (
+                                            return (
+                                                <span
+                                                    key={index}
+                                                    className={
+                                                        styles.scheduleItem
+                                                    }>
                                                     <span
-                                                        key={index}
                                                         className={
-                                                            styles.scheduleItem
+                                                            styles.time
                                                         }>
-                                                        <span
-                                                            className={
-                                                                styles.time
-                                                            }>
-                                                            {startTimeFormatted}{" "}
-                                                            ~ {endTimeFormatted}
-                                                        </span>
+                                                        {startTimeFormatted}{" "}
+                                                        ~ {endTimeFormatted}
                                                     </span>
-                                                );
-                                            }
-                                        )}
+                                                </span>
+                                            );
+                                        })}
                                     </span>
                                 )}
                             </div>
@@ -875,36 +890,32 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 </span>
                                 {modalData.length > 0 && (
                                     <span className={styles.scheduleList}>
-                                        {modalData.map(
-                                            (group: any, index: any) => {
-                                                const startTimeFormatted =
-                                                    group.startTime
-                                                        .split(":")
-                                                        .slice(0, 2)
-                                                        .join(":");
-                                                const endTimeFormatted =
-                                                    group.endTime
-                                                        .split(":")
-                                                        .slice(0, 2)
-                                                        .join(":");
+                                        {modalData.map((group: { startTime: string; endTime: string }, index: number) => {
+                                            const startTimeFormatted =
+                                                group.startTime
+                                                    ? group.startTime.split(":").slice(0, 2).join(":")
+                                                    : "시작 시간 없음";
+                                            const endTimeFormatted =
+                                                group.endTime
+                                                    ? group.endTime.split(":").slice(0, 2).join(":")
+                                                    : "종료 시간 없음";
 
-                                                return (
+                                            return (
+                                                <span
+                                                    key={index}
+                                                    className={
+                                                        styles.scheduleItem
+                                                    }>
                                                     <span
-                                                        key={index}
                                                         className={
-                                                            styles.scheduleItem
+                                                            styles.time
                                                         }>
-                                                        <span
-                                                            className={
-                                                                styles.time
-                                                            }>
-                                                            {startTimeFormatted}{" "}
-                                                            ~ {endTimeFormatted}
-                                                        </span>
+                                                        {startTimeFormatted}{" "}
+                                                        ~ {endTimeFormatted}
                                                     </span>
-                                                );
-                                            }
-                                        )}
+                                                </span>
+                                            );
+                                        })}
                                     </span>
                                 )}
                             </div>

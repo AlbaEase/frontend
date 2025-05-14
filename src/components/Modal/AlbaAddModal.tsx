@@ -1,95 +1,93 @@
 import styles from "./AlbaAddModal.module.css";
 import { useState } from "react";
-import Button from "../Button";
-import axiosInstance from "../../api/axios";
+import axiosInstance from "../../api/loginAxios";
+import { API_URL } from "../../utils/config";
 
-interface AlbaAddModalProps {
+interface AlbaAddProps {
   onClose: () => void;
 }
 
-const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
+const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
   const [businessNumber, setBusinessNumber] = useState<string>("");
   const [shop, setShop] = useState<string>("");
-  const [isValidating, setIsValidating] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [validationSuccess, setValidationSuccess] = useState<boolean>(false);
 
   const handleBusinessNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 하이픈 자동 포맷팅 (000-00-00000)
-    let value = e.target.value;
-    // 숫자와 하이픈만 입력 가능하도록
-    value = value.replace(/[^\d-]/g, '');
-    
-    // 하이픈 자동 추가
-    if (value.length > 0) {
-      // 기존 하이픈 제거
-      value = value.replace(/-/g, '');
-      
-      // 숫자만 최대 10자리 제한
-      if (value.length > 10) {
-        value = value.substring(0, 10);
-      }
-      
-      // 하이픈 추가 (XXX-XX-XXXXX 형식)
-      if (value.length > 5) {
-        value = `${value.substring(0, 3)}-${value.substring(3, 5)}-${value.substring(5)}`;
-      } else if (value.length > 3) {
-        value = `${value.substring(0, 3)}-${value.substring(3)}`;
-      }
+    const value = e.target.value;
+    // 하이픈 자동 추가 (123-45-67890 형식)
+    let formattedValue = value.replace(/[^0-9]/g, "");
+    if (formattedValue.length > 3 && formattedValue.length <= 5) {
+      formattedValue = `${formattedValue.slice(0, 3)}-${formattedValue.slice(3)}`;
+    } else if (formattedValue.length > 5) {
+      formattedValue = `${formattedValue.slice(0, 3)}-${formattedValue.slice(3, 5)}-${formattedValue.slice(5, 10)}`;
     }
     
-    setBusinessNumber(value);
-    // 입력 시 에러 메시지 초기화
+    setBusinessNumber(formattedValue);
+    // 입력 필드가 변경되면 오류 메시지와 유효성 상태 초기화
     setValidationError("");
+    setValidationSuccess(false);
   };
 
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  
-  // 매장이 틀렸을 경우 버튼을 눌러서 다시 없어지도록 설정
-  const closeShop = () => {
-    setIsOpen(false);
+  const handleStoreName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setShop(e.target.value);
   };
 
-  // 스탭별로 작업
-  const [step, setStep] = useState<number>(1);
-
-  // 사업자등록번호 검증 함수
-  const validateBusinessNumber = async (number: string) => {
-    // 하이픈 제거
-    const cleanNumber = number.replace(/-/g, '');
-    
-    // 검증 기본 규칙 - 10자리 숫자 확인
-    if (!/^\d{10}$/.test(cleanNumber)) {
-      setValidationError("사업자등록번호는 10자리 숫자여야 합니다.");
-      return false;
-    }
-    
+  const validateBusinessNumber = async (businessNumber: string): Promise<boolean> => {
     try {
-      setIsValidating(true);
+      setIsLoading(true);
+      setValidationError("");
       
-      // 백엔드 API를 통한 사업자번호 검증
-      const response = await axiosInstance.post('/store/validate-business-number', {
-        businessNumber: cleanNumber
-      });
+      // 숫자만 추출
+      const cleanNumber = businessNumber.replace(/-/g, "");
       
-      // 검증 결과
-      const isValid = response.data;
-      
-      if (!isValid) {
-        setValidationError("유효하지 않은 사업자등록번호입니다.");
+      // 기본 형식 검증
+      if (cleanNumber.length !== 10) {
+        setValidationError("사업자등록번호는 10자리 숫자여야 합니다.");
+        return false;
       }
       
-      return isValid;
-    } catch (error) {
-      console.error("사업자등록번호 검증 중 오류 발생:", error);
-      setValidationError("사업자등록번호 검증에 실패했습니다.");
-      return false;
+      // API 호출 전 형식 확인 - 실제 API가 있다고 가정
+      try {
+        // 백엔드 API로 사업자번호 검증 요청
+        const response = await axiosInstance.get(`${API_URL}/store/validate-business-number?number=${cleanNumber}`);
+        
+        if (response.data && response.data.valid) {
+          setValidationSuccess(true);
+          console.log("✅ 사업자번호 검증 성공:", response.data);
+          return true;
+        } else {
+          setValidationError(response.data?.message || "유효하지 않은 사업자등록번호입니다.");
+          return false;
+        }
+      } catch (error) {
+        console.error("사업자번호 검증 API 오류:", error);
+        
+        // 개발 중 API가 없는 경우 임시 검증 로직
+        if (import.meta.env.DEV) {
+          // 개발 환경에서는 간단한 형식 검증만 수행
+          const isValidFormat = /^\d{3}-\d{2}-\d{5}$/.test(businessNumber);
+          if (isValidFormat) {
+            setValidationSuccess(true);
+            console.log("✅ 개발 환경: 사업자번호 형식 검증 통과");
+            return true;
+          } else {
+            setValidationError("올바른 사업자등록번호 형식이 아닙니다. (예: 123-45-67890)");
+            return false;
+          }
+        }
+        
+        setValidationError("사업자등록번호 검증 중 오류가 발생했습니다.");
+        return false;
+      }
     } finally {
-      setIsValidating(false);
+      setIsLoading(false);
     }
   };
 
-  // 사업자번호로 매장 정보 조회
-  const fetchFakeShop = async () => {
+  const fetchStoreByBusinessNumber = async () => {
     if (!businessNumber) {
       setValidationError("사업자등록번호를 입력해주세요.");
       return;
@@ -105,161 +103,123 @@ const AlbaAddModal: React.FC<AlbaAddModalProps> = ({ onClose }) => {
       return;
     }
     
-    // 하드코딩된 데이터에서 매장 조회
-    if (fakeShops[cleanNumber]) {
-      setShop(fakeShops[cleanNumber]); // 매장명 설정
-      setIsOpen(true);
-    } else {
-      // 검증은 성공했지만 DB에 없는 사업자번호일 경우 매장명 입력 기능 추가
-      setValidationError("확인된 사업자번호이나 등록된 매장 정보가 없습니다. 매장명을 직접 입력해주세요.");
-      setShop("");
-      setIsOpen(true);
-    }
-  };
-
-  // 사업자번호에 따른 하드코딩된 매장 정보
-  const fakeShops: { [key: string]: string } = {
-    "0000000000": "스타벅스 성신여대점",
-    "1111111111": "투썸플레이스 성공회대점",
-    "2222222222": "이디야 숙명여대점",
-  };
-
-  // 매장 정보 저장
-  const registerShop = async () => {
-    if (!shop && !document.getElementById('shopNameInput')) {
-      setValidationError("매장명을 입력해주세요.");
-      return;
-    }
-    
-    // 직접 입력한 매장명 가져오기
-    const inputElement = document.getElementById('shopNameInput') as HTMLInputElement;
-    const shopName = inputElement ? inputElement.value : shop;
-    
-    if (!shopName) {
-      setValidationError("매장명을 입력해주세요.");
-      return;
-    }
-
     try {
-      await axiosInstance.post("/store", {
-        businessNumber: businessNumber.replace(/-/g, ''),
-        shopName: shopName,
-      });
-
-      setStep(2); // 등록 완료 화면으로 이동
+      setIsLoading(true);
+      
+      // 백엔드 API로 매장 정보 조회
+      const response = await axiosInstance.get(`${API_URL}/store/find-by-business-number?number=${cleanNumber}`);
+      
+      if (response.data && response.data.name) {
+        setShop(response.data.name);
+        setIsOpen(true);
+        console.log("✅ 매장 정보 조회 성공:", response.data);
+      } else {
+        // 검증은 성공했지만 DB에 없는 사업자번호일 경우 매장명 입력 기능 추가
+        setValidationError("확인된 사업자번호이나 등록된 매장 정보가 없습니다. 매장명을 직접 입력해주세요.");
+        setShop("");
+        setIsOpen(true);
+      }
     } catch (error) {
-      console.error("매장 등록 중 오류 발생:", error);
-      setValidationError("매장 등록에 실패했습니다.");
+      console.error("매장 정보 조회 오류:", error);
+      
+      // 개발 중 API가 없는 경우 임시 로직
+      if (import.meta.env.DEV) {
+        setValidationError("개발 환경: 매장 정보를 직접 입력해주세요.");
+        setShop("");
+        setIsOpen(true);
+      } else {
+        setValidationError("매장 정보 조회 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // 매장명 직접 입력 상태
-  const [isDirectInput, setIsDirectInput] = useState<boolean>(false);
-  
-  // 매장명 직접 입력 전환
-  const toggleDirectInput = () => {
-    setIsDirectInput(!isDirectInput);
-    if (!isDirectInput) {
-      setShop("");
+  const handleSave = async () => {
+    if (!shop) {
+      setValidationError("매장명을 입력해주세요.");
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // 매장 등록 API 호출
+      const cleanNumber = businessNumber.replace(/-/g, "");
+      
+      const response = await axiosInstance.post(`${API_URL}/store/register`, {
+        businessNumber: cleanNumber,
+        name: shop
+      });
+      
+      console.log("✅ 매장 등록 성공:", response.data);
+      
+      // 성공 후 모달 닫기
+      onClose();
+    } catch (error) {
+      console.error("매장 등록 오류:", error);
+      setValidationError("매장 등록 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
-        <div className={styles.container} style={{ marginTop: "20px" }}>
-          <div className={styles.title}>근무지 등록하기</div>
+        <div className={styles.modal_title}>
+          <div className={styles.title}>매장 추가</div>
           <div className={styles.button} onClick={onClose}>
             취소
           </div>
         </div>
-        <div className={styles.content}>
-          <div className={styles.contentBox}>
-            <div className={styles.contentTitle}>매장 사업자번호 입력</div>
-            <div className={styles.contentContent}>
+        <div className={styles.modal_content}>
+          <div className={styles.input_container}>
+            <div className={styles.input_title}>사업자등록번호</div>
+            <div className={styles.input_container_flex}>
               <input
+                className={styles.input}
                 type="text"
+                placeholder="사업자등록번호 10자리"
                 value={businessNumber}
                 onChange={handleBusinessNumber}
-                className={styles.numberInput}
-                placeholder="매장의 사업자번호를 입력해 주세요 (000-00-00000)"
+                maxLength={12} // 000-00-00000 형식으로 최대 12자
+                disabled={isLoading}
               />
               <button 
-                className={styles.inputButton} 
-                onClick={fetchFakeShop}
-                disabled={isValidating}
+                className={`${styles.button2} ${isLoading ? styles.loading : ''}`} 
+                onClick={fetchStoreByBusinessNumber}
+                disabled={isLoading}
               >
-                {isValidating ? "검증 중..." : "입력 완료"}
+                {isLoading ? "조회 중..." : "조회"}
               </button>
             </div>
+            {validationError && (
+              <div className={styles.validation_error}>{validationError}</div>
+            )}
+            {validationSuccess && !validationError && (
+              <div className={styles.validation_success}>유효한 사업자등록번호입니다.</div>
+            )}
           </div>
-          {validationError && (
-            <div className={styles.errorMessage}>{validationError}</div>
-          )}
-          
-          {/* 입력 확인을 눌렀을 때 매장이 나오도록 하는 코드 */}
-          {isOpen && (
-            <>
-              <div className={styles.openShopBox}>
-                <div className={styles.openBox}>
-                  <div className={styles.contentTitle}>매장명</div>
-                  {isDirectInput && (
-                    <div className={styles.directInputToggle} onClick={toggleDirectInput}>
-                      저장된 매장명 사용
-                    </div>
-                  )}
-                  {!isDirectInput && shop && (
-                    <div className={styles.directInputToggle} onClick={toggleDirectInput}>
-                      직접 입력
-                    </div>
-                  )}
-                </div>
-                <div className={styles.openBox}>
-                  {isDirectInput || !shop ? (
-                    <input 
-                      id="shopNameInput"
-                      type="text" 
-                      className={styles.shopNameInput}
-                      placeholder="매장명을 입력해주세요"
-                      defaultValue={shop}
-                    />
-                  ) : (
-                    <div className={styles.openShop}>{shop}</div>
-                  )}
-                </div>
-              </div>
 
-              {/* 매장이 나오도록 하는 코드 */}
-              {/* 동시에 "위 매장이 맞나요?" 텍스트와 두 개의 버튼이 나타남 */}
-              <div className={styles.openText}>근무지가 위 매장이 맞나요?</div>
-              {step === 1 && (
-                <div className={styles.openButtonBox}>
-                  <Button
-                    width="216px"
-                    height="46px"
-                    children="네 맞습니다."
-                    onClick={registerShop}
-                  />
-                  <Button
-                    width="216px"
-                    height="46px"
-                    children="아닙니다."
-                    variant="gray"
-                    onClick={closeShop}
-                  />
-                </div>
-              )}
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <div className={styles.step2Box}>
-                <div className={styles.done}>매장등록이 완료되었습니다.</div>
-                <div className={styles.move} onClick={onClose}>
-                  메인페이지로 이동하기.
-                </div>
+          {isOpen && (
+            <div className={styles.input_container}>
+              <div className={styles.input_title}>매장명</div>
+              <input
+                className={styles.input}
+                type="text"
+                placeholder="매장명을 입력해주세요"
+                value={shop}
+                onChange={handleStoreName}
+                disabled={isLoading}
+              />
+              <div
+                className={`${styles.save_button} ${isLoading ? styles.loading : ''}`}
+                onClick={handleSave}
+              >
+                {isLoading ? "저장 중..." : "저장"}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

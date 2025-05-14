@@ -208,10 +208,24 @@ export const fetchShiftRequests = async (storeId?: number): Promise<ShiftRespons
   }
 };
 
+// ShiftRequest 확장 타입 (toUserId가 포함된 버전)
+interface ShiftRequestWithToUser extends ShiftRequest {
+  toUserId?: number;
+}
+
+// 대타 요청 데이터 타입
+interface ShiftPayload {
+  fromUserId: number | null;
+  scheduleId: number | null;
+  requestType: 'ALL_USERS' | 'SPECIFIC_USER';
+  requestDate: string;
+  toUserId?: number;
+}
+
 // 대타 요청
 export const requestShift = async (
   storeId: number, 
-  data: ShiftRequest
+  data: ShiftRequestWithToUser
 ): Promise<ShiftResponse> => {
   try {
     if (!checkAuthAndSetToken()) {
@@ -221,7 +235,7 @@ export const requestShift = async (
     console.log("🔍 원본 요청 데이터:", JSON.stringify(data, null, 2));
     
     // 백엔드가 기대하는 데이터 형식으로 변환 - 백엔드는 Long 타입을 사용함
-    const payloadData = {
+    const payloadData: ShiftPayload = {
       // fromUserId가 0인 경우를 명시적으로 처리 (0도 유효한 ID)
       fromUserId: data.fromUserId !== undefined ? Number(data.fromUserId) : null,
       scheduleId: data.scheduleId ? Number(data.scheduleId) : null,
@@ -236,11 +250,11 @@ export const requestShift = async (
     
     // 특정 사용자에게 요청하는 경우에만 toUserId 추가
     if (data.requestType === 'SPECIFIC_USER' && data.toUserId !== undefined) {
-      (payloadData as any).toUserId = Number(data.toUserId);
-      console.log("🔍 변환된 payload - toUserId:", (payloadData as any).toUserId, 
-                  "타입:", typeof (payloadData as any).toUserId, 
-                  "원본 toUserId:", data.toUserId, 
-                  "원본 타입:", typeof data.toUserId);
+      payloadData.toUserId = Number(data.toUserId);
+      console.log("🔍 변환된 payload - toUserId:", payloadData.toUserId, 
+                "타입:", typeof payloadData.toUserId, 
+                "원본 toUserId:", data.toUserId, 
+                "원본 타입:", typeof data.toUserId);
     }
     
     // fromUserId가 유효한지 확인 (0도 유효한 ID로 간주)
@@ -316,11 +330,11 @@ export const requestShift = async (
     
     // SPECIFIC_USER 타입일 때 toUserId 검증
     if (payloadData.requestType === 'SPECIFIC_USER') {
-      if ((payloadData as any).toUserId === undefined || (payloadData as any).toUserId === null || isNaN((payloadData as any).toUserId)) {
+      if (payloadData.toUserId === undefined || payloadData.toUserId === null || isNaN(payloadData.toUserId)) {
         throw new Error("특정 사용자에게 요청할 때는 대상 사용자 ID가 필요합니다.");
       }
       
-      if (payloadData.fromUserId === (payloadData as any).toUserId) {
+      if (payloadData.fromUserId === payloadData.toUserId) {
         throw new Error("자기 자신에게 대타 요청을 할 수 없습니다.");
       }
     }
@@ -332,8 +346,8 @@ export const requestShift = async (
     console.log('  - requestType:', payloadData.requestType, '(타입:', typeof payloadData.requestType, ')');
     console.log('  - requestDate:', payloadData.requestDate, '(타입:', typeof payloadData.requestDate, ')');
     
-    if ((payloadData as any).toUserId) {
-      console.log('  - toUserId:', (payloadData as any).toUserId, '(타입:', typeof (payloadData as any).toUserId, ')');
+    if (payloadData.toUserId) {
+      console.log('  - toUserId:', payloadData.toUserId, '(타입:', typeof payloadData.toUserId, ')');
     }
     
     console.log(`🔍 요청 URL: /shift-requests/store/${storeId}`);
@@ -352,39 +366,56 @@ export const requestShift = async (
       );
       console.log('✅ 대타 요청 성공:', response.data);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       // 에러 상세 분석
       console.error('🚨 대타 요청 중 오류 발생:', error);
       
-      if (error.response) {
-        console.error('🚨 응답 상태:', error.response.status);
-        console.error('🚨 응답 데이터:', error.response.data);
-        console.error('🚨 응답 헤더:', error.response.headers);
+      // 에러 객체의 타입을 좁혀서 처리
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { 
+          response?: { 
+            status: number; 
+            data: any; 
+            headers: any; 
+          }; 
+          request?: any; 
+          message?: string; 
+        };
         
-        if (error.response.status === 400) {
-          console.error('🚨 서버에 전송된 데이터:', payloadData);
-          throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
-        } else if (error.response.status === 401) {
-          throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
-        } else if (error.response.status === 403) {
-          throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
-        } else if (error.response.status === 404) {
-          throw new Error("요청한 자원을 찾을 수 없습니다.");
-        } else if (error.response.status === 500) {
-          throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
+        if (axiosError.response) {
+          console.error('🚨 응답 상태:', axiosError.response.status);
+          console.error('🚨 응답 데이터:', axiosError.response.data);
+          console.error('🚨 응답 헤더:', axiosError.response.headers);
+          
+          if (axiosError.response.status === 400) {
+            console.error('🚨 서버에 전송된 데이터:', payloadData);
+            throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
+          } else if (axiosError.response.status === 401) {
+            throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
+          } else if (axiosError.response.status === 403) {
+            throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
+          } else if (axiosError.response.status === 404) {
+            throw new Error("요청한 자원을 찾을 수 없습니다.");
+          } else if (axiosError.response.status === 500) {
+            throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
+          }
+        } else if (axiosError.request) {
+          console.error('🚨 요청은 보냈으나 응답이 없음:', axiosError.request);
+          throw new Error("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
+        } else if (axiosError.message) {
+          console.error('🚨 오류 메시지:', axiosError.message);
+          throw new Error(axiosError.message);
         }
-      } else if (error.request) {
-        console.error('🚨 요청은 보냈으나 응답이 없음:', error.request);
-        throw new Error("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
-      } else {
-        console.error('🚨 오류 메시지:', error.message);
-        throw error;
       }
       throw error;
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('🚨 대타 요청 처리 중 오류:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error('알 수 없는 오류가 발생했습니다.');
+    }
   }
 };
 

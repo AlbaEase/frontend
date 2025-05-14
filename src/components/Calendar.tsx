@@ -1,11 +1,9 @@
 import styles from "./Calendar.module.css";
 import CalendarSchedule from "./CalendarSchedule";
 import { useState, useEffect } from "react";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
 import "dayjs/locale/ko";
-import { fetchSchedules } from "../api/apiService";
-import { getUserInfo } from "../api/loginAxios";
 
 dayjs.locale("ko");
 
@@ -141,13 +139,25 @@ const Calendar = () => {
 
 export default Calendar;
 
+// 스케줄 데이터 타입 정의
+interface ScheduleUpdateDetail {
+  id?: number;
+  scheduleId?: number;
+  userId?: number;
+  userName?: string;
+  startTime?: string;
+  endTime?: string;
+  date?: string;
+  [key: string]: unknown;
+}
+
 // 스케줄 데이터 갱신 이벤트를 들을 커스텀 이벤트
 export const setupScheduleUpdateListener = () => {
     // 스케줄 업데이트 이벤트 구독
     window.addEventListener("scheduleUpdated", (event: Event) => {
         console.log("스케줄 업데이트 이벤트 감지됨");
         // 필요시 추가 데이터 처리
-        const customEvent = event as CustomEvent;
+        const customEvent = event as CustomEvent<ScheduleUpdateDetail>;
         if (customEvent.detail) {
             console.log("업데이트된 스케줄 정보:", customEvent.detail);
         }
@@ -158,7 +168,7 @@ export const setupScheduleUpdateListener = () => {
 };
 
 // 스케줄 데이터 갱신 이벤트 발생 함수
-export const triggerScheduleUpdate = (updatedSchedule: any = null) => {
+export const triggerScheduleUpdate = (updatedSchedule: ScheduleUpdateDetail | null = null) => {
     const event = new CustomEvent("scheduleUpdated", { 
         detail: updatedSchedule 
     });

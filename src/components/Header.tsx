@@ -2,7 +2,7 @@ import styles from "./Header.module.css";
 import logo from "../assets/logo.svg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axiosInstance from "../api/axios";
+import axiosInstance from "../api/loginAxios";
 
 const Header = () => {
     const myLocation = useLocation();
@@ -16,8 +16,10 @@ const Header = () => {
         if (userInfo) {
             try {
                 const parsedUserInfo = JSON.parse(userInfo);
-                setUserName(parsedUserInfo.name || "");
-                setUserType(parsedUserInfo.userType || ""); // 사용자 타입 설정
+                // 이름 표시 우선순위: fullName > name > email
+                const displayName = parsedUserInfo.fullName || parsedUserInfo.name || parsedUserInfo.email?.split('@')[0] || "";
+                setUserName(displayName);
+                setUserType(parsedUserInfo.role || parsedUserInfo.userType || "GUEST"); // 사용자 타입 설정
                 console.log("사용자 정보:", parsedUserInfo); // 디버깅용 로그
             } catch (error) {
                 console.error("사용자 정보 파싱 오류:", error);
@@ -54,12 +56,12 @@ const Header = () => {
     
     // 사용자 타입에 따라 메인 페이지 경로 결정
     const getMainPath = () => {
-        return userType === "EMPLOYEE" ? "/employeemain" : "/ownermain";
+        return userType.toUpperCase() === "EMPLOYEE" || userType.toUpperCase() === "WORKER" ? "/employeemain" : "/ownermain";
     };
     
     // 사용자 타입에 따라 마이페이지 경로 결정
     const getMyPagePath = () => {
-        return userType === "EMPLOYEE" ? "/employeemypage" : "/ownermypage";
+        return userType.toUpperCase() === "EMPLOYEE" || userType.toUpperCase() === "WORKER" ? "/employeemypage" : "/ownermypage";
     };
     
     const mainPath = getMainPath();

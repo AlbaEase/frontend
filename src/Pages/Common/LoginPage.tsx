@@ -2,8 +2,7 @@ import styles from "./LoginPage.module.css";
 import albaBoy from "../../assets/albaBoy.svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-
-import axiosInstance from "../../api/loginAxios";
+import axiosInstance, { setAuthToken, setUserInfo, UserInfo } from "../../api/loginAxios";
 
 // interface FormData {
 //   id: string;
@@ -19,6 +18,7 @@ const LoginPage = () => {
   // id, password 상태관리
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
     return setEmail(e.target.value);
@@ -32,7 +32,28 @@ const LoginPage = () => {
 
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 조건은 좀 더 생각해보기
+  // 사용자 정보 조회 함수 - JWT 토큰으로 서버에서 조회
+  const fetchUserInfo = async (token: string): Promise<UserInfo | null> => {
+    try {
+      console.log("💡 사용자 정보 조회 시도");
+      const response = await axiosInstance.get('/user/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200 && response.data) {
+        console.log("💡 사용자 정보 조회 성공:", response.data);
+        return response.data;
+      }
+      
+      console.error("💡 사용자 정보 조회 실패:", response.status);
+      return null;
+    } catch (error) {
+      console.error("💡 사용자 정보 조회 중 오류:", error);
+      return null;
+    }
+  };
 
   const handleLogin = async () => {
     // 이메일 형식 및 비밀번호 유효성 검사
@@ -51,6 +72,9 @@ const LoginPage = () => {
     }
 
     try {
+      setIsLoading(true);
+      setErrorMessage("");
+      
       // axiosInstance를 사용하여 로그인 요청
       const response = await axiosInstance.post("/user/login", {
         email,
@@ -70,59 +94,29 @@ const LoginPage = () => {
       }
 
       console.log("✅ 받은 토큰:", token);
-      console.log("✅ 사용자 역할:", role);
-      console.log("✅ 사용자 이름:", fullName);
-      console.log("✅ 사용자 ID:", userId);
       
-      // 토큰은 Bearer 접두사 없이 저장 (백엔드에서 처리함)
-      localStorage.setItem("accessToken", token);
+      // 토큰 설정 (로컬 스토리지 저장 및 헤더 설정)
+      setAuthToken(token);
       
-      // 사용자 정보 객체 생성 - 백엔드 응답 구조 매핑
-      // 특수 케이스: 특정 이메일에 대해 하드코딩된 userId 사용
-      let resolvedUserId = userId;
+      // 토큰으로 사용자 상세 정보 조회
+      const userDetails = await fetchUserInfo(token);
       
-      // 백엔드에서 userId가 제공되지 않았거나 올바르지 않은 경우
-      if (resolvedUserId === undefined || resolvedUserId === null) {
-        // 이메일에 따라 임시 userId 할당 (더미 데이터 기반)
-        if (email === 'staff1@albaease.com') { // 김시현
-          resolvedUserId = 3;
-          console.log("✅ 이메일 기반으로 사용자 ID 할당 (김시현):", resolvedUserId);
-        } else if (email === 'staff2@albaease.com') { // 김지희
-          resolvedUserId = 4;
-          console.log("✅ 이메일 기반으로 사용자 ID 할당 (김지희):", resolvedUserId);
-        } else if (email === 'staff3@albaease.com') { // 이서영
-          resolvedUserId = 5;
-          console.log("✅ 이메일 기반으로 사용자 ID 할당 (이서영):", resolvedUserId);
-        } else if (email === 'staff4@albaease.com') { // 조정현
-          resolvedUserId = 6;
-          console.log("✅ 이메일 기반으로 사용자 ID 할당 (조정현):", resolvedUserId);
-        } else if (email === 'staff5@albaease.com') { // 이은우
-          resolvedUserId = 7;
-          console.log("✅ 이메일 기반으로 사용자 ID 할당 (이은우):", resolvedUserId);
-        }
-      }
-      
+      // 사용자 정보 구성 - 백엔드에서 받은 정보 우선, 없으면 로그인 응답 사용
       const userInfo = {
-        userId: resolvedUserId !== undefined ? resolvedUserId : null,
-        name: fullName || "",
-        userType: userType || role,
-        email,
-        role
+        userId: userDetails?.id || userId,
+        email: userDetails?.email || email,
+        fullName: userDetails?.fullName || fullName || email.split('@')[0],
+        role: userDetails?.role || role || userType || "GUEST",
+        name: userDetails?.name
       };
       
       console.log("✅ 최종 사용자 정보:", userInfo);
-      localStorage.setItem("userInfo", JSON.stringify(userInfo));
+      setUserInfo(userInfo);
       
-      console.log("✅ 저장된 토큰 확인:", localStorage.getItem("accessToken"));
-      console.log("✅ 저장된 사용자 정보:", localStorage.getItem("userInfo"));
-      
-      // 모든 요청에 Authorization 헤더 추가
-      axiosInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
-
       // 역할에 따른 라우팅 분기
-      if (role === "OWNER" || userType === "OWNER") {
+      if (userInfo.role.toUpperCase() === "OWNER") {
         navigate("/ownermain");
-      } else if (role === "WORKER" || role === "EMPLOYEE" || userType === "EMPLOYEE") {
+      } else if (["WORKER", "EMPLOYEE"].includes(userInfo.role.toUpperCase())) {
         navigate("/employeemain");
       } else {
         navigate("/defaultMain");
@@ -130,14 +124,17 @@ const LoginPage = () => {
     } catch (error) {
       console.error("🚨 로그인 요청 실패:", error);
       setErrorMessage("아이디 또는 비밀번호가 잘못되었습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const SERVICE_KEY = import.meta.env.VITE_SERVICE_KEY; // .env에서 키를 가져와서 사용
+  const SERVICE_KEY = import.meta.env.VITE_SERVICE_KEY;
 
   const handleKakaoLogin = () => {
     // 카카오 로그인 페이지로 리다이렉트
-    const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${SERVICE_KEY}&redirect_uri=http://localhost:5174/auth/kakao/callback&response_type=code`;
+    const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI || "http://localhost:5174/auth/kakao/callback";
+    const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${SERVICE_KEY}&redirect_uri=${redirectUri}&response_type=code`;
     window.location.href = kakaoLoginUrl;
   };
 
@@ -173,6 +170,7 @@ const LoginPage = () => {
               value={email}
               onChange={handleEmail}
               placeholder="이메일"
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -183,13 +181,18 @@ const LoginPage = () => {
               value={password}
               onChange={handlePassword}
               placeholder="Password"
+              disabled={isLoading}
             />
           </div>
           <div className={styles.fontStyle}>비밀번호를 잃어버리셨나요?</div>
-          <div className={styles.errorMessage}>{errorMessage}</div>
+          {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
           <div style={{ marginTop: "40px" }}>
-            <button className={styles.button} onClick={handleLogin}>
-              Login
+            <button 
+              className={styles.button} 
+              onClick={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? "로그인 중..." : "Login"}
             </button>
             <p className={styles.fontStyle} style={{ textAlign: "center" }}>
               or
@@ -198,6 +201,7 @@ const LoginPage = () => {
               className={styles.button}
               style={{ backgroundColor: "yellow", color: "black" }}
               onClick={handleKakaoLogin}
+              disabled={isLoading}
             >
               카카오 로그인
             </button>

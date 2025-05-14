@@ -30,7 +30,14 @@ export interface UserInfo {
   role?: string;
   storeName?: string;
   storeId?: number;
-  [key: string]: any; // 기타 필드는 any 타입으로 허용
+  name?: string;
+  userType?: string;
+  // 추가 가능한 필드 명시적 정의
+  id?: number;
+  store?: { id: number; name: string };
+  stores?: Array<{ id: number; name: string }>;
+  storeNames?: string[];
+  permissions?: string[];
 }
 
 // 사용자 정보 가져오기 함수

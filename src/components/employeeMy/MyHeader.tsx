@@ -14,7 +14,10 @@ const MyHeader = () => {
     if (userInfo) {
       try {
         const parsedUserInfo = JSON.parse(userInfo);
-        setUserName(parsedUserInfo.name || "");
+        // 이름 표시 우선순위: fullName > name > email
+        const displayName = parsedUserInfo.fullName || parsedUserInfo.name || parsedUserInfo.email?.split('@')[0] || "";
+        setUserName(displayName);
+        console.log("사용자 정보 (MyHeader):", parsedUserInfo);
       } catch (error) {
         console.error("사용자 정보 파싱 오류:", error);
       }
