@@ -1,7 +1,8 @@
 import axios from "axios";
+import { API_URL } from "../utils/config";
 
 // 환경 변수에서 API URL 가져오기 (기본값 설정)
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.39.237.218:8080";
+const API_BASE_URL = API_URL;
 
 // 로컬 스토리지 키 상수화
 const TOKEN_KEY = "accessToken";

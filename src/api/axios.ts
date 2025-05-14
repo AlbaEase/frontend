@@ -1,8 +1,9 @@
 // src/api/axios.ts
 import axios from "axios";
+import { API_URL } from "../utils/config";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
