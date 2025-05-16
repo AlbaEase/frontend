@@ -5,7 +5,7 @@ import EditModal from "../Modal/Edit/EditModal";
 import DoneModal from "../Modal/Edit/DoneModal";
 import EditNameModal from "../Modal/Edit/EditNameModal"; 
 import axiosInstance from "../../api/loginAxios"
-
+import EditableField from "../../components/Modal/Edit/EditableField"
 
 const EmployeeMyInfo = () => {
   const { activeModal, openModal, closeModal } = useModal();
@@ -72,37 +72,46 @@ const EmployeeMyInfo = () => {
         </div>
       </div>
       <div className={styles.content}>
-       <div className={styles.contents}>
-        <div className={styles.contentsTitle}>이름</div>
-          {isEditing ? (
-            <div
-              className={styles.contentsContentsTrue}
-              onClick={() => handleEditField("fullName")}
-            >
-              {userInfo.fullName || "이름 없음"}
-            </div>
-          ) : (
-            <div className={styles.contentsContents}>
-              {userInfo.fullName || "이름 없음"}
-            </div>
-          )}
-        </div>
-        <div className={styles.contents}>
-          <div className={styles.contentsTitle}>이메일</div>
-          <div className={styles.contentsContents}>{userInfo.email}</div>
-        </div>
-        <div className={styles.contents}>
-          <div className={styles.contentsTitle}>비밀번호</div>
-          <div className={styles.contentsContents}>{userInfo.password}</div>
-        </div>
-        <div className={styles.contents}>
-          <div className={styles.contentsTitle}>직업</div>
-          <div className={styles.contentsContents}>{userInfo.role}</div>
-        </div>
-        <div className={styles.contents}>
-          <div className={styles.contentsTitle}>근무 매장</div>
-          <div className={styles.contentsContents}>{userInfo.storeNames}</div>
-        </div>
+        <EditableField
+          label="이름"
+          value={userInfo.fullName}
+          fieldName="fullName"
+          isEditing={isEditing}
+          isEditable={true}
+          onClick={handleEditField}
+        />
+        <EditableField
+          label="이메일"
+          value={userInfo.email}
+          fieldName="email"
+          isEditing={isEditing}
+          isEditable={true}
+          onClick={handleEditField}
+        />
+        <EditableField
+          label="비밀번호"
+          value={userInfo.password}
+          fieldName="password"
+          isEditing={isEditing}
+          isEditable={true}
+          onClick={handleEditField}
+        />
+        <EditableField
+          label="직업"
+          value={userInfo.role}
+          fieldName="role"
+          isEditing={isEditing}
+          isEditable={true}
+          onClick={handleEditField}
+        />
+       <EditableField
+          label="근무 매장"
+          value={userInfo.storeNames.join(", ")} // 배열 처리
+          fieldName="storeNames"
+          isEditing={isEditing}
+          isEditable={true}
+          onClick={handleEditField}
+        />
       </div>
       {/* activeModal이 "edit"일 때 EditModal 렌더링 */}
       {activeModal === "edit" && <EditModal onClose={closeModal} onSuccess={() => setIsEditing(true)}/>}

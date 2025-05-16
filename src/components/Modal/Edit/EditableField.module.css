@@ -1,0 +1,20 @@
+.contents {
+  width: 100%;
+  /* border: 1px solid black; */
+
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+.contentsTitle {
+  font-size: 22px;
+}
+
+.contentsContents {
+  font-size: 20px;
+}
+
+.contentsContentsTrue {
+  font-size: 20px;
+  text-decoration: underline;
+}
