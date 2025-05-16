@@ -5,10 +5,11 @@ import axiosInstance from "../../../api/user";
 interface AlarmProps {
   onClose: () => void;
   fullName: string; // ✅ 추가
-  onSave: (newFullName: string) => void;
+
+
 }
 
-const EditNameModal: React.FC<AlarmProps> = ({ onClose, fullName, onSave}) => {
+const EditNameModal: React.FC<AlarmProps> = ({ onClose, fullName}) => {
 
   const [errorMessage, setErrorMessage] = useState<string>("");
   
@@ -28,7 +29,6 @@ const EditNameModal: React.FC<AlarmProps> = ({ onClose, fullName, onSave}) => {
       });
 
       console.log("✅ 이름 수정 성공", res.data);
-      onSave(`${newLastName} ${newFirstName}`);
       onClose();
     } catch (error: any) {
       console.error("🚨 이름 수정 실패", error);
@@ -53,7 +53,7 @@ const EditNameModal: React.FC<AlarmProps> = ({ onClose, fullName, onSave}) => {
           {/* 변경 전 이름 */}
           <div className={styles.contents}>
             <div className={styles.contentsTitle}>변경 전 이름</div>
-            <div className={styles.contentsFullName}>{fullName}</div>
+            <div>{fullName}</div>
           </div>
           <div className={styles.contents}>
             <div className={styles.contentsTitle}>변경 후 이름</div>

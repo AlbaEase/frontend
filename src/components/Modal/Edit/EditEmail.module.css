@@ -75,13 +75,7 @@
   width: 200px;
   border: 1px solid black;
 }
-.contentsFullName{
-  width: 200px;
-  border: 1px solid black;
-}
 .inputBox{
   display: flex;
   flex-direction: column;
-  width: 200px;
-  border: 1px solid black;
 }

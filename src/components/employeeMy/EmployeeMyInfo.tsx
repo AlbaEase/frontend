@@ -3,12 +3,21 @@ import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import EditModal from "../Modal/Edit/EditModal";
 import DoneModal from "../Modal/Edit/DoneModal";
+import EditNameModal from "../Modal/Edit/EditNameModal"; 
 import axiosInstance from "../../api/loginAxios"
 
 
 const EmployeeMyInfo = () => {
   const { activeModal, openModal, closeModal } = useModal();
   const [isEditing, setIsEditing] = useState(false);
+
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const handleEditField = (field: string) => {
+  if (field === "fullName") {
+    setIsEditNameModalOpen(true);
+  }
+};
+
 
   const [userInfo, setUserInfo] = useState({
     fullName: "",
@@ -98,6 +107,16 @@ const EmployeeMyInfo = () => {
       {/* activeModal이 "edit"일 때 EditModal 렌더링 */}
       {activeModal === "edit" && <EditModal onClose={closeModal} onSuccess={() => setIsEditing(true)}/>}
       {activeModal === "done" && <DoneModal onClose={closeModal} onSuccess={() => setIsEditing(false)}/>}
+       {isEditNameModalOpen && (
+      <EditNameModal
+        fullName={userInfo.fullName}
+        onClose={() => setIsEditNameModalOpen(false)}
+        onSave={(newFullName) => {
+          setUserInfo((prev) => ({ ...prev, fullName: newFullName }));
+          setIsEditNameModalOpen(false);
+        }}
+      />
+    )}
     </div>
   );
 };
