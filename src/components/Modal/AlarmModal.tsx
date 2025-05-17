@@ -5,11 +5,13 @@ import {
   fetchNotifications, 
   deleteNotification, 
   updateModificationStatus, 
-  updateShiftStatus 
+  updateShiftStatus,
+  fetchCurrentUser
 } from "../../api/apiService";
 import { useWebSocket } from "../../contexts/WebSocketContext";
 import { useOwnerSchedule } from "../../contexts/OwnerScheduleContext";
 import { triggerScheduleUpdate } from "../Calendar";
+import { User } from "../../types/api";
 
 interface AlarmProps {
   onClose: () => void;
@@ -43,12 +45,32 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [processingNotification, setProcessingNotification] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   // 웹소켓 컨텍스트 사용
   const { lastNotification, markNotificationsRead } = useWebSocket();
   
   // 스케줄 컨텍스트 사용
   const { setOwnerSchedules, selectedStore } = useOwnerSchedule();
+
+  // 현재 사용자 정보 가져오기
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const user = await fetchCurrentUser();
+        if (user) {
+          console.log("현재 로그인한 사용자 정보:", user);
+          setCurrentUser(user);
+        } else {
+          console.error("사용자 정보를 가져올 수 없습니다.");
+        }
+      } catch (err) {
+        console.error("사용자 정보 조회 중 오류:", err);
+      }
+    };
+    
+    getCurrentUser();
+  }, []);
 
   // 알림 데이터 가져오기
   useEffect(() => {
@@ -109,17 +131,34 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       console.log(`메시지: ${notification.message}`);
       console.log("============================");
       
-      // 로그인한 사용자 ID 확인
-      const userInfoStr = localStorage.getItem("userInfo");
+      // 현재 사용자 ID 확인 - API에서 가져온 정보 우선 사용
       let currentUserId: number | null = null;
-      if (userInfoStr) {
-        try {
-          const userInfo = JSON.parse(userInfoStr);
-          currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
-          console.log(`현재 로그인한 사용자 ID: ${currentUserId}`);
-        } catch (e) {
-          console.error("사용자 정보 파싱 오류:", e);
+      
+      // API에서 가져온 사용자 정보 사용
+      if (currentUser) {
+        const userId = currentUser.id || currentUser.userId;
+        currentUserId = userId !== undefined ? Number(userId) : null;
+        console.log(`API에서 확인한 현재 사용자 ID: ${currentUserId}`);
+      }
+      // 백업: 로컬 스토리지에서 사용자 정보 확인
+      else {
+        const userInfoStr = localStorage.getItem("userInfo");
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
+            console.log(`로컬 스토리지에서 확인한 현재 사용자 ID: ${currentUserId}`);
+          } catch (e) {
+            console.error("사용자 정보 파싱 오류:", e);
+          }
         }
+      }
+      
+      // 사용자 ID가 없으면 처리 중단
+      if (currentUserId === null) {
+        setError("사용자 인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.");
+        setProcessingNotification(null);
+        return;
       }
       
       let response;
@@ -129,7 +168,6 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         console.log("🔄 이 알림은 근무 수정 요청입니다.");
         
         // 요청 대상자 확인 - 매니저나 점주만 수정 요청을 승인할 수 있음
-        // 여기서는 toUserId가 현재 로그인한 사용자와 일치하는지 확인
         if (notification.toUserId !== undefined && notification.toUserId !== currentUserId) {
           setError("이 근무 수정 요청에 대한 수락 권한이 없습니다.");
           setProcessingNotification(null);
@@ -169,10 +207,14 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         console.log("🔄 이 알림은 대타 요청입니다.");
         
         // 현재 사용자가 요청을 받은 사람인지 확인
-        const isRequestRecipient = notification.toUserId === currentUserId;
+        // 수정: toUserId가 null이면 대타 요청을 받을 수 있는 모든 직원이 대상
+        const isRequestRecipient = 
+          notification.toUserId === currentUserId || 
+          (notification.toUserId === null && notification.message?.includes('대타') && notification.message?.includes('요청'));
         
         console.log(`요청 수신자 확인: toUserId=${notification.toUserId}, currentUserId=${currentUserId}, isRecipient=${isRequestRecipient}`);
         
+        // toUserId가 null인 경우는 모든 사용자가 처리 가능한 요청으로 간주
         if (!isRequestRecipient) {
           setError("이 대타 요청에 대한 수락 권한이 없습니다. 요청을 받은 사용자만 수락할 수 있습니다.");
           setProcessingNotification(null);
@@ -205,12 +247,18 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         }
         if (notification.toUserId) {
           console.log(`대상자 ID: ${notification.toUserId}`);
+        } else {
+          console.log(`대상자 ID가 없습니다 (전체 요청). 현재 사용자 ID ${currentUserId}가 처리합니다.`);
         }
         
         try {
+          // 대타 요청 승인 시 현재 사용자 ID를 toUserId로 설정
           // 명시적으로 대타 요청 API 호출
           console.log(`💡 API 호출: /shift-requests/${shiftRequestId}/status?status=APPROVED`);
-          response = await updateShiftStatus(shiftRequestId, 'APPROVED');
+          console.log(`현재 사용자 ID ${currentUserId}로 대타 요청 승인 시도`);
+          
+          // userId를 명시적으로 설정 - 백엔드에서 현재 인증된 사용자를 사용하더라도 명확성을 위해 전달
+          response = await updateShiftStatus(shiftRequestId, 'APPROVED', { userId: currentUserId });
           console.log("근무 교대 요청 승인 응답:", response);
           setSuccessMessage("근무 교대 요청이 승인되었습니다.");
           
@@ -292,17 +340,34 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       console.log(`메시지: ${notification.message}`);
       console.log("============================");
       
-      // 로그인한 사용자 ID 확인
-      const userInfoStr = localStorage.getItem("userInfo");
+      // 현재 사용자 ID 확인 - API에서 가져온 정보 우선 사용
       let currentUserId: number | null = null;
-      if (userInfoStr) {
-        try {
-          const userInfo = JSON.parse(userInfoStr);
-          currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
-          console.log(`현재 로그인한 사용자 ID: ${currentUserId}`);
-        } catch (e) {
-          console.error("사용자 정보 파싱 오류:", e);
+      
+      // API에서 가져온 사용자 정보 사용
+      if (currentUser) {
+        const userId = currentUser.id || currentUser.userId;
+        currentUserId = userId !== undefined ? Number(userId) : null;
+        console.log(`API에서 확인한 현재 사용자 ID: ${currentUserId}`);
+      }
+      // 백업: 로컬 스토리지에서 사용자 정보 확인
+      else {
+        const userInfoStr = localStorage.getItem("userInfo");
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
+            console.log(`로컬 스토리지에서 확인한 현재 사용자 ID: ${currentUserId}`);
+          } catch (e) {
+            console.error("사용자 정보 파싱 오류:", e);
+          }
         }
+      }
+      
+      // 사용자 ID가 없으면 처리 중단
+      if (currentUserId === null) {
+        setError("사용자 인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.");
+        setProcessingNotification(null);
+        return;
       }
       
       // 근무 수정 요청인지 명확하게 확인 (modificationStatus가 있고 shiftStatus가 없는 경우)
@@ -325,7 +390,10 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         console.log("🔄 이 알림은 대타 요청입니다.");
         
         // 현재 사용자가 요청을 받은 사람인지 확인
-        const isRequestRecipient = notification.toUserId === currentUserId;
+        // 수정: toUserId가 null이면 대타 요청을 받을 수 있는 모든 직원이 대상
+        const isRequestRecipient = 
+          notification.toUserId === currentUserId || 
+          (notification.toUserId === null && notification.message?.includes('대타') && notification.message?.includes('요청'));
         
         console.log(`요청 수신자 확인: toUserId=${notification.toUserId}, currentUserId=${currentUserId}, isRecipient=${isRequestRecipient}`);
         
@@ -361,6 +429,8 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         }
         if (notification.toUserId) {
           console.log(`대상자 ID: ${notification.toUserId}`);
+        } else {
+          console.log(`대상자 ID가 없습니다 (전체 요청). 현재 사용자 ID ${currentUserId}가 처리합니다.`);
         }
         
         try {
@@ -564,7 +634,10 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
               }
               
               // 현재 사용자가 요청을 받은 사람인지 확인
-              const isRequestRecipient = notification.toUserId === currentUserId;
+              // 수정: toUserId가 null이고 메시지에 "대타 요청"이 포함된 경우, 해당 사용자는 요청 수신자 그룹에 포함됨
+              const isRequestRecipient = 
+                notification.toUserId === currentUserId || 
+                (notification.toUserId === null && notification.message?.includes('대타') && notification.message?.includes('요청'));
               
               // 현재 알림 상태 디버깅
               console.log(`알림 ID: ${notification.id} 디버깅 정보:`);
@@ -584,15 +657,23 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
                    !notification.message.includes('거절') &&
                    !notification.message.includes('승인')));
               
-              console.log(`- 수락/거절 버튼 표시 조건: isRequestRecipient=${isRequestRecipient}, isPending=${isPending}`);
-              console.log(`- 최종 버튼 표시 여부: ${isRequestRecipient && isPending}`);
+              // 백엔드 응답에서 특별히 전달된 플래그 확인
+              const isSpecificUser = 
+                (notification.type === 'SPECIFIC_USER') || 
+                (notification.message?.includes('대타') && !notification.message?.includes('전체'));
+              
+              // 최종 수락/거절 버튼 표시 여부 판단 
+              const shouldShowButtons = isPending && (isRequestRecipient || isSpecificUser);
+              
+              console.log(`- 수락/거절 버튼 표시 조건: isRequestRecipient=${isRequestRecipient}, isPending=${isPending}, isSpecificUser=${isSpecificUser}`);
+              console.log(`- 최종 버튼 표시 여부: ${shouldShowButtons}`);
               
               return (
                 <div key={notification.id} className={styles.contentBox}>
                   {renderNotificationMessage(notification)}
                   
                   {/* 대타/수정 요청을 받은 사람이고 상태가 PENDING인 경우에만 수락/거절 버튼 표시 */}
-                  {isRequestRecipient && isPending && (
+                  {shouldShowButtons && (
                     <div className={styles.alarmButton}>
                       <Button
                         width="105px"
@@ -615,10 +696,10 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
                   )}
                   
                   {/* 대타 요청을 보낸 사람이거나 처리 완료된 상태인 경우 상태 표시 */}
-                  {(!isRequestRecipient || !isPending) && (
+                  {(!shouldShowButtons) && (
                     <div className={styles.statusMessage} style={{
                       color: 
-                        (notification.shiftStatus === 'APPROVED' || notification.modificationStatus === 'APPROVED') 
+                        (notification.shiftStatus === 'APPROVED' || notification.modificationStatus === 'APPROVED' || notification.message?.includes('승인')) 
                           ? 'green' 
                           : (notification.shiftStatus === 'REJECTED' || notification.modificationStatus === 'REJECTED' || notification.message?.includes('거절'))
                             ? 'red'

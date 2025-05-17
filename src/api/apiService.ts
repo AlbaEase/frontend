@@ -9,7 +9,8 @@ import {
   ShiftRequest,
   ShiftResponse,
   Schedule,
-  ScheduleResponse
+  ScheduleResponse,
+  User
 } from "../types/api";
 
 // 로그인 상태 확인 및 토큰 설정
@@ -28,6 +29,46 @@ export const checkAuthAndSetToken = (): boolean => {
   
   console.warn("🚨 인증 토큰이 없습니다. 로그인이 필요합니다.");
   return false;
+};
+
+// 현재 인증된 사용자 정보 가져오기
+export const fetchCurrentUser = async (): Promise<User | null> => {
+  try {
+    // 인증 상태 확인
+    if (!checkAuthAndSetToken()) {
+      console.error("🚨 인증 실패: 사용자 정보를 가져올 수 없습니다.");
+      return null;
+    }
+    
+    // /user/me 엔드포인트를 통해 현재 로그인한 사용자 정보 조회
+    console.log("🔍 GET /user/me API 호출 시작");
+    const response = await axiosInstance.get<User>('/user/me');
+    
+    if (response.data) {
+      console.log("✅ 사용자 정보 가져옴:", response.data);
+      
+      // 로컬 스토리지에 최신 사용자 정보 저장
+      const userId = response.data.id || response.data.userId;
+      if (userId !== undefined) {
+        const userInfo = {
+          userId: Number(userId),
+          email: response.data.email,
+          name: response.data.name || response.data.fullName,
+          role: response.data.role
+        };
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
+        console.log("✅ 로컬 스토리지 사용자 정보 업데이트");
+      }
+      
+      return response.data;
+    }
+    
+    console.warn("🚨 사용자 정보가 없습니다.");
+    return null;
+  } catch (error) {
+    console.error("🚨 사용자 정보를 가져오는 중 오류 발생:", error);
+    return null;
+  }
 };
 
 // ======= 알림(Notification) 관련 API =======
@@ -402,10 +443,16 @@ export const requestShift = async (
   }
 };
 
+// 대타 요청 승인/거절 함수의 파라미터 타입 정의
+interface ShiftStatusUpdateOptions {
+  userId?: number; // 대타 요청을 수락하는 현재 사용자 ID (toUserId가 null일 때 사용)
+}
+
 // 대타 요청 승인/거절
 export const updateShiftStatus = async (
   shiftId: number, 
-  status: 'APPROVED' | 'REJECTED'
+  status: 'APPROVED' | 'REJECTED',
+  options?: ShiftStatusUpdateOptions
 ): Promise<ShiftResponse> => {
   try {
     if (!checkAuthAndSetToken()) {
@@ -414,8 +461,61 @@ export const updateShiftStatus = async (
     
     console.log(`🔍 대타 요청 ID ${shiftId} 상태 업데이트 시도: ${status}`);
     
+    // 요청 데이터 구성 
+    const requestData: Record<string, unknown> = {};
+    
+    // 대타 승인 시 userId 추가 (현재 사용자가 대타를 수락하는 경우)
+    if (status === 'APPROVED') {
+      let userId: number | undefined = options?.userId;
+      
+      // options에 userId가 없으면 API를 통해 현재 사용자 정보 조회
+      if (userId === undefined) {
+        try {
+          const currentUser = await fetchCurrentUser();
+          if (currentUser) {
+            userId = currentUser.id || currentUser.userId;
+            if (userId !== undefined) {
+              console.log(`🔍 API에서 가져온 대타 요청 수락자 ID: ${userId}`);
+              requestData.userId = Number(userId);
+            }
+          }
+        } catch (userError) {
+          console.error("사용자 정보 조회 중 오류:", userError);
+        }
+      } else {
+        console.log(`🔍 전달받은 대타 요청 수락자 ID: ${userId}`);
+        requestData.userId = userId;
+      }
+      
+      // API 조회 실패 시 로컬 스토리지에서 가져오기 (마지막 대안)
+      if (requestData.userId === undefined) {
+        try {
+          const userInfoStr = localStorage.getItem("userInfo");
+          if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr);
+            if (userInfo.userId !== undefined) {
+              requestData.userId = Number(userInfo.userId);
+              console.log(`🔍 로컬 스토리지에서 가져온 대타 요청 수락자 ID: ${requestData.userId}`);
+            }
+          }
+        } catch (error) {
+          console.error("사용자 정보 파싱 중 오류:", error);
+        }
+      }
+      
+      // 여전히 userId가 없으면 오류 발생
+      if (requestData.userId === undefined) {
+        throw new Error("대타 요청 수락자 ID를 가져올 수 없습니다. 다시 로그인해 주세요.");
+      }
+    }
+    
+    // 요청 URL 구성
+    const url = `/shift-requests/${shiftId}/status?status=${status}`;
+    
+    // API 요청 (userId가 있으면 데이터 포함, 없으면 빈 객체)
     const response = await axiosInstance.patch<ShiftResponse>(
-      `/shift-requests/${shiftId}/status?status=${status}`
+      url, 
+      Object.keys(requestData).length > 0 ? requestData : undefined
     );
     
     console.log(`✅ 대타 요청 ID ${shiftId} 상태 업데이트 완료:`, response.data);
