@@ -422,6 +422,23 @@ export const updateShiftStatus = async (
       console.log('✅ 대타 요청이 승인되었습니다. 스케줄 변경이 필요합니다.');
       // 변경된 스케줄 정보 로깅
       console.log('📅 변경된 스케줄 정보:', response.data.schedule);
+      
+      // 백엔드에서 자동으로 알림을 생성하므로 여기서는 추가 작업 필요 없음
+      // 클라이언트 측 캐시를 강제로 갱신하도록 이벤트 발생
+      try {
+        const event = new CustomEvent("scheduleUpdated", {
+          detail: {
+            scheduleId: response.data.schedule.scheduleId,
+            userId: response.data.schedule.userId,
+            workDate: response.data.schedule.workDate,
+            storeId: response.data.schedule.storeId
+          }
+        });
+        window.dispatchEvent(event);
+        console.log("스케줄 업데이트 이벤트 발생됨");
+      } catch (eventError) {
+        console.error("스케줄 업데이트 이벤트 발생 중 오류:", eventError);
+      }
     }
     
     return response.data;

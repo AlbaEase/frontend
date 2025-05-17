@@ -134,7 +134,6 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
               date: response.schedule.workDate
             };
             triggerScheduleUpdate(scheduleUpdateDetail);
-            console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
             
             // 페이지 새로고침 추가
             setTimeout(() => {
@@ -146,6 +145,27 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       // 대타 요청인지 명확하게 확인 (shiftStatus가 있거나 명시적으로 대타 요청임을 나타내는 다른 지표가 있는 경우)
       else if (notification.shiftStatus !== undefined || notification.message?.includes('대타')) {
         console.log("🔄 이 알림은 대타 요청입니다.");
+        
+        // 로그인한 사용자 ID 확인
+        const userInfoStr = localStorage.getItem("userInfo");
+        let currentUserId: number | null = null;
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
+          } catch (e) {
+            console.error("사용자 정보 파싱 오류:", e);
+          }
+        }
+        
+        // 현재 사용자가 요청을 받은 사람인지 확인
+        const isRequestRecipient = notification.toUserId === currentUserId;
+        
+        if (!isRequestRecipient) {
+          setError("이 대타 요청에 대한 수락 권한이 없습니다.");
+          return;
+        }
+        
         // 근무 교대 요청 승인 - 실제 shiftId 사용 (없으면 알림 ID 폴백)
         let shiftRequestId = notification.shiftId;
         
@@ -269,6 +289,27 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       // 대타 요청인지 명확하게 확인 (shiftStatus가 있거나 명시적으로 대타 요청임을 나타내는 다른 지표가 있는 경우)
       else if (notification.shiftStatus !== undefined || notification.message?.includes('대타')) {
         console.log("🔄 이 알림은 대타 요청입니다.");
+        
+        // 로그인한 사용자 ID 확인
+        const userInfoStr = localStorage.getItem("userInfo");
+        let currentUserId: number | null = null;
+        if (userInfoStr) {
+          try {
+            const userInfo = JSON.parse(userInfoStr);
+            currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
+          } catch (e) {
+            console.error("사용자 정보 파싱 오류:", e);
+          }
+        }
+        
+        // 현재 사용자가 요청을 받은 사람인지 확인
+        const isRequestRecipient = notification.toUserId === currentUserId;
+        
+        if (!isRequestRecipient) {
+          setError("이 대타 요청에 대한 거절 권한이 없습니다.");
+          return;
+        }
+        
         // 근무 교대 요청 거절 - 실제 shiftId 사용 (없으면 알림 ID 폴백)
         let shiftRequestId = notification.shiftId;
         
@@ -463,42 +504,59 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           {loading ? (
             <p style={{ textAlign: "center", padding: "20px" }}>알림을 불러오는 중...</p>
           ) : notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <div key={notification.id} className={styles.contentBox}>
-                {renderNotificationMessage(notification)}
-                
-                {/* 대타 요청을 보낸 사용자가 아닌 경우에만 수락/거절 버튼 표시 */}
-                {(!notification.fromUserId || notification.toUserId) && (
-                  <div className={styles.alarmButton}>
-                    <Button
-                      width="105px"
-                      height="35px"
-                      onClick={() => handleAccept(notification)}
-                      disabled={processingNotification === notification.id}
-                    >
-                      {processingNotification === notification.id ? "처리 중..." : "수락하기"}
-                    </Button>
-                    <Button
-                      width="105px"
-                      height="35px"
-                      variant="gray"
-                      onClick={() => handleReject(notification)}
-                      disabled={processingNotification === notification.id}
-                    >
-                      {processingNotification === notification.id ? "처리 중..." : "거절하기"}
-                    </Button>
-                  </div>
-                )}
-                
-                {/* 대타 요청을 보낸 사용자인 경우 버튼 없이 상태만 표시 */}
-                {notification.fromUserId && !notification.toUserId && (
-                  <div className={styles.statusMessage}>
-                    {notification.shiftStatus === 'APPROVED' ? '승인됨' : 
-                     notification.shiftStatus === 'REJECTED' ? '거절됨' : '처리 대기 중'}
-                  </div>
-                )}
-              </div>
-            ))
+            notifications.map((notification) => {
+              // 로그인한 사용자 ID 확인
+              const userInfoStr = localStorage.getItem("userInfo");
+              let currentUserId: number | null = null;
+              if (userInfoStr) {
+                try {
+                  const userInfo = JSON.parse(userInfoStr);
+                  currentUserId = userInfo.userId !== undefined ? Number(userInfo.userId) : null;
+                } catch (e) {
+                  console.error("사용자 정보 파싱 오류:", e);
+                }
+              }
+              
+              // 현재 사용자가 요청을 받은 사람인지 확인
+              const isRequestRecipient = notification.toUserId === currentUserId;
+              
+              return (
+                <div key={notification.id} className={styles.contentBox}>
+                  {renderNotificationMessage(notification)}
+                  
+                  {/* 대타 요청을 받은 사람인 경우에만 수락/거절 버튼 표시 */}
+                  {isRequestRecipient && (notification.shiftStatus === 'PENDING' || notification.modificationStatus === 'PENDING') && (
+                    <div className={styles.alarmButton}>
+                      <Button
+                        width="105px"
+                        height="35px"
+                        onClick={() => handleAccept(notification)}
+                        disabled={processingNotification === notification.id}
+                      >
+                        {processingNotification === notification.id ? "처리 중..." : "수락하기"}
+                      </Button>
+                      <Button
+                        width="105px"
+                        height="35px"
+                        variant="gray"
+                        onClick={() => handleReject(notification)}
+                        disabled={processingNotification === notification.id}
+                      >
+                        {processingNotification === notification.id ? "처리 중..." : "거절하기"}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* 대타 요청을 보낸 사람이거나 처리 완료된 상태인 경우 상태 표시 */}
+                  {(notification.fromUserId === currentUserId || notification.shiftStatus === 'APPROVED' || notification.shiftStatus === 'REJECTED') && (
+                    <div className={styles.statusMessage}>
+                      {notification.shiftStatus === 'APPROVED' ? '승인됨' : 
+                       notification.shiftStatus === 'REJECTED' ? '거절됨' : '처리 대기 중'}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           ) : (
             <p style={{ textAlign: "center", padding: "20px" }}>
               새로운 알림이 없습니다.
