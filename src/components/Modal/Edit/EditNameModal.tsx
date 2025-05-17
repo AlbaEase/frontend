@@ -20,7 +20,10 @@ const EditNameModal: React.FC<AlarmProps> = ({ onClose, fullName, onSave}) => {
       setErrorMessage("성을 포함한 이름을 모두 입력해주세요.");
       return;
     }
-
+    console.log("✅ 보낼 이름 payload:", {
+      newFirstName,
+      newLastName,
+    });
     try {
       const res = await axiosInstance.patch("/user/name", {
         newFirstName,

@@ -3,21 +3,37 @@ import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import EditModal from "../Modal/Edit/EditModal";
 import DoneModal from "../Modal/Edit/DoneModal";
-import EditNameModal from "../Modal/Edit/EditNameModal"; 
 import axiosInstance from "../../api/loginAxios"
 import EditableField from "../../components/Modal/Edit/EditableField"
+import EditNameModal from "../Modal/Edit/EditNameModal"; 
+import EditEmailModal from "../Modal/Edit/EditEmailModal"
+import EditPasswordModal from "../Modal/Edit/EditPasswordModal"
+import EditStoreModal from "../Modal/Edit/EditStoreModal";
 
 const EmployeeMyInfo = () => {
   const { activeModal, openModal, closeModal } = useModal();
   const [isEditing, setIsEditing] = useState(false);
 
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const [isEditEmailModalOpen, setIsEditEmailModalOpen] = useState(false);
+  const [isEditPasswordModalOpen, setIsEditPasswordModalOpen] = useState(false);
+  const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
   const handleEditField = (field: string) => {
-  if (field === "fullName") {
-    setIsEditNameModalOpen(true);
-  }
-};
-
+    switch (field) {
+      case "fullName":
+        setIsEditNameModalOpen(true);
+        break;
+      case "email":
+        setIsEditEmailModalOpen(true);
+        break;
+      case "password":
+        setIsEditPasswordModalOpen(true);
+        break;
+      case "storeNames":
+        setIsEditStoreModalOpen(true);
+        break;
+    }
+  };
 
   const [userInfo, setUserInfo] = useState({
     fullName: "",
@@ -126,6 +142,37 @@ const EmployeeMyInfo = () => {
         }}
       />
     )}
+    {isEditEmailModalOpen && (
+      <EditEmailModal
+        onClose={() => setIsEditEmailModalOpen(false)}
+        onSuccess={(email) => {
+          setUserInfo((prev) => ({ ...prev, email: email }));
+          setIsEditEmailModalOpen(false);
+        }}
+      />
+    )}
+    {isEditPasswordModalOpen && (
+      <EditPasswordModal
+        onClose={() => setIsEditPasswordModalOpen(false)}
+        onSuccess={() => {
+          setUserInfo((prev) => ({ ...prev, password:"********" }));
+          setIsEditPasswordModalOpen(false);
+        }}
+      />
+    )}
+
+    {/* {isEditStoreModalOpen && (
+      <EditStoreModal
+        storeNames={userInfo.storeNames}
+        onClose={() => setIsEditStoreModalOpen(false)}
+        onSave={(storeNames) => {
+          setUserInfo((prev) => ({ ...prev, storeNames }));
+          setIsEditStoreModalOpen(false);
+        }}
+      />
+    )} */}
+
+
     </div>
   );
 };

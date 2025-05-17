@@ -56,26 +56,41 @@
   justify-content: center;
 
   flex-direction: column;
-  gap: 30px;
+  gap: 40px;
 }
 .contents {
-  width: 750px;
-  margin-top: 40px;
+  width: 450px;
+  margin-top: 60px;
 
   border: 1px solid black;
 
   display: flex;
-  justify-content: center
+  justify-content: space-between;
+
+}
+.contents2 {
+  width: 450px;
+ 
+
+  border: 1px solid black;
+
+  display: flex;
+  justify-content: space-between;
+
 }
 .input {
   width: 450px;
 }
 
-.contentsTitle{
+.contentsEmail{
   width: 200px;
   border: 1px solid black;
 }
 .inputBox{
   display: flex;
   flex-direction: column;
+}
+/* 인증번호 전송하기에서 사용할 스타일 클래스 */
+.vbutton{
+  margin-top: 50px;
 }
