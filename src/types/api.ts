@@ -29,6 +29,7 @@ export interface Notification {
   details?: string;
   fromUserId?: number;
   toUserId?: number;
+  shiftId?: number;
   shiftStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   modificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }

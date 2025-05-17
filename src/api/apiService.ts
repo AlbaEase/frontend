@@ -233,8 +233,8 @@ export const requestShift = async (
       payloadData.toUserId = Number(data.toUserId);
       console.log("🔍 변환된 payload - toUserId:", payloadData.toUserId, 
                 "타입:", typeof payloadData.toUserId, 
-                "원본 toUserId:", data.toUserId, 
-                "원본 타입:", typeof data.toUserId);
+                  "원본 toUserId:", data.toUserId, 
+                  "원본 타입:", typeof data.toUserId);
     }
     
     // fromUserId가 유효한지 확인 (0도 유효한 ID로 간주)
@@ -366,22 +366,22 @@ export const requestShift = async (
           console.error('🚨 응답 상태:', axiosError.response.status);
           console.error('🚨 응답 데이터:', axiosError.response.data);
           console.error('🚨 응답 헤더:', axiosError.response.headers);
-          
+        
           if (axiosError.response.status === 400) {
-            console.error('🚨 서버에 전송된 데이터:', payloadData);
-            throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
+          console.error('🚨 서버에 전송된 데이터:', payloadData);
+          throw new Error("요청 형식이 올바르지 않습니다. 입력 데이터를 확인해 주세요.");
           } else if (axiosError.response.status === 401) {
-            throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
+          throw new Error("인증에 실패했습니다. 다시 로그인해 주세요.");
           } else if (axiosError.response.status === 403) {
-            throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
+          throw new Error("권한이 없습니다. 접근 권한을 확인해 주세요.");
           } else if (axiosError.response.status === 404) {
-            throw new Error("요청한 자원을 찾을 수 없습니다.");
+          throw new Error("요청한 자원을 찾을 수 없습니다.");
           } else if (axiosError.response.status === 500) {
-            throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
-          }
+          throw new Error("서버 내부 오류입니다. 잠시 후 다시 시도해 주세요.");
+        }
         } else if (axiosError.request) {
           console.error('🚨 요청은 보냈으나 응답이 없음:', axiosError.request);
-          throw new Error("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
+        throw new Error("서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.");
         } else if (axiosError.message) {
           console.error('🚨 오류 메시지:', axiosError.message);
           throw new Error(axiosError.message);
@@ -392,7 +392,7 @@ export const requestShift = async (
   } catch (error) {
     console.error('🚨 대타 요청 처리 중 오류:', error);
     if (error instanceof Error) {
-      throw error;
+    throw error;
     } else {
       throw new Error('알 수 없는 오류가 발생했습니다.');
     }

@@ -42,15 +42,15 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
       
       // 숫자만 추출
       const cleanNumber = businessNumber.replace(/-/g, "");
-      
+    
       // 기본 형식 검증
       if (cleanNumber.length !== 10) {
-        setValidationError("사업자등록번호는 10자리 숫자여야 합니다.");
-        return false;
-      }
-      
+      setValidationError("사업자등록번호는 10자리 숫자여야 합니다.");
+      return false;
+    }
+    
       // API 호출 전 형식 확인 - 실제 API가 있다고 가정
-      try {
+    try {
         // 백엔드 API로 사업자번호 검증 요청
         const response = await axiosInstance.get(`${API_URL}/store/validate-business-number?number=${cleanNumber}`);
         
@@ -62,7 +62,7 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
           setValidationError(response.data?.message || "유효하지 않은 사업자등록번호입니다.");
           return false;
         }
-      } catch (error) {
+    } catch (error) {
         console.error("사업자번호 검증 API 오류:", error);
         
         // 개발 중 API가 없는 경우 임시 검증 로직
@@ -80,7 +80,7 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
         }
         
         setValidationError("사업자등록번호 검증 중 오류가 발생했습니다.");
-        return false;
+      return false;
       }
     } finally {
       setIsLoading(false);
@@ -111,17 +111,17 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
       
       if (response.data && response.data.name) {
         setShop(response.data.name);
-        setIsOpen(true);
+      setIsOpen(true);
         console.log("✅ 매장 정보 조회 성공:", response.data);
-      } else {
-        // 검증은 성공했지만 DB에 없는 사업자번호일 경우 매장명 입력 기능 추가
-        setValidationError("확인된 사업자번호이나 등록된 매장 정보가 없습니다. 매장명을 직접 입력해주세요.");
-        setShop("");
-        setIsOpen(true);
-      }
+    } else {
+      // 검증은 성공했지만 DB에 없는 사업자번호일 경우 매장명 입력 기능 추가
+      setValidationError("확인된 사업자번호이나 등록된 매장 정보가 없습니다. 매장명을 직접 입력해주세요.");
+      setShop("");
+      setIsOpen(true);
+    }
     } catch (error) {
       console.error("매장 정보 조회 오류:", error);
-      
+
       // 개발 중 API가 없는 경우 임시 로직
       if (import.meta.env.DEV) {
         setValidationError("개발 환경: 매장 정보를 직접 입력해주세요.");
@@ -140,7 +140,7 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
       setValidationError("매장명을 입력해주세요.");
       return;
     }
-    
+
     try {
       setIsLoading(true);
       
@@ -151,7 +151,7 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
         businessNumber: cleanNumber,
         name: shop
       });
-      
+
       console.log("✅ 매장 등록 성공:", response.data);
       
       // 성공 후 모달 닫기
@@ -201,14 +201,14 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
               <div className={styles.validation_success}>유효한 사업자등록번호입니다.</div>
             )}
           </div>
-
+          
           {isOpen && (
             <div className={styles.input_container}>
               <div className={styles.input_title}>매장명</div>
-              <input
+                    <input 
                 className={styles.input}
-                type="text"
-                placeholder="매장명을 입력해주세요"
+                      type="text" 
+                      placeholder="매장명을 입력해주세요"
                 value={shop}
                 onChange={handleStoreName}
                 disabled={isLoading}
@@ -218,8 +218,8 @@ const AlbaAddModal: React.FC<AlbaAddProps> = ({ onClose }) => {
                 onClick={handleSave}
               >
                 {isLoading ? "저장 중..." : "저장"}
+                </div>
               </div>
-            </div>
           )}
         </div>
       </div>

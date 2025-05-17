@@ -112,7 +112,7 @@ const LoginPage = () => {
       
       console.log("✅ 최종 사용자 정보:", userInfo);
       setUserInfo(userInfo);
-      
+
       // 역할에 따른 라우팅 분기
       if (userInfo.role.toUpperCase() === "OWNER") {
         navigate("/ownermain");

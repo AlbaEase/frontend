@@ -88,22 +88,22 @@ export const connectWebSocket = (token: string, callbacks: WebSocketCallbacks = 
       if (stompClient) {
         try {
           console.log('개인 알림 구독 시도 중...');
-          subscription = stompClient.subscribe('/user/queue/notifications', (message: IMessage) => {
-            try {
+        subscription = stompClient.subscribe('/user/queue/notifications', (message: IMessage) => {
+          try {
               console.log('알림 메시지 수신:', message.body);
-              const notification = JSON.parse(message.body);
-              console.log('Received notification:', notification);
-              if (callbacks.onNotification) {
-                callbacks.onNotification(notification);
-              }
-            } catch (error) {
-              console.error('알림 메시지 처리 중 오류:', error);
-              console.error('원본 메시지:', message.body);
+            const notification = JSON.parse(message.body);
+            console.log('Received notification:', notification);
+            if (callbacks.onNotification) {
+              callbacks.onNotification(notification);
             }
-          }, {
-            // 구독 시에도 인증 헤더 포함
-            Authorization: `Bearer ${token}`
-          });
+          } catch (error) {
+            console.error('알림 메시지 처리 중 오류:', error);
+            console.error('원본 메시지:', message.body);
+          }
+        }, {
+          // 구독 시에도 인증 헤더 포함
+          Authorization: `Bearer ${token}`
+        });
           console.log('알림 구독 성공:', subscription);
         } catch (error) {
           console.error('알림 구독 중 오류 발생:', error);
@@ -119,14 +119,14 @@ export const connectWebSocket = (token: string, callbacks: WebSocketCallbacks = 
       if (stompClient) {
         try {
           console.log('사용자 등록 메시지 전송 중...');
-          stompClient.publish({
-            destination: '/app/subscribe',
-            body: JSON.stringify({}),
-            headers: {
+        stompClient.publish({
+          destination: '/app/subscribe',
+          body: JSON.stringify({}),
+          headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json'
-            }
-          });
+          }
+        });
           console.log('사용자 등록 메시지 전송 완료');
         } catch (error) {
           console.error('사용자 등록 메시지 전송 중 오류:', error);

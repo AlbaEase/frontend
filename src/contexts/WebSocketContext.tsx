@@ -88,6 +88,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           if (typeof data.details === 'string') notificationData.details = data.details;
           if (typeof data.fromUserId === 'number') notificationData.fromUserId = data.fromUserId;
           if (typeof data.toUserId === 'number') notificationData.toUserId = data.toUserId;
+          if (typeof data.shiftId === 'number') notificationData.shiftId = data.shiftId;
           
           // 상태 필드 추가
           if (data.shiftStatus) {

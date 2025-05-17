@@ -27,6 +27,7 @@ interface Notification {
   fromUserId?: number;
   toUserId?: number; 
   shiftStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  shiftId?: number;
   
   // 수정 요청 관련 필드
   details?: string;
@@ -95,9 +96,24 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       setError(null);
       setSuccessMessage(null);
       
+      // 알림 데이터 상세 디버깅 
+      console.log("===== 알림 데이터 디버깅 =====");
+      console.log(`알림 ID: ${notification.id}`);
+      console.log(`알림 타입: ${notification.type}`);
+      console.log(`modificationStatus: ${notification.modificationStatus}`);
+      console.log(`shiftStatus: ${notification.shiftStatus}`);
+      console.log(`scheduleId: ${notification.scheduleId}`);
+      console.log(`shiftId: ${notification.shiftId}`);
+      console.log(`fromUserId: ${notification.fromUserId}`);
+      console.log(`toUserId: ${notification.toUserId}`);
+      console.log(`메시지: ${notification.message}`);
+      console.log("============================");
+      
       let response;
       
-      if (notification.modificationStatus !== undefined) {
+      // 근무 수정 요청인지 명확하게 확인 (modificationStatus가 있고 shiftStatus가 없는 경우)
+      if (notification.modificationStatus !== undefined && notification.shiftStatus === undefined) {
+        console.log("🔄 이 알림은 근무 수정 요청입니다.");
         // 근무 수정 요청 승인
         response = await updateModificationStatus(notification.id, 'APPROVED');
         console.log("근무 수정 요청 승인 응답:", response);
@@ -120,30 +136,77 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
             triggerScheduleUpdate(scheduleUpdateDetail);
           }
         }
-      } else if (notification.shiftStatus !== undefined) {
-        // 근무 교대 요청 승인
-        response = await updateShiftStatus(notification.id, 'APPROVED');
-        console.log("근무 교대 요청 승인 응답:", response);
-        setSuccessMessage("근무 교대 요청이 승인되었습니다.");
+      } 
+      // 대타 요청인지 명확하게 확인 (shiftStatus가 있거나 명시적으로 대타 요청임을 나타내는 다른 지표가 있는 경우)
+      else if (notification.shiftStatus !== undefined || notification.message?.includes('대타')) {
+        console.log("🔄 이 알림은 대타 요청입니다.");
+        // 근무 교대 요청 승인 - 실제 shiftId 사용 (없으면 알림 ID 폴백)
+        let shiftRequestId = notification.shiftId;
         
-        // 스케줄 업데이트 - 대타 요청이 승인된 경우
-        if (response && response.scheduleId) {
-          await fetchUpdatedSchedules();
-          // 스케줄 갱신 이벤트 발생
-          if (response.schedule) {
-            // Schedule 타입을 ScheduleUpdateDetail 타입으로 변환
-            const scheduleUpdateDetail = {
-              scheduleId: response.schedule.scheduleId,
-              userId: response.schedule.userId,
-              userName: response.schedule.userName,
-              startTime: response.schedule.startTime,
-              endTime: response.schedule.endTime,
-              date: response.schedule.workDate
-            };
-            triggerScheduleUpdate(scheduleUpdateDetail);
-            console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
-          }
+        // shiftId가 없으면 scheduleId를 사용해보기 
+        if (!shiftRequestId && notification.scheduleId) {
+          shiftRequestId = notification.scheduleId;
+          console.log(`shiftId가 없어 scheduleId(${shiftRequestId})를 사용합니다.`);
         }
+        
+        // 마지막 폴백으로 알림 ID 사용
+        if (!shiftRequestId) {
+          shiftRequestId = notification.id;
+          console.log(`적절한 ID가 없어 알림 ID(${shiftRequestId})를 사용합니다.`);
+        }
+        
+        console.log(`대타 요청 승인 시도: 실제 shiftId=${shiftRequestId}, 알림ID=${notification.id}`);
+        
+        // 요청 처리 상태 로깅
+        if (notification.scheduleId) {
+          console.log(`관련 스케줄 ID: ${notification.scheduleId}`);
+        }
+        if (notification.fromUserId) {
+          console.log(`요청자 ID: ${notification.fromUserId}`);
+        }
+        if (notification.toUserId) {
+          console.log(`대상자 ID: ${notification.toUserId}`);
+        }
+        
+        try {
+          // 명시적으로 대타 요청 API 호출
+          console.log(`💡 API 호출: /shift-requests/${shiftRequestId}/status?status=APPROVED`);
+          response = await updateShiftStatus(shiftRequestId, 'APPROVED');
+          console.log("근무 교대 요청 승인 응답:", response);
+          setSuccessMessage("근무 교대 요청이 승인되었습니다.");
+          
+          // 스케줄 업데이트 - 대타 요청이 승인된 경우
+          if (response && response.scheduleId) {
+            await fetchUpdatedSchedules();
+            // 스케줄 갱신 이벤트 발생
+            if (response.schedule) {
+              // Schedule 타입을 ScheduleUpdateDetail 타입으로 변환
+              const scheduleUpdateDetail = {
+                scheduleId: response.schedule.scheduleId,
+                userId: response.schedule.userId,
+                userName: response.schedule.userName,
+                startTime: response.schedule.startTime,
+                endTime: response.schedule.endTime,
+                date: response.schedule.workDate
+              };
+              triggerScheduleUpdate(scheduleUpdateDetail);
+              console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
+            }
+          }
+        } catch (error) {
+          console.error("대타 요청 승인 중 오류:", error);
+          if (error instanceof Error) {
+            setError(`요청 처리 오류: ${error.message}`);
+          } else {
+            setError("대타 요청을 처리할 수 없습니다.");
+          }
+          return; // 오류 발생 시 알림 삭제 안함
+        }
+      } else {
+        console.log("⚠️ 알림 유형을 확인할 수 없습니다. 모든 정보를 기록합니다:");
+        console.log(notification);
+        setError("알림 유형을 확인할 수 없어 처리할 수 없습니다.");
+        return;
       }
       
       // 알림 삭제
@@ -172,14 +235,76 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       setError(null);
       setSuccessMessage(null);
       
-      if (notification.modificationStatus !== undefined) {
+      // 알림 데이터 상세 디버깅 
+      console.log("===== 알림 거절 데이터 디버깅 =====");
+      console.log(`알림 ID: ${notification.id}`);
+      console.log(`알림 타입: ${notification.type}`);
+      console.log(`modificationStatus: ${notification.modificationStatus}`);
+      console.log(`shiftStatus: ${notification.shiftStatus}`);
+      console.log(`scheduleId: ${notification.scheduleId}`);
+      console.log(`shiftId: ${notification.shiftId}`);
+      console.log(`fromUserId: ${notification.fromUserId}`);
+      console.log(`toUserId: ${notification.toUserId}`);
+      console.log(`메시지: ${notification.message}`);
+      console.log("============================");
+      
+      // 근무 수정 요청인지 명확하게 확인 (modificationStatus가 있고 shiftStatus가 없는 경우)
+      if (notification.modificationStatus !== undefined && notification.shiftStatus === undefined) {
+        console.log("🔄 이 알림은 근무 수정 요청입니다.");
         // 근무 수정 요청 거절
         await updateModificationStatus(notification.id, 'REJECTED');
         setSuccessMessage("근무 수정 요청이 거절되었습니다.");
-      } else if (notification.shiftStatus !== undefined) {
-        // 근무 교대 요청 거절
-        await updateShiftStatus(notification.id, 'REJECTED');
-        setSuccessMessage("근무 교대 요청이 거절되었습니다.");
+      } 
+      // 대타 요청인지 명확하게 확인 (shiftStatus가 있거나 명시적으로 대타 요청임을 나타내는 다른 지표가 있는 경우)
+      else if (notification.shiftStatus !== undefined || notification.message?.includes('대타')) {
+        console.log("🔄 이 알림은 대타 요청입니다.");
+        // 근무 교대 요청 거절 - 실제 shiftId 사용 (없으면 알림 ID 폴백)
+        let shiftRequestId = notification.shiftId;
+        
+        // shiftId가 없으면 scheduleId를 사용해보기 
+        if (!shiftRequestId && notification.scheduleId) {
+          shiftRequestId = notification.scheduleId;
+          console.log(`shiftId가 없어 scheduleId(${shiftRequestId})를 사용합니다.`);
+        }
+        
+        // 마지막 폴백으로 알림 ID 사용
+        if (!shiftRequestId) {
+          shiftRequestId = notification.id;
+          console.log(`적절한 ID가 없어 알림 ID(${shiftRequestId})를 사용합니다.`);
+        }
+        
+        console.log(`대타 요청 거절 시도: 실제 shiftId=${shiftRequestId}, 알림ID=${notification.id}`);
+        
+        // 요청 처리 상태 로깅
+        if (notification.scheduleId) {
+          console.log(`관련 스케줄 ID: ${notification.scheduleId}`);
+        }
+        if (notification.fromUserId) {
+          console.log(`요청자 ID: ${notification.fromUserId}`);
+        }
+        if (notification.toUserId) {
+          console.log(`대상자 ID: ${notification.toUserId}`);
+        }
+        
+        try {
+          // 명시적으로 대타 요청 API 호출
+          console.log(`💡 API 호출: /shift-requests/${shiftRequestId}/status?status=REJECTED`);
+          await updateShiftStatus(shiftRequestId, 'REJECTED');
+          setSuccessMessage("근무 교대 요청이 거절되었습니다.");
+        } catch (error) {
+          console.error("대타 요청 거절 중 오류:", error);
+          if (error instanceof Error) {
+            setError(`요청 처리 오류: ${error.message}`);
+          } else {
+            setError("대타 요청을 처리할 수 없습니다.");
+          }
+          return; // 오류 발생 시 알림 삭제 안함
+        }
+      } else {
+        console.log("⚠️ 알림 유형을 확인할 수 없습니다. 모든 정보를 기록합니다:");
+        console.log(notification);
+        setError("알림 유형을 확인할 수 없어 처리할 수 없습니다.");
+        return;
       }
       
       // 알림 삭제

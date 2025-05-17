@@ -128,7 +128,7 @@ const fetchCurrentUserId = async (): Promise<number | null> => {
             if (userInfo && userInfo.userId !== undefined && userInfo.userId !== null) {
                 console.log("로컬 스토리지에서 사용자 ID 확인 (API 실패 후):", userInfo.userId);
                 return Number(userInfo.userId);
-            }
+}
             
             // 토큰 디코딩을 통한 사용자 ID 추출 시도 (백업)
             try {
@@ -814,31 +814,31 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 {modalData.length > 0 && (
                                     <span className={styles.scheduleList}>
                                         {modalData.map((group: { startTime: string; endTime: string }, index: number) => {
-                                            // "HH:mm:ss"에서 시와 분만 추출
-                                            const startTimeFormatted =
-                                                group.startTime
+                                                // "HH:mm:ss"에서 시와 분만 추출
+                                                const startTimeFormatted =
+                                                    group.startTime
                                                     ? group.startTime.split(":").slice(0, 2).join(":")
                                                     : "시작 시간 없음";
-                                            const endTimeFormatted =
-                                                group.endTime
+                                                const endTimeFormatted =
+                                                    group.endTime
                                                     ? group.endTime.split(":").slice(0, 2).join(":")
                                                     : "종료 시간 없음";
 
-                                            return (
-                                                <span
-                                                    key={index}
-                                                    className={
-                                                        styles.scheduleItem
-                                                    }>
+                                                return (
                                                     <span
+                                                        key={index}
                                                         className={
-                                                            styles.time
+                                                            styles.scheduleItem
                                                         }>
-                                                        {startTimeFormatted}{" "}
-                                                        ~ {endTimeFormatted}
+                                                        <span
+                                                            className={
+                                                                styles.time
+                                                            }>
+                                                            {startTimeFormatted}{" "}
+                                                            ~ {endTimeFormatted}
+                                                        </span>
                                                     </span>
-                                                </span>
-                                            );
+                                                );
                                         })}
                                     </span>
                                 )}
@@ -891,30 +891,30 @@ const RequestModal: React.FC<CalendarScheduleProps> = ({ onClose }) => {
                                 {modalData.length > 0 && (
                                     <span className={styles.scheduleList}>
                                         {modalData.map((group: { startTime: string; endTime: string }, index: number) => {
-                                            const startTimeFormatted =
-                                                group.startTime
+                                                const startTimeFormatted =
+                                                    group.startTime
                                                     ? group.startTime.split(":").slice(0, 2).join(":")
                                                     : "시작 시간 없음";
-                                            const endTimeFormatted =
-                                                group.endTime
+                                                const endTimeFormatted =
+                                                    group.endTime
                                                     ? group.endTime.split(":").slice(0, 2).join(":")
                                                     : "종료 시간 없음";
 
-                                            return (
-                                                <span
-                                                    key={index}
-                                                    className={
-                                                        styles.scheduleItem
-                                                    }>
+                                                return (
                                                     <span
+                                                        key={index}
                                                         className={
-                                                            styles.time
+                                                            styles.scheduleItem
                                                         }>
-                                                        {startTimeFormatted}{" "}
-                                                        ~ {endTimeFormatted}
+                                                        <span
+                                                            className={
+                                                                styles.time
+                                                            }>
+                                                            {startTimeFormatted}{" "}
+                                                            ~ {endTimeFormatted}
+                                                        </span>
                                                     </span>
-                                                </span>
-                                            );
+                                                );
                                         })}
                                     </span>
                                 )}
