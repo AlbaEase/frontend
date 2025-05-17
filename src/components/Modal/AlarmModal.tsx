@@ -37,6 +37,7 @@ interface Notification {
   
   // 추가 필드
   scheduleId?: number;
+  userId?: number; // 요청을 생성한 사용자 ID
 }
 
 const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
@@ -63,6 +64,25 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           setCurrentUser(user);
         } else {
           console.error("사용자 정보를 가져올 수 없습니다.");
+          // 실패 시 로컬 스토리지에서 사용자 정보 확인 (백업)
+          const userInfoStr = localStorage.getItem("userInfo");
+          if (userInfoStr) {
+            try {
+              const userInfo = JSON.parse(userInfoStr);
+              if (userInfo.userId !== undefined) {
+                console.log("로컬 스토리지에서 사용자 ID 확인:", userInfo.userId);
+                // 임시 사용자 객체 생성
+                setCurrentUser({ 
+                  id: userInfo.userId, 
+                  email: userInfo.email || "",
+                  name: userInfo.name || "",
+                  role: userInfo.role || ""
+                });
+              }
+            } catch (e) {
+              console.error("로컬 스토리지 사용자 정보 파싱 오류:", e);
+            }
+          }
         }
       } catch (err) {
         console.error("사용자 정보 조회 중 오류:", err);
@@ -128,6 +148,7 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       console.log(`shiftId: ${notification.shiftId}`);
       console.log(`fromUserId: ${notification.fromUserId}`);
       console.log(`toUserId: ${notification.toUserId}`);
+      console.log(`userId: ${notification.userId}`); // 요청을 보낸 사용자 ID
       console.log(`메시지: ${notification.message}`);
       console.log("============================");
       
@@ -154,8 +175,15 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
         }
       }
       
-      // 사용자 ID가 없으면 처리 중단
-      if (currentUserId === null) {
+      // userId가 0인 경우도 유효한 ID로 처리
+      if (currentUserId === null && localStorage.getItem("accessToken")) {
+        // 토큰은 있지만 ID가 없는 경우 0으로 설정 (백엔드가 0을 유효한 ID로 사용하는 경우)
+        console.log("토큰은 있지만 ID가 없어 ID를 0으로 설정합니다");
+        currentUserId = 0;
+      }
+      
+      // 사용자 ID가 없고 토큰도 없으면 처리 중단
+      if (currentUserId === null && !localStorage.getItem("accessToken")) {
         setError("사용자 인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.");
         setProcessingNotification(null);
         return;
@@ -163,8 +191,137 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
       
       let response;
       
-      // 근무 수정 요청인지 명확하게 확인 (modificationStatus가 있고 shiftStatus가 없는 경우)
-      if (notification.modificationStatus !== undefined && notification.shiftStatus === undefined) {
+      // 대타 요청 여부 확인 - 메시지 내용 또는 타입을 기준으로 판단
+      const isShiftRequest = 
+        notification.shiftStatus !== undefined || 
+        notification.message?.includes('대타') || 
+        (notification.type === 'SPECIFIC_USER' && notification.scheduleId);
+      
+      if (isShiftRequest) {
+        console.log("🔄 이 알림은 대타 요청입니다.");
+        
+        // 요청자와 수신자 관계 확인 - 0도 유효한 사용자 ID로 처리
+        const isRequestRecipient = 
+          notification.toUserId === currentUserId || 
+          (notification.toUserId === null && notification.message?.includes('대타') && notification.message?.includes('요청'));
+        
+        console.log(`요청 수신자 확인: toUserId=${notification.toUserId}, currentUserId=${currentUserId}, isRecipient=${isRequestRecipient}`);
+        
+        if (!isRequestRecipient) {
+          setError("이 대타 요청에 대한 수락 권한이 없습니다. 요청을 받은 사용자만 수락할 수 있습니다.");
+          setProcessingNotification(null);
+          return;
+        }
+        
+        // 요청 ID 결정 (우선순위: shiftId > scheduleId > 알림 ID)
+        let requestId: number;
+        let idSource: string;
+        
+        if (notification.shiftId) {
+          requestId = notification.shiftId;
+          idSource = "shiftId";
+        } else if (notification.scheduleId) {
+          requestId = notification.scheduleId;
+          idSource = "scheduleId";
+        } else {
+          requestId = notification.id;
+          idSource = "notificationId";
+        }
+        
+        console.log(`대타 요청 승인에 사용할 ID: ${requestId} (출처: ${idSource})`);
+        
+        // 추가 매개변수 확인
+        const fromUserId = notification.fromUserId || notification.userId;
+        if (fromUserId) {
+          console.log(`요청자 ID: ${fromUserId}`);
+        }
+        
+        // 요청 데이터 준비
+        const requestData = {
+          // 현재 사용자가 대타 수락자
+          userId: currentUserId ?? undefined,  // null일 경우 undefined로 처리
+          // 요청의 원본 스케줄 ID (없으면 undefined)
+          scheduleId: notification.scheduleId || undefined,
+          // 요청자 ID (없으면 undefined)
+          fromUserId: fromUserId || undefined
+        };
+        
+        console.log("요청 데이터:", requestData);
+        
+        try {
+          // API 호출 (try/catch로 감싸서 오류 처리 강화)
+          try {
+            console.log(`💡 API 호출: /shift-requests/${requestId}/status?status=APPROVED`);
+            console.log(`현재 사용자 ID ${currentUserId}로 대타 요청 승인 시도`);
+            
+            // 인증 토큰 유효성 확인
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+              throw new Error("인증 토큰이 없습니다. 다시 로그인 해주세요.");
+            }
+            
+            response = await updateShiftStatus(requestId, 'APPROVED', { 
+              userId: currentUserId !== null ? currentUserId : undefined
+            });
+            console.log("근무 교대 요청 승인 응답:", response);
+            setSuccessMessage("근무 교대 요청이 승인되었습니다.");
+          } catch (apiError) {
+            console.error("API 호출 오류:", apiError);
+            
+            // scheduleId로 다시 시도
+            if (idSource !== "scheduleId" && notification.scheduleId) {
+              console.log(`scheduleId(${notification.scheduleId})로 다시 시도합니다.`);
+              try {
+                response = await updateShiftStatus(notification.scheduleId, 'APPROVED', { 
+                  userId: currentUserId !== null ? currentUserId : undefined 
+                });
+                console.log("근무 교대 요청 승인 응답 (두 번째 시도):", response);
+                setSuccessMessage("근무 교대 요청이 승인되었습니다.");
+              } catch (retryError) {
+                console.error("두 번째 시도 오류:", retryError);
+                throw new Error("대타 요청을 처리할 수 없습니다. 다시 시도해 주세요.");
+              }
+            } else {
+              throw apiError;
+            }
+          }
+          
+          // 스케줄 업데이트 - 대타 요청이 승인된 경우
+          if (response && (response.scheduleId || notification.scheduleId)) {
+            await fetchUpdatedSchedules();
+            
+            // 스케줄 정보가 응답에 있는 경우
+            if (response.schedule) {
+              // Schedule 타입을 ScheduleUpdateDetail 타입으로 변환
+              const scheduleUpdateDetail = {
+                scheduleId: response.schedule.scheduleId,
+                userId: response.schedule.userId,
+                userName: response.schedule.userName,
+                startTime: response.schedule.startTime,
+                endTime: response.schedule.endTime,
+                date: response.schedule.workDate
+              };
+              triggerScheduleUpdate(scheduleUpdateDetail);
+              console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
+            }
+            
+            // 페이지 새로고침 추가
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500); // 1.5초 후 새로고침 (성공 메시지를 잠시 보여주기 위해)
+          }
+        } catch (error) {
+          console.error("대타 요청 승인 중 오류:", error);
+          if (error instanceof Error) {
+            setError(`요청 처리 오류: ${error.message}`);
+          } else {
+            setError("대타 요청을 처리할 수 없습니다.");
+          }
+          return; // 오류 발생 시 알림 삭제 안함
+        }
+      }
+      // 근무 수정 요청인지 확인
+      else if (notification.modificationStatus !== undefined) {
         console.log("🔄 이 알림은 근무 수정 요청입니다.");
         
         // 요청 대상자 확인 - 매니저나 점주만 수정 요청을 승인할 수 있음
@@ -202,103 +359,43 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
           }
         }
       } 
-      // 대타 요청인지 명확하게 확인 (shiftStatus가 있거나 명시적으로 대타 요청임을 나타내는 다른 지표가 있는 경우)
-      else if (notification.shiftStatus !== undefined || notification.message?.includes('대타')) {
-        console.log("🔄 이 알림은 대타 요청입니다.");
-        
-        // 현재 사용자가 요청을 받은 사람인지 확인
-        // 수정: toUserId가 null이면 대타 요청을 받을 수 있는 모든 직원이 대상
-        const isRequestRecipient = 
-          notification.toUserId === currentUserId || 
-          (notification.toUserId === null && notification.message?.includes('대타') && notification.message?.includes('요청'));
-        
-        console.log(`요청 수신자 확인: toUserId=${notification.toUserId}, currentUserId=${currentUserId}, isRecipient=${isRequestRecipient}`);
-        
-        // toUserId가 null인 경우는 모든 사용자가 처리 가능한 요청으로 간주
-        if (!isRequestRecipient) {
-          setError("이 대타 요청에 대한 수락 권한이 없습니다. 요청을 받은 사용자만 수락할 수 있습니다.");
-          setProcessingNotification(null);
-          return;
-        }
-        
-        // 근무 교대 요청 승인 - 실제 shiftId 사용 (없으면 알림 ID 폴백)
-        let shiftRequestId = notification.shiftId;
-        
-        // shiftId가 없으면 scheduleId를 사용해보기 
-        if (!shiftRequestId && notification.scheduleId) {
-          shiftRequestId = notification.scheduleId;
-          console.log(`shiftId가 없어 scheduleId(${shiftRequestId})를 사용합니다.`);
-        }
-        
-        // 마지막 폴백으로 알림 ID 사용
-        if (!shiftRequestId) {
-          shiftRequestId = notification.id;
-          console.log(`적절한 ID가 없어 알림 ID(${shiftRequestId})를 사용합니다.`);
-        }
-        
-        console.log(`대타 요청 승인 시도: 실제 shiftId=${shiftRequestId}, 알림ID=${notification.id}`);
-        
-        // 요청 처리 상태 로깅
-        if (notification.scheduleId) {
-          console.log(`관련 스케줄 ID: ${notification.scheduleId}`);
-        }
-        if (notification.fromUserId) {
-          console.log(`요청자 ID: ${notification.fromUserId}`);
-        }
-        if (notification.toUserId) {
-          console.log(`대상자 ID: ${notification.toUserId}`);
-        } else {
-          console.log(`대상자 ID가 없습니다 (전체 요청). 현재 사용자 ID ${currentUserId}가 처리합니다.`);
-        }
-        
-        try {
-          // 대타 요청 승인 시 현재 사용자 ID를 toUserId로 설정
-          // 명시적으로 대타 요청 API 호출
-          console.log(`💡 API 호출: /shift-requests/${shiftRequestId}/status?status=APPROVED`);
-          console.log(`현재 사용자 ID ${currentUserId}로 대타 요청 승인 시도`);
-          
-          // userId를 명시적으로 설정 - 백엔드에서 현재 인증된 사용자를 사용하더라도 명확성을 위해 전달
-          response = await updateShiftStatus(shiftRequestId, 'APPROVED', { userId: currentUserId });
-          console.log("근무 교대 요청 승인 응답:", response);
-          setSuccessMessage("근무 교대 요청이 승인되었습니다.");
-          
-          // 스케줄 업데이트 - 대타 요청이 승인된 경우
-          if (response && response.scheduleId) {
-            await fetchUpdatedSchedules();
-            // 스케줄 갱신 이벤트 발생
-            if (response.schedule) {
-              // Schedule 타입을 ScheduleUpdateDetail 타입으로 변환
-              const scheduleUpdateDetail = {
-                scheduleId: response.schedule.scheduleId,
-                userId: response.schedule.userId,
-                userName: response.schedule.userName,
-                startTime: response.schedule.startTime,
-                endTime: response.schedule.endTime,
-                date: response.schedule.workDate
-              };
-              triggerScheduleUpdate(scheduleUpdateDetail);
-              console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
-              
-              // 페이지 새로고침 추가
-              setTimeout(() => {
-                window.location.reload();
-              }, 1500); // 1.5초 후 새로고침 (성공 메시지를 잠시 보여주기 위해)
-            }
-          }
-        } catch (error) {
-          console.error("대타 요청 승인 중 오류:", error);
-          if (error instanceof Error) {
-            setError(`요청 처리 오류: ${error.message}`);
-          } else {
-            setError("대타 요청을 처리할 수 없습니다.");
-          }
-          return; // 오류 발생 시 알림 삭제 안함
-        }
-      } else {
+      // 그 외의 경우 - 타입을 결정할 수 없는 경우
+      else {
         console.log("⚠️ 알림 유형을 확인할 수 없습니다. 모든 정보를 기록합니다:");
         console.log(notification);
-        setError("알림 유형을 확인할 수 없어 처리할 수 없습니다.");
-        return;
+        
+        // 메시지 내용으로 마지막 시도
+        if (notification.message?.includes('대타')) {
+          console.log("메시지 내용으로 대타 요청으로 추정합니다.");
+          
+          if (!notification.scheduleId) {
+            setError("대타 요청에 필요한 스케줄 ID 정보가 없습니다.");
+            setProcessingNotification(null);
+            return;
+          }
+          
+          try {
+            console.log(`💡 scheduleId(${notification.scheduleId})로 대타 요청 처리 시도`);
+            response = await updateShiftStatus(notification.scheduleId, 'APPROVED', { 
+              userId: currentUserId !== null ? currentUserId : undefined 
+            });
+            console.log("대타 요청 처리 응답:", response);
+            setSuccessMessage("대타 요청이 승인되었습니다.");
+            
+            // 스케줄 업데이트
+            await fetchUpdatedSchedules();
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } catch (error) {
+            console.error("대타 요청 처리 중 오류:", error);
+            setError("대타 요청을 처리할 수 없습니다. 관리자에게 문의하세요.");
+            return;
+          }
+        } else {
+          setError("알림 유형을 확인할 수 없어 처리할 수 없습니다.");
+          return;
+        }
       }
       
       // 알림 삭제
