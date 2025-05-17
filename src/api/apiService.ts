@@ -1,6 +1,6 @@
 // 1. 코드분리 api호출만 담당
 // 2. 재사용성 증가
-import axiosInstance, { getToken, setAuthToken } from "./loginAxios"; // ✅ getToken과 setAuthToken 추가
+import axiosInstance, { getToken } from "./loginAxios"; // getToken만 사용
 import {
   Notification,
   NotificationResponse,
@@ -202,6 +202,17 @@ interface ShiftPayload {
   toUserId?: number;
 }
 
+// 대타 요청 중 오류 발생 처리를 위한 타입
+interface AxiosErrorResponse {
+  response?: { 
+    status: number; 
+    data: Record<string, unknown>; 
+    headers: Record<string, string>; 
+  }; 
+  request?: unknown; 
+  message?: string; 
+}
+
 // 대타 요청
 export const requestShift = async (
   storeId: number, 
@@ -352,15 +363,7 @@ export const requestShift = async (
       
       // 에러 객체의 타입을 좁혀서 처리
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { 
-          response?: { 
-            status: number; 
-            data: any; 
-            headers: any; 
-          }; 
-          request?: any; 
-          message?: string; 
-        };
+        const axiosError = error as AxiosErrorResponse;
         
         if (axiosError.response) {
           console.error('🚨 응답 상태:', axiosError.response.status);
@@ -431,11 +434,40 @@ export const updateShiftStatus = async (
             scheduleId: response.data.schedule.scheduleId,
             userId: response.data.schedule.userId,
             workDate: response.data.schedule.workDate,
-            storeId: response.data.schedule.storeId
+            storeId: response.data.schedule.storeId,
+            startTime: response.data.schedule.startTime,
+            endTime: response.data.schedule.endTime,
+            userName: response.data.schedule.userName || "알 수 없음"
           }
         });
         window.dispatchEvent(event);
-        console.log("스케줄 업데이트 이벤트 발생됨");
+        console.log("스케줄 업데이트 이벤트 발생됨", event.detail);
+        
+        // 캘린더 UI 자동 갱신이 확실하지 않은 경우를 위한 백업
+        try {
+          // 현재 선택된 월에 해당하는 스케줄 데이터 갱신 이벤트 추가 발생
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth(); // 0-based
+          
+          // 매장 ID가 있는 경우
+          if (response.data.schedule.storeId) {
+            console.log(`매장 ID: ${response.data.schedule.storeId}의 스케줄 데이터 갱신 이벤트 발생 시도`);
+            
+            // 스케줄 새로고침 이벤트 발생 (별도 이벤트)
+            const refreshEvent = new CustomEvent("refreshSchedules", {
+              detail: {
+                storeId: response.data.schedule.storeId,
+                year: currentYear,
+                month: currentMonth
+              }
+            });
+            window.dispatchEvent(refreshEvent);
+            console.log("스케줄 새로고침 이벤트 발생됨");
+          }
+        } catch (refreshError) {
+          console.error("스케줄 새로고침 이벤트 발생 중 오류:", refreshError);
+        }
       } catch (eventError) {
         console.error("스케줄 업데이트 이벤트 발생 중 오류:", eventError);
       }
