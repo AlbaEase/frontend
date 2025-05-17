@@ -134,6 +134,12 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
               date: response.schedule.workDate
             };
             triggerScheduleUpdate(scheduleUpdateDetail);
+            console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
+            
+            // 페이지 새로고침 추가
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500); // 1.5초 후 새로고침 (성공 메시지를 잠시 보여주기 위해)
           }
         }
       } 
@@ -191,6 +197,11 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
               };
               triggerScheduleUpdate(scheduleUpdateDetail);
               console.log('스케줄 갱신 이벤트 발생:', scheduleUpdateDetail);
+              
+              // 페이지 새로고침 추가
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500); // 1.5초 후 새로고침 (성공 메시지를 잠시 보여주기 위해)
             }
           }
         } catch (error) {
@@ -456,26 +467,36 @@ const AlarmModal: React.FC<AlarmProps> = ({ onClose }) => {
               <div key={notification.id} className={styles.contentBox}>
                 {renderNotificationMessage(notification)}
                 
-                {/* 모든 알림에 대해 수락/거절 버튼 표시 */}
-                <div className={styles.alarmButton}>
-                  <Button
-                    width="105px"
-                    height="35px"
-                    onClick={() => handleAccept(notification)}
-                    disabled={processingNotification === notification.id}
-                  >
-                    {processingNotification === notification.id ? "처리 중..." : "수락하기"}
-                  </Button>
-                  <Button
-                    width="105px"
-                    height="35px"
-                    variant="gray"
-                    onClick={() => handleReject(notification)}
-                    disabled={processingNotification === notification.id}
-                  >
-                    {processingNotification === notification.id ? "처리 중..." : "거절하기"}
-                  </Button>
-                </div>
+                {/* 대타 요청을 보낸 사용자가 아닌 경우에만 수락/거절 버튼 표시 */}
+                {(!notification.fromUserId || notification.toUserId) && (
+                  <div className={styles.alarmButton}>
+                    <Button
+                      width="105px"
+                      height="35px"
+                      onClick={() => handleAccept(notification)}
+                      disabled={processingNotification === notification.id}
+                    >
+                      {processingNotification === notification.id ? "처리 중..." : "수락하기"}
+                    </Button>
+                    <Button
+                      width="105px"
+                      height="35px"
+                      variant="gray"
+                      onClick={() => handleReject(notification)}
+                      disabled={processingNotification === notification.id}
+                    >
+                      {processingNotification === notification.id ? "처리 중..." : "거절하기"}
+                    </Button>
+                  </div>
+                )}
+                
+                {/* 대타 요청을 보낸 사용자인 경우 버튼 없이 상태만 표시 */}
+                {notification.fromUserId && !notification.toUserId && (
+                  <div className={styles.statusMessage}>
+                    {notification.shiftStatus === 'APPROVED' ? '승인됨' : 
+                     notification.shiftStatus === 'REJECTED' ? '거절됨' : '처리 대기 중'}
+                  </div>
+                )}
               </div>
             ))
           ) : (

@@ -128,3 +128,17 @@ button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* 상태 메시지 스타일 */
+.statusMessage {
+  width: 240px;
+  height: 72px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-weight: 500;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
