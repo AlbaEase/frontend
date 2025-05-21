@@ -164,7 +164,7 @@ export const EmployeeScheduleProvider = ({
         };
 
         fetchSchedules();
-    }, [selectedStore]);
+    }, [selectedStore, token]);
 
     const viewedSchedules = useMemo(() => {
         /* selectedList에 있는 알바생들의 일정만 filteredSchedules에 저장 */
@@ -172,9 +172,6 @@ export const EmployeeScheduleProvider = ({
             selectedList.includes(schedule.fullName)
         );
 
-        console.log("스케줄", employeeSchedules);
-        console.log("선택 리스트", selectedList);
-        console.log("필터링 된 스케줄", filteredSchedules);
 
         /* currentDate를 기준으로 한 달의 시작일과 종료일을 계산 */
         const startOfMonth = currentDate.startOf("month");
@@ -285,7 +282,7 @@ export const EmployeeScheduleProvider = ({
 
         // console.log("viewedSchedules 결과: ", result);
         return result;
-    }, [selectedList, employeeSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
+    }, [selectedStore, selectedList, employeeSchedules, currentDate]); // 선택된 알바생 목록이 변경되거나 데이터베이스에 변경이 있을 때만 재계산
 
     /* 스케줄 그룹화 */
     const groupedSchedules = useMemo(() => {
@@ -403,7 +400,7 @@ export const EmployeeScheduleProvider = ({
 
         console.log("groupedSchedules 결과: ", result);
         return result;
-    }, [employeeSchedules, currentDate]); // 데이터베이스에 변경이 있을 때만 재계산
+    }, [selectedStore, employeeSchedules, currentDate]); // 데이터베이스에 변경이 있을 때만 재계산
 
     /* 근무하는 날짜 또는 시간이 다른 그룹의 명단 */
     const otherGroupMembers = useMemo(() => {
@@ -436,7 +433,7 @@ export const EmployeeScheduleProvider = ({
             userId: schedule.userId, // 근무자의 id
             name: schedule.fullName, // 근무자의 이름
         }));
-    }, [employeeSchedules, groupedSchedules, currentDate, selectedName]);
+    }, [selectedStore, employeeSchedules, groupedSchedules, currentDate, selectedName]);
 
     return (
         <EmployeeScheduleContext.Provider

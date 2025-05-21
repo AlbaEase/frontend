@@ -10,6 +10,9 @@ const PartTime = () => {
     const selectedStoreData = stores.find(
         (store) => store.storeId === Number(selectedStore)
     );
+
+    console.log("⭐⭐ selectedStore: ", selectedStore);
+
     const storeCode = selectedStoreData
         ? selectedStoreData.storeCode
         : "매장 코드 없음";
