@@ -3,7 +3,7 @@ import { useEmployeeSchedule } from "../contexts/EmployeeScheduleContext";
 
 const SelectRadioEmployee = () => {
     const { stores, selectedStore, setSelectedStore } = useEmployeeSchedule();
-    console.log("stores:", stores);
+    // console.log("stores:", stores);
 
     // stores가 undefined일 경우 빈 배열로 설정
     const safeStores = stores || [];

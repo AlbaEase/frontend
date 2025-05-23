@@ -1,5 +1,5 @@
 // SockJS 폴리필을 가장 먼저 가져옵니다
-import './utils/sockjs-polyfill';
+import "./utils/sockjs-polyfill";
 import { createRoot } from "react-dom/client";
 import { ModalProvider } from "./contexts/ModalContext.tsx";
 import "./index.css";
@@ -14,8 +14,8 @@ createRoot(document.getElementById("root")!).render(
         <OwnerScheduleProvider>
             <ModalProvider>
                 <BrowserRouter>
-                <WebSocketProvider>
-                    <App />
+                    <WebSocketProvider>
+                        <App />
                     </WebSocketProvider>
                 </BrowserRouter>
             </ModalProvider>

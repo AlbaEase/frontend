@@ -11,7 +11,7 @@ const PartTime = () => {
         (store) => store.storeId === Number(selectedStore)
     );
 
-    console.log("⭐⭐ selectedStore: ", selectedStore);
+    // console.log("⭐⭐ selectedStore: ", selectedStore);
 
     const storeCode = selectedStoreData
         ? selectedStoreData.storeCode
