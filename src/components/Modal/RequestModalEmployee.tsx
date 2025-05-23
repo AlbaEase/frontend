@@ -320,7 +320,7 @@ const RequestModalEmployee: React.FC<CalendarScheduleProps> = ({ onClose }) => {
 
             for (const toUserId of toUserId) {
                 await axiosInstance.post(
-                    `http://3.39.237.218:8080/shift-requests/store/{selectedStore}`,
+                    `http://3.39.237.218:8080/shift-requests/store/${selectedStore}`,
                     {
                         fromUserId,
                         toUserId,
