@@ -1,18 +1,18 @@
 import styles from "./Checkbox.module.css";
 import { useState, useEffect } from "react";
-import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
+import { useEmployeeSchedule } from "../contexts/EmployeeScheduleContext";
 import axiosInstance from "../api/loginAxios";
 
 const Checkbox = () => {
     /* DB 연결 */
-    const { selectedStore, selectedList, setSelectedList } = useOwnerSchedule();
+    const { selectedStore, selectedList, setSelectedList } = useEmployeeSchedule();
     const [employeesArray, setEmployeeArray] = useState<string[]>([]);
     /* 체크박스 선택 관리 */
     const [isAllSelected, setIsAllSelected] = useState(false);
 
     const token = localStorage.getItem("accessToken"); // 토큰 가져오기
 
-    // console.log("selectedList: ", selectedList);
+    console.log("selectedList: ", selectedList);
     // console.log("selectedStore:", selectedStore);
 
     useEffect(() => {

@@ -101,3 +101,12 @@
     padding: 0.15em;
     background-color: #e8decf;
 }
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabled input {
+    cursor: not-allowed;
+}

@@ -31,8 +31,16 @@
     font-family: "Noto Sans KR", sans-serif;
     text-decoration: none;
     font-weight: 700;
-    font-size: 16px;
+    font-size: 24px;
     color: #1c170d;
+}
+
+.userName {
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: #555;
+    margin-left: 5px;
 }
 
 .nav {

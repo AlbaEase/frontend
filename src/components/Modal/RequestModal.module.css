@@ -247,3 +247,45 @@
 .invisible {
   display: none;
 }
+
+/* 근무 수정 요청용 스타일 */
+.textareaContainer {
+    margin-top: 15px;
+    width: 100%;
+}
+
+.modificationDetails {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.modificationDetails:focus {
+    outline: none;
+    border-color: #009963;
+}
+
+.errorMessage {
+    color: #ff3b30;
+    font-size: 14px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.successMessage {
+    color: #009963;
+    font-size: 16px;
+    margin-top: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

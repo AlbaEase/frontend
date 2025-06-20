@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
+type ModalType = "alarm" | "albaAdd" | "request" | "edit";
+
 // 모달 컨텍스트 생성
 interface ModalContextType {
+
   /* 열 때 어떤 모달창인지 타입 명시 */
   openModal: (
     modal: "alarm" | "albaAdd" | "request" | "edit" | "done",
@@ -12,11 +15,13 @@ interface ModalContextType {
   activeModal: "alarm" | "albaAdd" | "request" | "edit" | "done" | null;
   /* 전달된 데이터를 저장할 변수 */
   modalData: any;
+
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export const ModalProvider = ({ children }: { children: ReactNode }) => {
+
   const [activeModal, setActiveModal] = useState<
     "alarm" | "albaAdd" | "request" | "edit" | "done" |null
   >(null);
@@ -31,18 +36,18 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
   };
   const closeModal = () => setActiveModal(null);
 
-  return (
-    <ModalContext.Provider
-      value={{ openModal, closeModal, activeModal, modalData }}
-    >
-      {children}
-    </ModalContext.Provider>
-  );
+    return (
+        <ModalContext.Provider
+            value={{ openModal, closeModal, activeModal, modalData }}>
+            {children}
+        </ModalContext.Provider>
+    );
 };
 
 // useModal 커스텀 훅
 export const useModal = () => {
-  const context = useContext(ModalContext);
-  if (!context) throw new Error("useModal must be used within a ModalProvider");
-  return context;
+    const context = useContext(ModalContext);
+    if (!context)
+        throw new Error("useModal must be used within a ModalProvider");
+    return context;
 };

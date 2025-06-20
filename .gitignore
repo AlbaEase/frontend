@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .env
+
+# java 및 resources 디렉토리 제외
+/java/
+/resources/
