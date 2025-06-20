@@ -82,7 +82,16 @@ axiosInstance.interceptors.request.use(
     if (token) {
       console.log("🔍 인터셉터 실행 - 저장된 토큰:", token.substring(0, 10) + "...");
       config.headers["Authorization"] = `Bearer ${token}`;
+
+      console.log("✅ Authorization 헤더 추가됨:", config.headers);
+    } else {
+       delete config.headers["Authorization"];
+      console.warn(
+        "🚨 Authorization 헤더 없음! 토큰이 저장되지 않았거나 불러올 수 없음."
+      );
+
       console.log("✅ Authorization 헤더 추가됨:", `Bearer ${token.substring(0, 10)}...`);
+
     }
     
     console.log("🔍 요청 헤더:", JSON.stringify(config.headers));

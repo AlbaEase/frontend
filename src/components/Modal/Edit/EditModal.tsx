@@ -4,23 +4,25 @@ import axiosInstance from "../../../api/user";
 
 interface AlarmProps {
   onClose: () => void;
+  onSuccess: () => void;
 }
 
-const EditModal: React.FC<AlarmProps> = ({ onClose }) => {
-  const [password, setPassword] = useState<string>("");
+const EditModal: React.FC<AlarmProps> = ({ onClose, onSuccess }) => {
+  const [currentPassword, setCurrentPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    return setPassword(e.target.value);
+  const handlecurrentPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    return setCurrentPassword(e.target.value);
   };
 
   const handleCheck = async () => {
     try {
       const res = await axiosInstance.post("/user/verify-password", {
-        password,
+        currentPassword,
       });
 
       console.log("✅ 인증 성공", res.data);
+      onSuccess();
       onClose();
     } catch (error) {
       setErrorMessage("비밀번호가 일치하지 않습니다.");
@@ -43,8 +45,8 @@ const EditModal: React.FC<AlarmProps> = ({ onClose }) => {
               <input
                 type="password"
                 className={styles.input}
-                value={password}
-                onChange={handlePassword}
+                value={currentPassword}
+                onChange={handlecurrentPassword}
               />
             </div>
           </div>
