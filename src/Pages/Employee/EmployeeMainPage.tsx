@@ -4,7 +4,7 @@ import AlbaAdd from "../../components/AlbaAdd";
 import CalendarEmployee from "../../components/CalendarEmployee";
 import ChoiceEmployee from "../../components/ChoiceEmployee";
 import PartTimeEmployee from "../../components/PartTimeEmployee";
-import SelectRadio from "../../components/SelectRadio";
+import SelectRadioEmployee from "../../components/SelectRadioEmployee";
 import AlbaAddModal from "../../components/Modal/AlbaAddModal";
 import AlarmModal from "../../components/Modal/AlarmModal";
 import RequestModalEmployee from "../../components/Modal/RequestModalEmployee";
@@ -33,7 +33,7 @@ const EmployeeMainPage = () => {
         </div>
         <div className={styles.bottomContents}>
           <Alarm onClick={() => openModal("alarm")} />
-          <SelectRadio />
+          <SelectRadioEmployee />
           <AlbaAdd onClick={() => openModal("albaAdd")} />
         </div>
       </div>

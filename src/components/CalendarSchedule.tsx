@@ -7,6 +7,7 @@ interface CalendarScheduleProps {
 }
 
 type Schedule = {
+    scheduleId: number;
     startTime: string;
     endTime: string;
     names: string[];
@@ -35,12 +36,13 @@ const CalendarSchedule: React.FC<CalendarScheduleProps> = ({ schedules }) => {
                         schedule.names.includes(fullName)
                     )
                 ) {
+                    console.log("넘기는 schedules:", schedules);
                     openModal("request", schedules);
                 } else {
                     alert("본인의 근무만 요청할 수 있습니다.");
                     return;
                 }
-            } else {
+            } else {    // 사장님일 경우
                 openModal("request", schedules);
             }
         } else {

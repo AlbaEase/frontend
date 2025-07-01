@@ -26,7 +26,7 @@ const Checkbox = () => {
 
                 // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
                 const res = await axiosInstance.get(
-                    `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
+                    `http://43.200.176.79:8080/schedule/store/${selectedStore}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,

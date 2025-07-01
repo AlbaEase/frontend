@@ -12,6 +12,7 @@ import { getUserFromToken } from "../utils/getUserFromToken";
 // import { getGroupedSchedules } from "../utils/schedulesUtils";
 
 interface EmployeeSchedule {
+    scheduleId: number; // 스케줄 아이디
     userId: number; // 알바생 아이디
     fullName: string; // 알바생 이름
     startTime: string; // 시작 시간 (13:00)
@@ -40,15 +41,17 @@ interface EmployeeScheduleContextType {
     >;
     viewedSchedules: {
         date: string;
-        groups: { startTime: string; endTime: string; names: string[] }[];
+        groups: {
+            scheduleId: number;
+            startTime: string;
+            endTime: string;
+            names: string[];
+        }[];
     }[];
-    // groupedSchedules: {
-    //    date: string;
-    //    groups: { startTime: string; endTime: string; names: string[] }[];
-    //}[];
     groupedSchedules: {
         date: string;
         groups: {
+            scheduleId: number;
             startTime: string;
             endTime: string;
             users: { name: string; userId: number }[];
@@ -60,7 +63,7 @@ interface EmployeeScheduleContextType {
     setCurrentDate: React.Dispatch<React.SetStateAction<Dayjs>>;
     selectedName: string;
     setSelectedName: React.Dispatch<React.SetStateAction<string>>;
-    otherGroupMembers: { userId: number, name: string }[];
+    otherGroupMembers: { userId: number; name: string }[];
 }
 
 const EmployeeScheduleContext = createContext<
@@ -87,7 +90,7 @@ export const EmployeeScheduleProvider = ({
     // localStorage에서 토큰을 가져옵니다.
     const token = localStorage.getItem("accessToken");
 
-    console.log("selectedName: ", selectedName);
+    // console.log("selectedName: ", selectedName);
 
     // DB에서 가게 목록 가져오기 (axios로 변경)
     useEffect(() => {
@@ -96,7 +99,7 @@ export const EmployeeScheduleProvider = ({
                 if (token) {
                     // axios 요청 헤더에 토큰을 추가합니다.
                     const res = await axiosInstance.get(
-                        "http://3.39.237.218:8080/store/me",
+                        "http://43.200.176.79:8080/store/me",
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
@@ -112,7 +115,7 @@ export const EmployeeScheduleProvider = ({
                         return;
                     }
 
-                    const filteredStores = data.map((store: any) => ({
+                    const filteredStores = data.map((store: Store) => ({
                         storeId: store.storeId,
                         name: store.name,
                         storeCode: store.storeCode,
@@ -132,7 +135,7 @@ export const EmployeeScheduleProvider = ({
         };
 
         fetchStores();
-    }, []);
+    }, [token]);
 
     // 가게 선택할 때마다 스케줄 다르게 불러오기 (axios로 변경)
     useEffect(() => {
@@ -142,7 +145,7 @@ export const EmployeeScheduleProvider = ({
             try {
                 if (token) {
                     const res = await axiosInstance.get(
-                        `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
+                        `http://43.200.176.79:8080/schedule/store/${selectedStore}`,
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
@@ -151,7 +154,7 @@ export const EmployeeScheduleProvider = ({
                     );
                     const data: EmployeeSchedule[] = res.data;
                     setEmployeeSchedules(data);
-                    console.log("받아온 스케줄 데이터: ", data);
+                    // console.log("받아온 스케줄 데이터: ", data);
                 } else {
                     console.error("토큰이 없습니다. 인증을 확인하세요.");
                 }
@@ -164,17 +167,13 @@ export const EmployeeScheduleProvider = ({
         };
 
         fetchSchedules();
-    }, [selectedStore]);
+    }, [selectedStore, token]);
 
     const viewedSchedules = useMemo(() => {
         /* selectedList에 있는 알바생들의 일정만 filteredSchedules에 저장 */
         const filteredSchedules = employeeSchedules.filter((schedule) =>
             selectedList.includes(schedule.fullName)
         );
-
-        console.log("스케줄", employeeSchedules);
-        console.log("선택 리스트", selectedList);
-        console.log("필터링 된 스케줄", filteredSchedules);
 
         /* currentDate를 기준으로 한 달의 시작일과 종료일을 계산 */
         const startOfMonth = currentDate.startOf("month");
@@ -199,7 +198,7 @@ export const EmployeeScheduleProvider = ({
             acc[date.format("YYYY-MM-DD")] = []; // 날짜별 빈 배열로 초기화
             return acc;
             // 형식은 날짜(string), 일정 기록하는 객체(시작 시간, 끝 시간, 알바생 명단)
-        }, {} as Record<string, { startTime: string; endTime: string; names: string[] }[]>);
+        }, {} as Record<string, { scheduleId: number; startTime: string; endTime: string; names: string[] }[]>);
 
         filteredSchedules.forEach((schedule) => {
             // repeat_days가 null인 경우, workDate를 기준으로 날짜 매칭
@@ -221,6 +220,7 @@ export const EmployeeScheduleProvider = ({
                     } else {
                         // 이전에 해당 스케줄 그룹이 없으면 새로 그룹 추가
                         scheduleMap[dateStr].push({
+                            scheduleId: schedule.scheduleId,
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
                             names: [schedule.fullName],
@@ -265,6 +265,7 @@ export const EmployeeScheduleProvider = ({
                             existingGroup.names.push(schedule.fullName);
                         } else {
                             scheduleMap[dateStr].push({
+                                scheduleId: schedule.scheduleId,
                                 startTime: schedule.startTime,
                                 endTime: schedule.endTime,
                                 names: [schedule.fullName],
@@ -314,7 +315,7 @@ export const EmployeeScheduleProvider = ({
             acc[date.format("YYYY-MM-DD")] = []; // 날짜별 빈 배열로 초기화
             return acc;
             // 형식은 날짜(string), 일정 기록하는 객체(시작 시간, 끝 시간, 알바생 명단)
-        }, {} as Record<string, { startTime: string; endTime: string; users: { name: string; userId: number }[] }[]>);
+        }, {} as Record<string, { scheduleId: number; startTime: string; endTime: string; users: { name: string; userId: number }[] }[]>);
 
         allSchedules.forEach((schedule) => {
             // user는 schedule에서 가져온 알바생 이름과 id
@@ -339,6 +340,7 @@ export const EmployeeScheduleProvider = ({
                     } else {
                         // 이전에 해당 스케줄 그룹이 없으면 새로 그룹 추가
                         scheduleMap[dateStr].push({
+                            scheduleId: schedule.scheduleId,
                             startTime: schedule.startTime,
                             endTime: schedule.endTime,
                             users: [user],
@@ -383,6 +385,7 @@ export const EmployeeScheduleProvider = ({
                             existingGroup.users.push(user);
                         } else {
                             scheduleMap[dateStr].push({
+                                scheduleId: schedule.scheduleId,
                                 startTime: schedule.startTime,
                                 endTime: schedule.endTime,
                                 users: [user],
@@ -401,7 +404,7 @@ export const EmployeeScheduleProvider = ({
             ), // startTime 기준 정렬
         }));
 
-        console.log("groupedSchedules 결과: ", result);
+        // console.log("groupedSchedules 결과: ", result);
         return result;
     }, [employeeSchedules, currentDate]); // 데이터베이스에 변경이 있을 때만 재계산
 

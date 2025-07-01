@@ -10,7 +10,7 @@ dayjs.locale("ko");
 const Calendar = () => {
     const { viewedSchedules, currentDate, setCurrentDate } =
         useEmployeeSchedule();
-    console.log(viewedSchedules);
+    // console.log(viewedSchedules);
     const [daysArray, setDaysArray] = useState<(number | null)[]>([]); // daysArray 상태 관리
 
     const minDate = dayjs("2025-01-01");
@@ -138,38 +138,3 @@ const Calendar = () => {
 };
 
 export default Calendar;
-
-/*  
-<div
-className={`${styles.days} ${
-    isScrollable ? styles.scroll : " "
-}`}>
-{daysArray.map((day, index) => (
-    <div
-        key={index}
-        className={`${day ? styles.day : styles.empty} ${
-            // day가 null이 아니고 현재 선택한 날짜라면
-            day && currentDate.date() === day
-                ? styles.isSelected
-                : ""
-        }`}
-        onClick={() => {
-            if (day) {
-                setCurrentDate((prevDate) =>
-                    prevDate.date(day)
-                ); // 새로운 dayjs 객체 반환 후 설정
-            }
-        }} // day가 있으면 날짜, 없으면 빈 칸
-    >
-        {day ? day : ""}{" "}
-        {day && selectedList.length !== 0 && groupedSchedules.length > 0 ? (
-            <CalendarSchedule />
-        ) : (
-            " "
-        )}
-    </div>
-))}
-</div>
-</div>
-);
-}; */
