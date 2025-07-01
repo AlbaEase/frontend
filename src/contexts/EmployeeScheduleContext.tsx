@@ -99,7 +99,7 @@ export const EmployeeScheduleProvider = ({
                 if (token) {
                     // axios 요청 헤더에 토큰을 추가합니다.
                     const res = await axiosInstance.get(
-                        "http://3.39.237.218:8080/store/me",
+                        "http://43.200.176.79:8080/store/me",
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
@@ -145,7 +145,7 @@ export const EmployeeScheduleProvider = ({
             try {
                 if (token) {
                     const res = await axiosInstance.get(
-                        `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
+                        `http://43.200.176.79:8080/schedule/store/${selectedStore}`,
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가

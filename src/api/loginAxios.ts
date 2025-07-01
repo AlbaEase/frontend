@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // 환경 변수에서 API URL 가져오기 (기본값 설정)
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://3.39.237.218:8080";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://43.200.176.79:8080";
 
 // 로컬 스토리지 키 상수화
 const TOKEN_KEY = "accessToken";
@@ -90,7 +90,7 @@ axiosInstance.interceptors.request.use(
         "🚨 Authorization 헤더 없음! 토큰이 저장되지 않았거나 불러올 수 없음."
       );
 
-      console.log("✅ Authorization 헤더 추가됨:", `Bearer ${token.substring(0, 10)}...`);
+      // console.log("✅ Authorization 헤더 추가됨:", `Bearer ${token.substring(0, 10)}...`);
 
     }
     

@@ -62,8 +62,6 @@ const LoginPage = () => {
       Authorization: undefined, // 🔥 이 줄이 핵심!
     },
   });
-
-      });
       
       // 응답 데이터 자세히 출력
 
