@@ -16,7 +16,7 @@ const LoginPage = () => {
   //   password: "",
   // });
 
-  // id, password 상태관리
+  // email, password 상태관리
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
@@ -35,6 +35,7 @@ const LoginPage = () => {
   // 조건은 좀 더 생각해보기
 
   const handleLogin = async () => {
+    delete axiosInstance.defaults.headers["Authorization"];
     // 이메일 형식 및 비밀번호 유효성 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -55,9 +56,17 @@ const LoginPage = () => {
       const response = await axiosInstance.post("/user/login", {
         email,
         password,
+
+      },{
+    headers: {
+      Authorization: undefined, // 🔥 이 줄이 핵심!
+    },
+  });
+
       });
       
       // 응답 데이터 자세히 출력
+
       console.log("🔍 로그인 응답 데이터:", response.data);
       
       // 응답에서 토큰과 사용자 정보 추출 (백엔드 응답 구조에 맞게 조정)

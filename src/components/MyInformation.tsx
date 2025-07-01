@@ -23,7 +23,7 @@ const MyInformation = () => {
           password: "********", // 실제 비번은 보여주지 않음
           role: response.data.role || "",
           storeNames: response.data.storeNames || [],
-        });
+       });
       } catch (error: any) {
         console.error("유저 정보 불러오기 실패:", error);
 
@@ -34,8 +34,8 @@ const MyInformation = () => {
       }
     };
 
-    fetchUserInfo();
-  }, []);
+  fetchUserInfo();
+}, []);
 
 
   return (
