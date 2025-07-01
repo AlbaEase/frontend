@@ -5,7 +5,8 @@ import axiosInstance from "../api/loginAxios";
 
 const Checkbox = () => {
     /* DB 연결 */
-    const { selectedStore, selectedList, setSelectedList } = useEmployeeSchedule();
+    const { selectedStore, selectedList, setSelectedList } =
+        useEmployeeSchedule();
     const [employeesArray, setEmployeeArray] = useState<string[]>([]);
     /* 체크박스 선택 관리 */
     const [isAllSelected, setIsAllSelected] = useState(false);
@@ -26,7 +27,7 @@ const Checkbox = () => {
 
                 // 첫 번째 API: store_id가 1인 직원의 user_id 목록을 가져오기
                 const res = await axiosInstance.get(
-                    `http://3.39.237.218:8080/schedule/store/${selectedStore}`,
+                    `http://43.200.176.79:8080/schedule/store/${selectedStore}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -58,7 +59,6 @@ const Checkbox = () => {
                     console.error("직원 목록 불러오기 실패: ", error);
                 }
             }
-            
         };
 
         fetchEmployees();
@@ -125,7 +125,9 @@ const Checkbox = () => {
             {sortedArray.map((employeeName, index) => {
                 const repeatedClassName = `name${(index % 10) + 1}`; // 1부터 10까지 반복
                 return (
-                    <label key={employeeName} className={styles[repeatedClassName]}>
+                    <label
+                        key={employeeName}
+                        className={styles[repeatedClassName]}>
                         <input
                             type="checkbox"
                             onChange={() => handleSingleSelect(employeeName)}
