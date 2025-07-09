@@ -4,9 +4,6 @@ interface AddStoreRequest {
   name: string;
   location: string;
   businessNumber: string;
-  storeCode: string;
-  requireApproval: boolean;
-  defaultHourlyWage: number;
 }
 
 export const validateBusinessNumber = (businessNumber: string) => {
@@ -17,5 +14,6 @@ export const validateBusinessNumber = (businessNumber: string) => {
 
 
 export const registerStore = (data: AddStoreRequest) => {
+  console.log("📤 [API] registerStore payload:", data); // ✅ 여기도 찍어볼 수 있음
   return axiosInstance.post("/store", data);
 };

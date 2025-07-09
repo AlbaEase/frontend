@@ -22,10 +22,16 @@ interface EmployeeSchedule {
 }
 
 interface Store {
+    id: number | null;
     storeId: number;
-    name: string;
     storeCode: string;
+    businessNumber: string | null;
+    name: string;
+    location: string;
+    requireApproval: boolean | null;
+    createdAt: string;
 }
+
 
 /* 공유할 context type */
 interface EmployeeScheduleContextType {
@@ -94,48 +100,39 @@ export const EmployeeScheduleProvider = ({
 
     // DB에서 가게 목록 가져오기 (axios로 변경)
     useEffect(() => {
-        const fetchStores = async () => {
-            try {
-                if (token) {
-                    // axios 요청 헤더에 토큰을 추가합니다.
-                    const res = await axiosInstance.get(
-                        "http://43.200.176.79:8080/store/me",
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`, // Authorization 헤더에 Bearer 토큰 추가
-                            },
-                        }
-                    );
-                    const data = res.data;
-
-                    // console.log("받아온 데이터: ", data);
-
-                    if (!data) {
-                        console.error("가게 목록 데이터가 없습니다.");
-                        return;
+    const fetchStores = async () => {
+        try {
+            if (token) {
+                const res = await axiosInstance.get(
+                    "http://43.200.176.79:8080/store/me",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
+                );
+                const data = res.data;
 
-                    const filteredStores = data.map((store: Store) => ({
-                        storeId: store.storeId,
-                        name: store.name,
-                        storeCode: store.storeCode,
-                    }));
-
-                    setStores(filteredStores);
-                    if (filteredStores.length > 0) {
-                        setSelectedStore(filteredStores[0].storeId);
-                    }
-                } else {
-                    console.error("토큰이 없습니다. 인증을 확인하세요.");
-                    // 인증 절차를 여기에 추가할 수 있습니다.
+                if (!data) {
+                    console.error("가게 목록 데이터가 없습니다.");
+                    return;
                 }
-            } catch (error) {
-                console.error("가게 목록을 불러오는 데 실패했습니다.", error);
-            }
-        };
 
-        fetchStores();
-    }, [token]);
+                setStores(data); // ✅ 전체 저장
+                if (data.length > 0) {
+                    setSelectedStore(data[0].storeId); // ✅ 첫 가게 자동 선택
+                }
+            } else {
+                console.error("토큰이 없습니다. 인증을 확인하세요.");
+            }
+        } catch (error) {
+            console.error("가게 목록을 불러오는 데 실패했습니다.", error);
+        }
+    };
+
+    fetchStores();
+}, [token]);
+
 
     // 가게 선택할 때마다 스케줄 다르게 불러오기 (axios로 변경)
     useEffect(() => {
