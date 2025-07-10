@@ -70,6 +70,7 @@ interface EmployeeScheduleContextType {
     selectedName: string;
     setSelectedName: React.Dispatch<React.SetStateAction<string>>;
     otherGroupMembers: { userId: number; name: string }[];
+    refetchStores: () => Promise<void>; // ✅ 이 줄 추가!
 }
 
 const EmployeeScheduleContext = createContext<
@@ -98,8 +99,6 @@ export const EmployeeScheduleProvider = ({
 
     // console.log("selectedName: ", selectedName);
 
-    // DB에서 가게 목록 가져오기 (axios로 변경)
-    useEffect(() => {
     const fetchStores = async () => {
         try {
             if (token) {
@@ -129,9 +128,10 @@ export const EmployeeScheduleProvider = ({
             console.error("가게 목록을 불러오는 데 실패했습니다.", error);
         }
     };
-
-    fetchStores();
-}, [token]);
+    // DB에서 가게 목록 가져오기 (axios로 변경)
+    useEffect(() => {
+        fetchStores();
+    }, [token]);
 
 
     // 가게 선택할 때마다 스케줄 다르게 불러오기 (axios로 변경)
@@ -456,6 +456,7 @@ export const EmployeeScheduleProvider = ({
                 selectedName,
                 setSelectedName,
                 otherGroupMembers,
+                refetchStores: fetchStores, // ✅ 이 한 줄 추가!
             }}>
             {children}
         </EmployeeScheduleContext.Provider>

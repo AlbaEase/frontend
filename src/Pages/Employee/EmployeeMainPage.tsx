@@ -5,7 +5,7 @@ import CalendarEmployee from "../../components/CalendarEmployee";
 import ChoiceEmployee from "../../components/ChoiceEmployee";
 import PartTimeEmployee from "../../components/PartTimeEmployee";
 import SelectRadioEmployee from "../../components/SelectRadioEmployee";
-import AlbaAddModal from "../../components/Modal/AlbaAddModal";
+import AlbaJoinModal from "../../components/Modal/AlbaJoinModal";
 import AlarmModal from "../../components/Modal/AlarmModal";
 import RequestModalEmployee from "../../components/Modal/RequestModalEmployee";
 import styles from "./EmployeeMainPage.module.css";
@@ -39,7 +39,7 @@ const EmployeeMainPage = () => {
       </div>
       {/* 모달 조건부 렌더링 */}
       {activeModal === "alarm" && <AlarmModal onClose={closeModal} />}
-      {activeModal === "albaAdd" && <AlbaAddModal onClose={closeModal} />}
+      {activeModal === "albaAdd" && <AlbaJoinModal onClose={closeModal} />}
       {activeModal === "request" && <RequestModalEmployee onClose={closeModal} />}
     </div>
   );

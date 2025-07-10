@@ -17,3 +17,9 @@ export const registerStore = (data: AddStoreRequest) => {
   console.log("📤 [API] registerStore payload:", data); // ✅ 여기도 찍어볼 수 있음
   return axiosInstance.post("/store", data);
 };
+
+// 알바생이 매장 등록
+export const joinStore = (storeCode: string) => {
+  console.log("📤 [API] joinStore payload:", storeCode);
+  return axiosInstance.post("/store/join", { storeCode });
+};
