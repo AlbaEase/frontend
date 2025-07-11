@@ -111,6 +111,8 @@ export const EmployeeScheduleProvider = ({
                     }
                 );
                 const data = res.data;
+                
+                console.log("📦 불러온 매장 데이터:", data); // ✅ 이 줄 추가
 
                 if (!data) {
                     console.error("가게 목록 데이터가 없습니다.");

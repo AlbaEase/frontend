@@ -23,3 +23,8 @@ export const joinStore = (storeCode: string) => {
   console.log("📤 [API] joinStore payload:", storeCode);
   return axiosInstance.post("/store/join", { storeCode });
 };
+
+// 매장 삭제
+export const deleteStore = (storeId: number) => {
+  return axiosInstance.delete(`/store/${storeId}`);
+};

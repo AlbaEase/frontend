@@ -1,14 +1,16 @@
 // ✅ EditableField: 사용자 정보(이름, 이메일, 비밀번호 등)를 화면에 출력하고,
 // 편집 모드일 때, 수정 가능한 항목만 클릭 가능하게 만드는 재사용 컴포넌트
 import styles from "./EditableField.module.css";
+import { ReactNode } from "react";
 
 interface EditableFieldProps {
   label: string;                           // 항목 라벨 (예: 이름)
-  value: string;                           // 항목 값 (예: 홍길동)
+  value?: string;                          // 항목 값 (예: 홍길동) (선택)
   fieldName: string;                       // 필드 이름 (예: "fullName", "email")
   isEditing: boolean;                      // 현재 편집 모드인지 여부
   isEditable: boolean;                     // 해당 항목이 수정 가능한지 여부
   onClick?: (field: string) => void;       // 클릭 이벤트 핸들러 (옵션)
+  children?: ReactNode;                   // 커스텀 출력용 JSX 지원
 }
 
 const EditableField = ({
@@ -18,17 +20,21 @@ const EditableField = ({
   isEditing,
   isEditable,
   onClick,
+  children,
 }: EditableFieldProps) => {
   const isClickable = isEditing && isEditable;
+  const isStoreField = fieldName === "storeNames"; // ✅ storeNames인지 확인
 
-  return (
+    return (
     <div className={styles.contents}>
       <div className={styles.contentsTitle}>{label}</div>
       <div
         className={isClickable ? styles.contentsContentsTrue : styles.contentsContents}
-        onClick={isClickable && onClick ? () => onClick(fieldName) : undefined}
+        onClick={
+          isClickable && !isStoreField && onClick ? () => onClick(fieldName) : undefined
+        }
       >
-        {value || `${label} 없음`}
+        {children ?? value ?? `${label} 없음`}
       </div>
     </div>
   );
