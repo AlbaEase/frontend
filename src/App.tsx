@@ -35,14 +35,8 @@ function App() {
         <Route path="ownermychange" element={<OwnerMyChange />}></Route>
         <Route path="employeemain" element={<EmployeeMainPage />}></Route>
         <Route path="employeemypage" element={<EmployeeMyPage />}></Route>
-        <Route
-          path="employeemypage/mysalary"
-          element={<EmployeeMySalary />}
-        ></Route>
-        <Route
-          path="employeemypage/mychange"
-          element={<EmployeeMyChange />}
-        ></Route>
+        <Route path="employeemypage/mysalary" element={<EmployeeMySalary />}></Route>
+        <Route path="employeemypage/mychange" element={<EmployeeMyChange />}></Route>
       </Routes>
       <Footer />
     </WebSocketProvider>
