@@ -47,3 +47,27 @@
   /* border: 1px black solid; */
   margin-right: 20px;
 }
+.contents{
+    width: 100%;
+    height: 80%;
+    border: 1px black solid;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.templeteBox{
+    width: 90%;
+    height: 70%;
+    border: 1px black solid;
+}
+.buttonBox{
+    width: 90%;
+    height: 15%;
+    border: 1px black solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+}
