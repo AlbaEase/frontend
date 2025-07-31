@@ -24,6 +24,18 @@ export const getTemplatesByStoreId = async (storeId: number): Promise<ScheduleTe
 
 
 // 템플릿 등록
+export interface CreateTemplateRequest {
+  templateName: string;
+  startTime: string;
+  endTime: string;
+  breakTime: string;
+}
+
+export const postTemplate = async (storeId: number, data: CreateTemplateRequest) => {
+  const res = await axiosInstance.post(`/template/store/${storeId}`, data);
+  return res.data;
+};
+
 
 // 직접 등록
 export interface ScheduleRequest {

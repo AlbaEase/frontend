@@ -1,5 +1,5 @@
 // ScheduleAddModal.tsx
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import TemplateSelector from "./TemplateSelector"; // 과정 분리하는 버튼 있는 곳
 import ManualScheduleForm from "./ManualScheduleForm"; // 직접 등록 
@@ -7,8 +7,16 @@ import TemplateCreateForm from "./TemplateCreateForm"; // 템플릿 생성
 import styles from "./ScheduleAddModal.module.css";
 
 const ScheduleAddModal = () => {
+  console.log("📌 ScheduleAddModal 렌더링됨");
+
   const { closeModal } = useModal();
   const [viewType, setViewType] = useState<"default" | "manual" | "template">("default");
+  console.log("📌 viewType 상태:", viewType);
+  
+    useEffect(() => {
+    // 모달이 열릴 때마다 기본값으로 초기화
+    setViewType("default");
+  }, []);
 
   return (
     <div className={styles.modalOverlay}>

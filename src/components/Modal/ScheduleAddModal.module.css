@@ -157,3 +157,36 @@
   margin-top: auto;
 }
 
+/* TemplateSelector */
+/* TemplateSelector용 전용 네이밍 */
+.templateGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding: 16px 0;
+  width: 90%;
+}
+
+.templateCardGrid {
+  width: 22%;
+  min-width: 120px;
+  padding: 12px;
+  border: 2px solid #bfeadf;
+  border-radius: 10px;
+  background-color: #f0fff4;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.roleText {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.timeText {
+  font-size: 14px;
+}
+
+

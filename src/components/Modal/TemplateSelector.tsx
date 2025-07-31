@@ -1,6 +1,7 @@
+// components/Modal/TemplateSelector.tsx
 import { useEffect, useState } from "react";
 import { getTemplatesByStoreId, ScheduleTemplate } from "../../api/scheduleAdd";
-import { formatTime } from "../../utils/timeFormat"; // 시간 09:00 포맷 함수
+import { formatTimeFlexible } from "../../utils/timeFormat";
 import Button from "../Button";
 import styles from "./ScheduleAddModal.module.css";
 
@@ -10,12 +11,15 @@ interface Props {
 
 const TemplateSelector = ({ onNext }: Props) => {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
-  const storeId = 1; // TODO: 실제 storeId는 props/context에서 받아오기
+  const storeId = 1; // TODO: 실제 storeId로 대체
 
   useEffect(() => {
     getTemplatesByStoreId(storeId)
       .then((data) => {
         console.log("✅ 템플릿 불러오기 성공:", data);
+        if (data.length > 0) {
+          console.log("⏰ startTime 타입 확인:", typeof data[0].startTime, data[0].startTime);
+        }
         setTemplates(data);
       })
       .catch((err) => {
@@ -25,15 +29,17 @@ const TemplateSelector = ({ onNext }: Props) => {
 
   return (
     <>
-      <div className={styles.templeteBox}>
+      <div className={styles.templateGrid}>
         {templates.length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: "40px" }}>템플릿이 없습니다</div>
+          <div style={{ textAlign: "center", marginTop: "40px" }}>
+            템플릿이 없습니다
+          </div>
         ) : (
           templates.map((template) => (
-            <div key={template.templateId} className={styles.templateCard}>
-              <div className={styles.role}>{template.templateName}</div>
-              <div className={styles.time}>
-                {formatTime(template.startTime)} ~ {formatTime(template.endTime)}
+            <div key={template.templateId} className={styles.templateCardGrid}>
+              <div className={styles.roleText}>{template.templateName}</div>
+              <div className={styles.timeText}>
+                {formatTimeFlexible(template.startTime)} ~ {formatTimeFlexible(template.endTime)}
               </div>
             </div>
           ))
