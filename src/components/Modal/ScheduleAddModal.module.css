@@ -42,10 +42,10 @@
   text-align: left;
 }
 .button {
-  width: 30px;
+  /* width: 30px; */
   height: 24px;
   /* border: 1px black solid; */
-  margin-right: 20px;
+  margin-right: 20px; 
 }
 .contents{
     width: 100%;
