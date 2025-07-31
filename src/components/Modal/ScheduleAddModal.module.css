@@ -71,3 +71,89 @@
     align-items: center;
     gap: 50px;
 }
+
+
+
+/* ScheduleAddModal.module.css */
+.templateCard {
+  width: 120px;
+  padding: 12px;
+  border: 2px solid #bfeadf;
+  border-radius: 10px;
+  background-color: #f0fff4;
+  text-align: center;
+  margin: 8px;
+  cursor: pointer;
+}
+
+.role {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.time {
+  font-size: 14px;
+}
+
+/* ManualSchdeuleForm */
+.formBox {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.required {
+  color: red;
+  margin-left: 4px;
+}
+
+.input {
+  width: 23%;
+  margin: 0px auto;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.inputSmall {
+  width: 120px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.inputTiny {
+  width: 60px;
+  padding: 6px 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.inlineGroup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.formButtonBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  margin-top: auto;
+}
+
