@@ -178,7 +178,11 @@
   text-align: center;
   box-sizing: border-box;
 }
-
+/* 확인 버튼은 템플릿 목록 아래에 중앙 정렬로 배치 */
+.confirmButton {
+  text-align: center;
+  margin: 16px 0;
+}
 .roleText {
   font-weight: bold;
   font-size: 16px;
