@@ -1,4 +1,4 @@
-// components/Modal/TemplateScheduleForm.tsx
+// 만들어진 템플릿 근무 등록
 import { useState, useEffect } from "react";
 import { getTemplatesByStoreId, ScheduleTemplate, postScheduleFromTemplate } from "../../api/scheduleAdd";
 import { getWorkersByStoreId, Worker } from "../../api/albaAdd";

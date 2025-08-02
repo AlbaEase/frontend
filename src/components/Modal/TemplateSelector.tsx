@@ -1,3 +1,6 @@
+// 근무 템플릿을 선택하거나 새로 등록하여 다음 단계로 넘어가는 선택 화면
+// 여기서 3개의 폼으로 넘어간다고 생각
+// 직접, 폼생성, 폼근무등록
 import { useEffect, useState } from "react";
 import { getTemplatesByStoreId, ScheduleTemplate } from "../../api/scheduleAdd";
 import { formatTimeFlexible } from "../../utils/timeFormat";
