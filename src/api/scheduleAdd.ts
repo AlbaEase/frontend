@@ -1,4 +1,5 @@
 import axiosInstance from "./axios";
+
 // 템플릿 조회
 // scheduleAdd.ts
 export interface TimeObj {
@@ -34,6 +35,24 @@ export interface CreateTemplateRequest {
 export const postTemplate = async (storeId: number, data: CreateTemplateRequest) => {
   const res = await axiosInstance.post(`/template/store/${storeId}`, data);
   return res.data;
+};
+
+// 템플릿을 이용한 근무 등록
+export interface ScheduleFromTemplateRequest {
+  userIds: number[];
+  storeId: number;
+  workDate: string;
+  repeatDays?: string[];
+  repeatEndDate?: string;
+  repeating: boolean;
+}
+
+export const postScheduleFromTemplate = async (
+  templateId: number,
+  data: ScheduleFromTemplateRequest
+) => {
+  const response = await axiosInstance.post(`/schedule/from-template/${templateId}`, data);
+  return response.data;
 };
 
 
