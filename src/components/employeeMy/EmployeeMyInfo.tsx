@@ -3,21 +3,23 @@ import { useState, useEffect } from "react";
 import { useModal } from "../../contexts/ModalContext";
 import EditModal from "../Modal/Edit/EditModal";
 import DoneModal from "../Modal/Edit/DoneModal";
-import axiosInstance from "../../api/loginAxios"
-import EditableField from "../../components/Modal/Edit/EditableField"
-import EditNameModal from "../Modal/Edit/EditNameModal"; 
-import EditEmailModal from "../Modal/Edit/EditEmailModal"
-import EditPasswordModal from "../Modal/Edit/EditPasswordModal"
-import EditStoreModal from "../Modal/Edit/EditStoreModal";
+import axiosInstance from "../../api/loginAxios";
+import EditableField from "../../components/Modal/Edit/EditableField";
+import EditNameModal from "../Modal/Edit/EditNameModal";
+import EditEmailModal from "../Modal/Edit/EditEmailModal";
+import EditPasswordModal from "../Modal/Edit/EditPasswordModal";
+import DeleteStoreModal from "../Modal/Edit/DeleteStoreModal";
 
 const EmployeeMyInfo = () => {
   const { activeModal, openModal, closeModal } = useModal();
   const [isEditing, setIsEditing] = useState(false);
 
+  const [storeToDelete, setStoreToDelete] = useState<{ id: number; name: string } | null>(null);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
   const [isEditEmailModalOpen, setIsEditEmailModalOpen] = useState(false);
   const [isEditPasswordModalOpen, setIsEditPasswordModalOpen] = useState(false);
   const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
+
   const handleEditField = (field: string) => {
     switch (field) {
       case "fullName":
@@ -40,7 +42,7 @@ const EmployeeMyInfo = () => {
     email: "",
     password: "********",
     role: "",
-    storeNames: [] as string[],
+    stores: [] as { id: number; name: string }[],
   });
 
   useEffect(() => {
@@ -49,16 +51,24 @@ const EmployeeMyInfo = () => {
         const response = await axiosInstance.get("/user/me");
         console.log("🔍 유저 정보:", response.data);
 
+        // user/me에는 storeNames(string[])만 있으므로 storeId가 필요한 경우 /store/me 추가 호출 필요
+        const storeResponse = await axiosInstance.get("/store/me");
+        const storeData = storeResponse.data || [];
+
+        const formattedStores = storeData.map((store: any) => ({
+          id: store.storeId,
+          name: store.name,
+        }));
+
         setUserInfo({
           fullName: response.data.fullName || "",
           email: response.data.email || "",
-          password: "********", // 실제 비번은 보여주지 않음
+          password: "********",
           role: response.data.role || "",
-          storeNames: response.data.storeNames || [],
-       });
+          stores: formattedStores,
+        });
       } catch (error: any) {
         console.error("유저 정보 불러오기 실패:", error);
-
         if (error.response?.status === 401) {
           localStorage.removeItem("accessToken");
           window.location.href = "/login";
@@ -66,8 +76,8 @@ const EmployeeMyInfo = () => {
       }
     };
 
-  fetchUserInfo();
-}, []);
+    fetchUserInfo();
+  }, []);
 
   return (
     <div className={styles.employeeMyInfo}>
@@ -76,17 +86,13 @@ const EmployeeMyInfo = () => {
         <div
           className={styles.titleEdit}
           onClick={() => {
-            if (isEditing) {
-              openModal("done");
-              console.log("수정 완료 버튼 클릭됨");
-            } else {
-              openModal("edit"); // 비밀번호 확인 모달 열기
-            }
+            isEditing ? openModal("done") : openModal("edit");
           }}
         >
           {isEditing ? "수정 완료" : "내 정보 수정하기"}
         </div>
       </div>
+
       <div className={styles.content}>
         <EditableField
           label="이름"
@@ -120,59 +126,89 @@ const EmployeeMyInfo = () => {
           isEditable={true}
           onClick={handleEditField}
         />
-       <EditableField
+        <EditableField
           label="근무 매장"
-          value={userInfo.storeNames.join(", ")} // 배열 처리
           fieldName="storeNames"
           isEditing={isEditing}
           isEditable={true}
           onClick={handleEditField}
-        />
+        >
+          <div className={styles.storeList}>
+            {userInfo.stores.map((store) => (
+              <div key={store.id} className={styles.storeItem}>
+                <span className={styles.storeName}>{store.name}</span>
+                {isEditing && (
+                  <span
+                    className={styles.manageButton}
+                    onClick={() => {
+                      console.log("🧩 매장 관리 클릭됨:", store);
+                      setStoreToDelete({ id: store.id, name: store.name });
+                    }}
+                  >
+                    매장 관리
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </EditableField>
       </div>
-      {/* activeModal이 "edit"일 때 EditModal 렌더링 */}
-      {activeModal === "edit" && <EditModal onClose={closeModal} onSuccess={() => setIsEditing(true)}/>}
-      {activeModal === "done" && <DoneModal onClose={closeModal} onSuccess={() => setIsEditing(false)}/>}
-       {isEditNameModalOpen && (
-      <EditNameModal
-        fullName={userInfo.fullName}
-        onClose={() => setIsEditNameModalOpen(false)}
-        onSave={(newFullName) => {
-          setUserInfo((prev) => ({ ...prev, fullName: newFullName }));
-          setIsEditNameModalOpen(false);
-        }}
-      />
-    )}
-    {isEditEmailModalOpen && (
-      <EditEmailModal
-        onClose={() => setIsEditEmailModalOpen(false)}
-        onSuccess={(email) => {
-          setUserInfo((prev) => ({ ...prev, email: email }));
-          setIsEditEmailModalOpen(false);
-        }}
-      />
-    )}
-    {isEditPasswordModalOpen && (
-      <EditPasswordModal
-        onClose={() => setIsEditPasswordModalOpen(false)}
-        onSuccess={() => {
-          setUserInfo((prev) => ({ ...prev, password:"********" }));
-          setIsEditPasswordModalOpen(false);
-        }}
-      />
-    )}
 
-    {/* {isEditStoreModalOpen && (
-      <EditStoreModal
-        storeNames={userInfo.storeNames}
-        onClose={() => setIsEditStoreModalOpen(false)}
-        onSave={(storeNames) => {
-          setUserInfo((prev) => ({ ...prev, storeNames }));
-          setIsEditStoreModalOpen(false);
-        }}
-      />
-    )} */}
+      {/* ✅ 모달들 */}
+      {activeModal === "edit" && (
+        <EditModal onClose={closeModal} onSuccess={() => setIsEditing(true)} />
+      )}
+      {activeModal === "done" && (
+        <DoneModal onClose={closeModal} onSuccess={() => setIsEditing(false)} />
+      )}
 
+      {isEditNameModalOpen && (
+        <EditNameModal
+          fullName={userInfo.fullName}
+          onClose={() => setIsEditNameModalOpen(false)}
+          onSave={(newFullName) => {
+            setUserInfo((prev) => ({ ...prev, fullName: newFullName }));
+            setIsEditNameModalOpen(false);
+          }}
+        />
+      )}
 
+      {isEditEmailModalOpen && (
+        <EditEmailModal
+          onClose={() => setIsEditEmailModalOpen(false)}
+          onSuccess={(email) => {
+            setUserInfo((prev) => ({ ...prev, email }));
+            setIsEditEmailModalOpen(false);
+          }}
+        />
+      )}
+
+      {isEditPasswordModalOpen && (
+        <EditPasswordModal
+          onClose={() => setIsEditPasswordModalOpen(false)}
+          onSuccess={() => {
+            setUserInfo((prev) => ({ ...prev, password: "********" }));
+            setIsEditPasswordModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* ✅ 삭제 모달 */}
+      {storeToDelete && (
+        <DeleteStoreModal
+          storeId={storeToDelete.id}
+          storeName={storeToDelete.name}
+          onClose={() => setStoreToDelete(null)}
+          onSuccess={() => {
+            setUserInfo((prev) => ({
+              ...prev,
+              stores: prev.stores.filter((s) => s.id !== storeToDelete.id),
+            }));
+            setStoreToDelete(null);
+            // ❌ setIsEditing(false) 제거 => 수정모드 유지!
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -12,25 +12,28 @@ const SelectRadio = () => {
             <div className={styles.selectRadio}>
                 <div className={styles.selectBtn}>
                     {safeStores.length > 0 ? (
-                        safeStores.map((store) => (
-                            <label
-                                key={store.storeId}
-                                className={styles.selectLabel}>
-                                <input
-                                    type="radio"
-                                    name="store"
-                                    value={store.storeId}
-                                    checked={selectedStore === store.storeId}
-                                    onChange={
-                                        (e) =>
+                        safeStores.map((store) => {
+                            console.log("store:", store); // ✅ 여기에 콘솔 추가!
+
+                            return (
+                                <label
+                                    key={store.storeId}
+                                    className={styles.selectLabel}>
+                                    <input
+                                        type="radio"
+                                        name="store"
+                                        value={store.storeId}
+                                        checked={selectedStore === store.storeId}
+                                        onChange={(e) =>
                                             setSelectedStore(
                                                 Number(e.target.value)
-                                            ) // storeId를 number로 변환하여 설정
-                                    }
-                                />
-                                {store.name}
-                            </label>
-                        ))
+                                            )
+                                        }
+                                    />
+                                    {store.name}
+                                </label>
+                            );
+                        })
                     ) : (
                         <p>가게 목록이 없습니다.</p>
                     )}

@@ -52,3 +52,32 @@
   font-size: 20px;
   text-decoration: underline;
 }
+
+.storeList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.storeItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 20px;
+  color: black;
+}
+
+.storeName {
+  flex: 1;
+  word-break: keep-all;
+  text-decoration: none; /* ✅ 밑줄 제거 */
+}
+
+.manageButton {
+  margin-left: 12px;
+  color: #4a90e2;
+  cursor: pointer;
+  font-size: 20px;
+  white-space: nowrap;
+  text-decoration: underline; /* ✅ 밑줄 유지 */
+}

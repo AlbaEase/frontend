@@ -18,3 +18,10 @@
   font-size: 20px;
   text-decoration: underline;
 }
+
+.manageButton {
+  color: #4a90e2;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}

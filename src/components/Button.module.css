@@ -25,3 +25,12 @@
     background-color: #ABABAB;
     color: #FFFFFF;
 }
+
+.blue {
+  background-color: #2196f3;
+  color: white;
+}
+
+.blue:hover {
+  background-color: #2079d2;
+}

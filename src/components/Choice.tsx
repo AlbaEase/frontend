@@ -1,10 +1,14 @@
 import { useOwnerSchedule } from "../contexts/OwnerScheduleContext";
+import { useModal } from "../contexts/ModalContext"
 import ChoiceSchedule from "./ChoiceSchedule";
 import Button from "./Button";
+import ScheduleAddModal from "./Modal/ScheduleAddModal";
 import styles from "./Choice.module.css";
 
 const Choice = () => {
     const { currentDate, groupedSchedules } = useOwnerSchedule();
+
+    const { openModal, activeModal } = useModal();
 
     // 선택된 날짜를 YYYY-MM-DD 형식으로 변환
     const dateStr = currentDate.format("YYYY-MM-DD");
@@ -29,7 +33,8 @@ const Choice = () => {
                     <ChoiceSchedule schedules={schedulesForDate} />
                 )}
             </div>
-            <Button children={"근무 등록하기"} />
+            <Button onClick = { () => openModal("scheduleAdd")} children={"근무 등록하기"} />
+            {activeModal === "scheduleAdd" && <ScheduleAddModal />}
         </div>
     );
 };
